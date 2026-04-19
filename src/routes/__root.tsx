@@ -5,8 +5,8 @@ import { useState, useEffect } from 'react'
 import { useSidebarStore } from '@/store/sidebar-store'
 import { cn } from '@/lib/utils'
 
-const publicRoutes = ['/', '/login', '/register', '/trial']
-const authRoutes = ['/login', '/register']
+const publicRoutes = ['/', '/login', '/register', '/trial', '/forgot-password']
+const authRoutes = ['/login', '/register', '/forgot-password']
 const noHeaderRoutes = ['/trial']
 
 function PageTransition({ children }: { children: React.ReactNode }) {

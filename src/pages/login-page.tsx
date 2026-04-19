@@ -28,8 +28,8 @@ export function LoginPage() {
             <p className="text-sm text-(--text-muted)">
               Não possui uma conta?{' '}
               <Link
-                to="/register"
-                className="font-medium text-teal-500 hover:underline no-underline"
+                to="/trial"
+                className="font-medium text-brand hover:underline no-underline"
               >
                 Começar agora
               </Link>
@@ -38,18 +38,18 @@ export function LoginPage() {
 
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-(--text)/80">Email</label>
+              <label className="text-xs font-medium text-(--text)/80">Email</label>
               <input
                 type="email"
                 placeholder="Insira aqui"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="h-11 rounded-xl border border-(--border-custom) bg-gray-50/60 px-4 text-sm placeholder:text-(--text-muted)/60 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all"
+                className="h-9 rounded-lg border border-(--border-custom) bg-gray-50/60 px-3 text-xs placeholder:text-(--text-muted)/60 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all"
               />
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-(--text)/80">Senha</label>
+              <label className="text-xs font-medium text-(--text)/80">Senha</label>
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
@@ -78,12 +78,12 @@ export function LoginPage() {
               Log in
             </button>
             <div className="flex justify-end">
-              <a
-                href="#"
-                className="text-sm font-medium text-teal-500 hover:underline no-underline"
+              <Link
+                to="/forgot-password"
+                className="text-xs font-medium text-brand hover:underline no-underline"
               >
                 Esqueceu a senha?
-              </a>
+              </Link>
             </div>
           </div>
         </div>
