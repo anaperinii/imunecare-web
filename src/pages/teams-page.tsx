@@ -1,7 +1,8 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from '@tanstack/react-router'
-import { ArrowLeft, Plus, X, Mail, Shield, ChevronDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, MoreHorizontal, Clock, Trash2, Pencil, UserX, UserCheck, Send } from 'lucide-react'
+import { ArrowLeft, Plus, X, Mail, Shield, ChevronDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, MoreHorizontal, Clock, Trash2, Pencil, UserX, UserCheck, Send, Lock } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useCan } from '@/store/user-store'
 
 interface TeamMember {
   id: string
@@ -45,6 +46,7 @@ const mockInvites: Invite[] = [
 
 export function TeamsPage() {
   const navigate = useNavigate()
+  const canManageTeam = useCan('manage_team')
   const [tab, setTab] = useState<'members' | 'invites'>('members')
   const [showInviteModal, setShowInviteModal] = useState(false)
   const [inviteEmail, setInviteEmail] = useState('')
@@ -75,6 +77,23 @@ export function TeamsPage() {
   const pendingCount = invites.filter((i) => i.status === 'pendente').length
 
   const inputClass = "w-full h-9 rounded-lg border border-(--border-custom) bg-gray-50/60 px-3 text-xs placeholder:text-(--text-muted)/60 focus:outline-none focus:ring-2 focus:ring-[#18C1CB]/40 focus:border-transparent transition-all"
+
+  if (!canManageTeam) {
+    return (
+      <div className="flex flex-1 flex-col bg-gray-50/80 min-h-0 overflow-hidden">
+        <div className="flex flex-1 min-h-0 flex-col items-center justify-center rounded-xl bg-white shadow-[0_4px_24px_rgba(0,0,0,0.06)] m-4 p-10 text-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gray-100 mb-4">
+            <Lock size={22} className="text-(--text-muted)" />
+          </div>
+          <h2 className="text-base font-bold text-(--text) mb-1.5">Acesso restrito</h2>
+          <p className="text-xs text-(--text-muted) max-w-sm leading-relaxed mb-5">A gestão de equipe está disponível apenas para o perfil <span className="font-semibold text-(--text)">Administrador</span>. Troque de perfil pelo menu de usuário para acessar esta área.</p>
+          <button onClick={() => navigate({ to: '/settings' })} className="h-8 px-4 rounded-lg border border-(--border-custom) text-xs font-semibold text-(--text-muted) hover:border-brand hover:text-brand transition-all cursor-pointer">
+            Voltar para configurações
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-1 flex-col bg-gray-50/80 min-h-0 overflow-hidden">

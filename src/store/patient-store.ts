@@ -101,7 +101,7 @@ interface PatientState {
 const INACTIVATION_SEEDS: Record<string, Omit<Inactivation, 'id' | 'snapshotConcentracao' | 'snapshotIntervalo'>> = {
   '10': { category: 'solicitacao_paciente', detail: 'Paciente optou por interromper o tratamento por motivos pessoais. Retorno será reavaliado após estabilização da rotina.', startDate: '15/02/2026 às 09:15', expectedReturnDate: '15/05/2026', responsavel: 'Dra. Karina Martins' },
   '11': { category: 'gestacao', detail: 'Paciente comunicou gestação; tratamento pausado conforme protocolo para reavaliação no pós-parto.', startDate: '22/01/2026 às 11:30', expectedReturnDate: '01/10/2026', responsavel: 'Dra. Karina Martins' },
-  '12': { category: 'reacao_adversa_grave', detail: 'Reação moderada durante aplicação 1:1.000 - 0,2ml com necessidade de anti-histamínico. Conduta revista com alergologista responsável.', startDate: '10/01/2026 às 15:45', expectedReturnDate: null, responsavel: 'Dra. Karina Martins' },
+  '12': { category: 'reacao_adversa_grave', detail: 'Reação moderada durante aplicação 1:1.000 - 0,2ml com necessidade de anti-histamínico. Conduta revista com alergologista responsável.', startDate: '10/01/2026 às 15:45', expectedReturnDate: null, responsavel: 'Dr. André Lima' },
 }
 
 export function seedInactivationsFor(patientId: string, snapshotConcentracao: string, snapshotIntervalo: number): Inactivation[] | undefined {

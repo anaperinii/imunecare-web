@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { usePatientStore } from '@/store/patient-store'
 import { useImmunotherapiesStore } from '@/store/immunotherapies-store'
+import { useCan, useDoctorFilter } from '@/store/user-store'
 import { Plus, ChevronLeft, ChevronRight, ChevronDown, X, ExternalLink, CheckCircle, Calendar, Phone, Clock, Syringe, User } from 'lucide-react'
 import type { Application } from '@/store/patient-store'
 import { cn } from '@/lib/utils'
@@ -29,8 +30,16 @@ const INTERVAL_COLORS: Record<number, { bg: string; text: string; dot: string }>
 const DEFAULT_COLOR = { bg: '#F3F4F6', text: '#374151', dot: '#6B7280' }
 
 export function AppointmentsPage() {
-  const { applications } = usePatientStore()
+  const { applications: allApplications } = usePatientStore()
   const { immunotherapies } = useImmunotherapiesStore()
+  const canNewAppointment = useCan('new_appointment')
+  const doctorFilter = useDoctorFilter()
+
+  const applications = useMemo(() => {
+    if (!doctorFilter) return allApplications
+    const ownedIds = new Set(immunotherapies.filter((i) => i.medicoResponsavel === doctorFilter).map((i) => i.id))
+    return allApplications.filter((a) => ownedIds.has(a.patientId))
+  }, [allApplications, immunotherapies, doctorFilter])
   const [viewMode, setViewMode] = useState<'week' | 'month'>('week')
   const [currentDate, setCurrentDate] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState(new Date())
@@ -107,10 +116,12 @@ export function AppointmentsPage() {
         {/* Header */}
         <div className="border-b border-(--border-custom) px-5 py-4 flex items-center justify-between">
           <h1 className="text-2xl font-bold text-(--text)">Agendamentos</h1>
-          <button onClick={() => setShowAddModal(true)} className="h-8 px-3 flex items-center gap-1.5 rounded-lg bg-linear-to-br from-brand to-teal-400 text-white text-xs font-semibold shadow-[0_2px_12px_rgba(20,184,166,0.3)] hover:-translate-y-px hover:shadow-[0_4px_20px_rgba(20,184,166,0.4)] transition-all">
-            <Plus size={14} />
-            Novo Agendamento
-          </button>
+          {canNewAppointment && (
+            <button onClick={() => setShowAddModal(true)} className="h-8 px-3 flex items-center gap-1.5 rounded-lg bg-linear-to-br from-brand to-teal-400 text-white text-xs font-semibold shadow-[0_2px_12px_rgba(20,184,166,0.3)] hover:-translate-y-px hover:shadow-[0_4px_20px_rgba(20,184,166,0.4)] transition-all">
+              <Plus size={14} />
+              Novo Agendamento
+            </button>
+          )}
         </div>
 
         {/* Nav bar */}

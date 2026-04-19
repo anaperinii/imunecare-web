@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useCallback } from 'react'
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { usePatientStore } from '@/store/patient-store'
 import { useImmunotherapiesStore } from '@/store/immunotherapies-store'
+import { useCan } from '@/store/user-store'
 import { Search, ChevronDown, ArrowLeft, ClipboardList, Syringe, CalendarDays, Info } from 'lucide-react'
 import { addDays, format, differenceInDays, parse } from 'date-fns'
 import { cn } from '@/lib/utils'
@@ -13,6 +14,8 @@ export function PatientEvolutionPage() {
   const { patientId: preselectedId } = useSearch({ from: '/patient-evolution' })
   const { setSelectedPatient: setStorePatient } = usePatientStore()
   const { immunotherapies } = useImmunotherapiesStore()
+  const canEvolve = useCan('evolve_patient')
+  useEffect(() => { if (!canEvolve) navigate({ to: '/immunotherapies' }) }, [canEvolve, navigate])
   const [step, setStep] = useState<0 | 1 | 2 | 3>(0)
   const [showCancelModal, setShowCancelModal] = useState(false)
   const [search, setSearch] = useState('')

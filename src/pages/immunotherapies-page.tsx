@@ -2,6 +2,7 @@ import { useMemo, useState, useEffect } from 'react'
 import { useNavigate, useSearch, Link } from '@tanstack/react-router'
 import { useImmunotherapiesStore } from '@/store/immunotherapies-store'
 import { usePatientStore, seedInactivationsFor } from '@/store/patient-store'
+import { useCan, useDoctorFilter } from '@/store/user-store'
 import {
   Search,
   Plus,
@@ -41,6 +42,9 @@ export function ImmunotherapiesPage() {
   }, [success])
 
   const { setSelectedPatient } = usePatientStore()
+  const canAddImmunotherapy = useCan('add_immunotherapy')
+  const canEvolve = useCan('evolve_patient')
+  const doctorFilter = useDoctorFilter()
   const {
     immunotherapies,
     searchTerm,
@@ -69,14 +73,15 @@ export function ImmunotherapiesPage() {
 
   const filtered = useMemo(() => {
     return immunotherapies.filter((item) => {
+      const matchDoctor = !doctorFilter || item.medicoResponsavel === doctorFilter
       const matchSearch = !searchTerm || item.nome.toLowerCase().includes(searchTerm.toLowerCase())
       const matchTipo = tipoFilter === 'Todos os tipos' || item.tipo === tipoFilter
       const matchCiclo =
         cicloFilter === 'Todos os intervalos' || item.cicloIntervalo.dias.toString() === cicloFilter
       const matchStatus = showInativas ? item.status === 'inativo' : item.status === 'ativo'
-      return matchSearch && matchTipo && matchCiclo && matchStatus
+      return matchDoctor && matchSearch && matchTipo && matchCiclo && matchStatus
     })
-  }, [immunotherapies, searchTerm, tipoFilter, cicloFilter, showInativas])
+  }, [immunotherapies, searchTerm, tipoFilter, cicloFilter, showInativas, doctorFilter])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage))
 
@@ -153,16 +158,20 @@ export function ImmunotherapiesPage() {
             </button>
 
             {/* Adicionar */}
-            <button onClick={() => navigate({ to: '/add-immunotherapy' })} className="h-8 px-3 flex items-center gap-1.5 rounded-lg bg-linear-to-br from-brand to-teal-400 text-white text-xs font-semibold shadow-[0_2px_12px_rgba(20,184,166,0.3)] hover:-translate-y-px hover:shadow-[0_4px_20px_rgba(20,184,166,0.4)] transition-all">
-              <Plus size={14} />
-              Adicionar Imunoterapia
-            </button>
+            {canAddImmunotherapy && (
+              <button onClick={() => navigate({ to: '/add-immunotherapy' })} className="h-8 px-3 flex items-center gap-1.5 rounded-lg bg-linear-to-br from-brand to-teal-400 text-white text-xs font-semibold shadow-[0_2px_12px_rgba(20,184,166,0.3)] hover:-translate-y-px hover:shadow-[0_4px_20px_rgba(20,184,166,0.4)] transition-all">
+                <Plus size={14} />
+                Adicionar Imunoterapia
+              </button>
+            )}
 
             {/* Evoluir */}
-            <button onClick={() => navigate({ to: '/patient-evolution' })} className="h-8 px-3 flex items-center gap-1.5 rounded-lg border-[1.5px] border-teal-400 text-teal-600 text-xs font-semibold hover:bg-teal-50 hover:-translate-y-px hover:shadow-[0_4px_20px_rgba(20,184,166,0.25)] transition-all">
-              <FileText size={14} />
-              Evoluir Paciente
-            </button>
+            {canEvolve && (
+              <button onClick={() => navigate({ to: '/patient-evolution' })} className="h-8 px-3 flex items-center gap-1.5 rounded-lg border-[1.5px] border-teal-400 text-teal-600 text-xs font-semibold hover:bg-teal-50 hover:-translate-y-px hover:shadow-[0_4px_20px_rgba(20,184,166,0.25)] transition-all">
+                <FileText size={14} />
+                Evoluir Paciente
+              </button>
+            )}
           </div>
         </div>
 
@@ -195,7 +204,7 @@ export function ImmunotherapiesPage() {
                         setSelectedPatient({
                           id: item.id, nome: item.nome, dataNascimento: '02/07/2000', idade: 25,
                           telefone: '(62) 99557-1423', peso: '89.7 kg', cpf: '711.905.744-89',
-                          medicoResponsavel: 'Dra. Karina Martins', status: item.status === 'ativo' ? 'ativo' as const : 'inativo' as const,
+                          medicoResponsavel: item.medicoResponsavel, status: item.status === 'ativo' ? 'ativo' as const : 'inativo' as const,
                           tipoImunoterapia: item.tipo, inicioInducao: '01/01/2020', inicioManutencao: null,
                           viaAdministracao: 'Subcutânea', extrato: 'Der p 60 + der f 10% + blt 30%',
                           concentracaoVolumeMeta: '1:10 - 0,5ml', metaAtingida: false,

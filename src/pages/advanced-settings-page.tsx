@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
-import { ArrowLeft, Database, Bell, Server, ChevronDown, Calendar, ExternalLink, CheckCircle, Palette, Plus, X } from 'lucide-react'
+import { ArrowLeft, Database, Bell, Server, ChevronDown, Calendar, ExternalLink, CheckCircle, Palette, Plus, X, Lock } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useCan } from '@/store/user-store'
 
 const defaultEventColors = [
   { id: 'subcutanea', label: 'Subcutânea', color: '#14B8A6' },
@@ -11,6 +12,7 @@ const defaultEventColors = [
 
 export function AdvancedSettingsPage() {
   const navigate = useNavigate()
+  const canAdvanced = useCan('advanced_settings')
   const [autoBackup, setAutoBackup] = useState(true)
   const [emailNotifications, setEmailNotifications] = useState(true)
   const [pushNotifications, setPushNotifications] = useState(false)
@@ -24,6 +26,23 @@ export function AdvancedSettingsPage() {
   const [eventColors, setEventColors] = useState(defaultEventColors)
 
   const inputClass = "w-full h-9 rounded-lg border border-(--border-custom) bg-gray-50/60 px-3 text-xs appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#18C1CB]/40 focus:border-transparent transition-all"
+
+  if (!canAdvanced) {
+    return (
+      <div className="flex flex-1 flex-col bg-gray-50/80 min-h-0 overflow-hidden">
+        <div className="flex flex-1 min-h-0 flex-col items-center justify-center rounded-xl bg-white shadow-[0_4px_24px_rgba(0,0,0,0.06)] m-4 p-10 text-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gray-100 mb-4">
+            <Lock size={22} className="text-(--text-muted)" />
+          </div>
+          <h2 className="text-base font-bold text-(--text) mb-1.5">Acesso restrito</h2>
+          <p className="text-xs text-(--text-muted) max-w-sm leading-relaxed mb-5">As configurações avançadas são restritas a perfis <span className="font-semibold text-(--text)">Administrador</span> e <span className="font-semibold text-(--text)">Médico</span>.</p>
+          <button onClick={() => navigate({ to: '/settings' })} className="h-8 px-4 rounded-lg border border-(--border-custom) text-xs font-semibold text-(--text-muted) hover:border-brand hover:text-brand transition-all cursor-pointer">
+            Voltar para configurações
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-1 flex-col bg-gray-50/80 min-h-0 overflow-hidden">
