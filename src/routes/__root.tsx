@@ -5,8 +5,9 @@ import { useState, useEffect } from 'react'
 import { useSidebarStore } from '@/store/sidebar-store'
 import { cn } from '@/lib/utils'
 
-const publicRoutes = ['/', '/login', '/register']
+const publicRoutes = ['/', '/login', '/register', '/trial']
 const authRoutes = ['/login', '/register']
+const noHeaderRoutes = ['/trial']
 
 function PageTransition({ children }: { children: React.ReactNode }) {
   const [visible, setVisible] = useState(false)
@@ -28,11 +29,12 @@ function RootComponent() {
   const location = useLocation()
   const isPublicRoute = publicRoutes.includes(location.pathname)
   const isAuthRoute = authRoutes.includes(location.pathname)
+  const hideHeader = noHeaderRoutes.includes(location.pathname)
 
   if (isPublicRoute) {
     return (
       <div className="min-h-screen">
-        <Header isAuthPage={isAuthRoute} />
+        {!hideHeader && <Header isAuthPage={isAuthRoute} />}
         <PageTransition key={location.pathname}>
           <Outlet />
         </PageTransition>
