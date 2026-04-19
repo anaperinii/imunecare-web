@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { validateEmail as sharedValidateEmail, validatePassword, validatePasswordConfirm } from '@/shared/lib/validators'
 import { Link } from '@tanstack/react-router'
 import { AuthCard } from '@/features/auth/auth-card'
 import { ArrowLeft, Mail, ShieldCheck, Clock, CheckCircle, KeyRound } from 'lucide-react'
@@ -20,8 +21,8 @@ export function ForgotPasswordPage() {
 
   const validateEmail = () => {
     const e: Record<string, string> = {}
-    if (!email.trim()) e.email = 'E-mail é obrigatório'
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) e.email = 'E-mail inválido'
+    const err = sharedValidateEmail(email)
+    if (err) e.email = err
     setErrors(e)
     return Object.keys(e).length === 0
   }
@@ -34,13 +35,12 @@ export function ForgotPasswordPage() {
     return Object.keys(e).length === 0
   }
 
-  const validatePassword = () => {
+  const validatePasswordFields = () => {
     const e: Record<string, string> = {}
-    if (!password) e.password = 'Nova senha é obrigatória'
-    else if (password.length < 8) e.password = 'A senha deve ter no mínimo 8 caracteres'
-    else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) e.password = 'Deve conter maiúscula, minúscula e número'
-    if (!confirmPassword) e.confirmPassword = 'Confirmação é obrigatória'
-    else if (password !== confirmPassword) e.confirmPassword = 'As senhas não coincidem'
+    const pwErr = validatePassword(password)
+    if (pwErr) e.password = pwErr
+    const confirmErr = validatePasswordConfirm(password, confirmPassword)
+    if (confirmErr) e.confirmPassword = confirmErr
     setErrors(e)
     return Object.keys(e).length === 0
   }
@@ -253,7 +253,7 @@ export function ForgotPasswordPage() {
               </div>
 
               <button
-                onClick={() => { if (validatePassword()) setStep('done') }}
+                onClick={() => { if (validatePasswordFields()) setStep('done') }}
                 className="w-full h-10 rounded-xl text-sm font-semibold text-white bg-linear-to-br from-brand to-teal-400 shadow-[0_2px_12px_rgba(20,184,166,0.3)] hover:-translate-y-px hover:shadow-[0_4px_20px_rgba(20,184,166,0.4)] transition-all cursor-pointer border-none"
               >
                 Redefinir senha

@@ -4,6 +4,8 @@ import { ChevronDown, ArrowLeft, User, Syringe, Info } from 'lucide-react'
 import { cn } from '@/shared/lib/utils'
 import { useCan } from '@/features/user/user-store'
 import { useForm } from '@/shared/hooks/useForm'
+import { useImmunotherapiesStore, type Immunotherapy } from '@/features/immunotherapy/immunotherapies-store'
+import { validateExtrato } from '@/shared/lib/validators'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
@@ -85,7 +87,24 @@ function validateVolume(vol: string): boolean {
 export function AddImmunotherapyPage() {
   const navigate = useNavigate()
   const canAdd = useCan('add_immunotherapy')
+  const addImmunotherapy = useImmunotherapiesStore((s) => s.addImmunotherapy)
   useEffect(() => { if (!canAdd) navigate({ to: '/immunotherapies' }) }, [canAdd, navigate])
+
+  const handleFinish = () => {
+    const modalidade: Immunotherapy['modalidade'] = form.viaCutanea === 'sublingual' ? 'sublingual' : 'subcutânea'
+    const newImm: Immunotherapy = {
+      id: `new-${Date.now()}`,
+      nome: form.nome.trim(),
+      tipo: form.tipo.trim(),
+      doseConcentracao: '1:10.000 - 0,1ml',
+      cicloIntervalo: { numero: 1, dias: 7 },
+      modalidade,
+      status: 'ativo',
+      medicoResponsavel: form.medicoResponsavel.trim(),
+    }
+    addImmunotherapy(newImm)
+    navigate({ to: '/immunotherapies', search: { success: true, patientName: form.nome } })
+  }
   const [step, setStep] = useState<1 | 2 | 3>(1)
   const [showCancelModal, setShowCancelModal] = useState(false)
   type ImmForm = {
@@ -125,7 +144,7 @@ export function AddImmunotherapyPage() {
     if (!form.tipo.trim()) e.tipo = 'Tipo é obrigatório'
     if (!form.viaCutanea) e.viaCutanea = 'Via cutânea é obrigatória'
     if (!form.dataInicio) e.dataInicio = 'Data de início é obrigatória'
-    if (!form.extrato.trim()) e.extrato = 'Extrato é obrigatório'
+    { const err = validateExtrato(form.extrato); if (err) e.extrato = err }
     if (!form.metaConcentracao.trim()) e.metaConcentracao = 'Meta de concentração é obrigatória'
     else if (!validateConcentration(form.metaConcentracao)) e.metaConcentracao = 'Formato inválido (ex: 1:10)'
     if (!form.metaVolume.trim()) e.metaVolume = 'Meta de volume é obrigatória'
@@ -368,7 +387,7 @@ export function AddImmunotherapyPage() {
               Continuar
             </button>
           ) : (
-            <button onClick={() => navigate({ to: '/immunotherapies', search: { success: true, patientName: form.nome } })} className="h-8 px-4 rounded-lg bg-linear-to-br from-brand to-teal-400 text-white text-xs font-semibold hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(20,184,166,0.3)] transition-all">
+            <button onClick={handleFinish} className="h-8 px-4 rounded-lg bg-linear-to-br from-brand to-teal-400 text-white text-xs font-semibold hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(20,184,166,0.3)] transition-all">
               Salvar Imunoterapia
             </button>
           )}

@@ -134,10 +134,10 @@ export function validateExtrato(value: string): string | null {
 }
 
 // ─── Concentration (meta concentração) ───────────────────────────────────────
-// Format: 1:N com ou sem separador de milhar (ex: 1:10, 1:1.000, 1:10.000)
+// Format: 1:N with optional "." thousand separators (pt-BR): 1:10, 1:1.000, 1:10.000
 export function validateConcentration(value: string): string | null {
   if (!value.trim()) return 'Concentração é obrigatória'
-  if (!/^1:\d+(?:\.\d{3})*$/.test(value.trim())) return 'Formato inválido. Use 1:N (ex: 1:10, 1:1.000, 1:10.000)'
+  if (!/^1:\d{1,3}(\.\d{3})*$/.test(value.trim())) return 'Formato inválido. Use 1:N (ex: 1:10, 1:1.000, 1:10.000)'
   return null
 }
 
@@ -176,21 +176,15 @@ export function formatWeight(value: string): string {
   return cleaned
 }
 
-// Enforce 1:N com separador de milhar auto-inserido (ex: 1:10.000 a partir de "10000")
+// Enforce 1:NNNNN — at most 5 digits after colon
 export function formatConcentration(value: string): string {
-  // Mantém apenas dígitos e `:` — descarta pontos que o usuário tenha digitado (recriamos)
   const cleaned = value.replace(/[^0-9:]/g, '')
-  const parts = cleaned.split(':')
-  const afterRaw = (parts.length > 1 ? parts.slice(1).join('') : parts[0]).replace(/\D/g, '').slice(0, 5)
-  if (!afterRaw) return ''
-  // Insere pontos como separador de milhar a cada 3 dígitos a partir da direita
-  let withDots = ''
-  for (let i = 0; i < afterRaw.length; i++) {
-    const fromRight = afterRaw.length - i
-    if (i > 0 && fromRight % 3 === 0) withDots += '.'
-    withDots += afterRaw[i]
+  if (!cleaned.includes(':')) {
+    const digits = cleaned.replace(/\D/g, '').slice(0, 5)
+    return digits.length > 0 ? `1:${digits}` : ''
   }
-  return `1:${withDots}`
+  const [, after] = cleaned.split(':')
+  return `1:${(after || '').slice(0, 5)}`
 }
 
 // Enforce up to 3 decimal digits for volume
