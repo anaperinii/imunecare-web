@@ -1,10 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { AppointmentsPage } from '@/pages/appointments-page'
 
 export const Route = createFileRoute('/appointments')({
-  component: () => (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold">Agendamentos</h1>
-      <p className="text-(--text-muted) mt-2">Em breve</p>
-    </div>
-  ),
+  component: AppointmentsPage,
 })

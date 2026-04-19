@@ -258,12 +258,24 @@ export function PatientEvolutionPage() {
                   </div>
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-(--text-muted) mb-1.5 block">Efeitos colaterais relatados</label>
-                  <input placeholder="Insira aqui" value={form.efeitosRelatados} onChange={(e) => set('efeitosRelatados', e.target.value)} className={inputClass} />
+                  <label className={cn("text-xs font-semibold mb-1.5 block", form.efeitoColateral === 'Sim' ? "text-(--text-muted)" : "text-(--text-muted)/40")}>Efeitos colaterais relatados</label>
+                  <input
+                    placeholder="Insira aqui"
+                    disabled={form.efeitoColateral !== 'Sim'}
+                    value={form.efeitosRelatados}
+                    onChange={(e) => set('efeitosRelatados', e.target.value)}
+                    className={cn(inputClass, form.efeitoColateral !== 'Sim' && "opacity-40 cursor-not-allowed")}
+                  />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-(--text-muted) mb-1.5 block">Medicações administradas</label>
-                  <input placeholder="Insira aqui" value={form.medicacoes} onChange={(e) => set('medicacoes', e.target.value)} className={inputClass} />
+                  <label className={cn("text-xs font-semibold mb-1.5 block", form.necessidadeMedicacao === 'Sim' ? "text-(--text-muted)" : "text-(--text-muted)/40")}>Medicações administradas</label>
+                  <input
+                    placeholder="Insira aqui"
+                    disabled={form.necessidadeMedicacao !== 'Sim'}
+                    value={form.medicacoes}
+                    onChange={(e) => set('medicacoes', e.target.value)}
+                    className={cn(inputClass, form.necessidadeMedicacao !== 'Sim' && "opacity-40 cursor-not-allowed")}
+                  />
                 </div>
                 <div className="col-span-2">
                   <label className="text-xs font-semibold text-(--text-muted) mb-1.5 block">Notas do responsável</label>
@@ -335,6 +347,15 @@ export function PatientEvolutionPage() {
                     </select>
                     <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-(--text-muted) pointer-events-none" />
                   </div>
+                </div>
+                {/* Conditional fields with fade-in */}
+                <div className={cn("transition-all duration-300 overflow-hidden", form.efeitoColateralPos === 'Sim' ? "max-h-20 opacity-100" : "max-h-0 opacity-0")}>
+                  <label className="text-xs font-semibold text-(--text-muted) mb-1.5 block">Efeitos colaterais relatados</label>
+                  <input placeholder="Insira aqui" value={form.efeitosRelatadosPos} onChange={(e) => set('efeitosRelatadosPos', e.target.value)} className={inputClass} />
+                </div>
+                <div className={cn("transition-all duration-300 overflow-hidden", form.necessidadeMedicacaoPos === 'Sim' ? "max-h-20 opacity-100" : "max-h-0 opacity-0")}>
+                  <label className="text-xs font-semibold text-(--text-muted) mb-1.5 block">Medicações administradas</label>
+                  <input placeholder="Insira aqui" value={form.medicacoesPos} onChange={(e) => set('medicacoesPos', e.target.value)} className={inputClass} />
                 </div>
                 <div className="col-span-2">
                   <label className="text-xs font-semibold text-(--text-muted) mb-1.5 block">Notas do responsável</label>
