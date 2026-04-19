@@ -2,7 +2,7 @@ import { useMemo, useState, useEffect } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useImmunotherapiesStore } from '@/features/immunotherapy/immunotherapies-store'
 import { useCan, useDoctorFilter } from '@/features/user/user-store'
-import { Users, Syringe, Activity, TrendingUp, TrendingDown, Download, ChevronDown } from 'lucide-react'
+import { Users, Syringe, Activity, TrendingUp, TrendingDown, Download, ChevronDown, Archive, Pin, PinOff } from 'lucide-react'
 import { cn } from '@/shared/lib/utils'
 import {
   PieChart, Pie, Cell,
@@ -46,6 +46,21 @@ export function DashboardPage() {
   const [statusCardFilter, setStatusCardFilter] = useState('Todos')
   const [typeCardFilter, setTypeCardFilter] = useState('Todos')
   const [volCardFilter, setVolCardFilter] = useState('Todos')
+
+  const [archivedCharts, setArchivedCharts] = useState<string[]>([])
+  const [showArchived, setShowArchived] = useState(false)
+  const toggleArchive = (id: string) => {
+    setArchivedCharts((prev) => prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id])
+  }
+  const isVisible = (id: string) => showArchived ? archivedCharts.includes(id) : !archivedCharts.includes(id)
+  const ArchiveBtn = ({ id }: { id: string }) => {
+    const archived = archivedCharts.includes(id)
+    return (
+      <button onClick={() => toggleArchive(id)} className="opacity-0 group-hover:opacity-100 p-1 text-(--text-muted) hover:bg-teal-50 hover:text-teal-600 rounded transition-all cursor-pointer" title={archived ? 'Desarquivar (Fixar)' : 'Arquivar (Ocultar)'}>
+        {archived ? <Pin size={12} /> : <PinOff size={12} />}
+      </button>
+    )
+  }
 
   const tipos = useMemo(() => Array.from(new Set(immunotherapies.map((i) => i.tipo))), [immunotherapies])
 
@@ -140,6 +155,18 @@ export function DashboardPage() {
               <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-(--text-muted) pointer-events-none" />
             </div>
             <button
+              onClick={() => setShowArchived(!showArchived)}
+              className={cn("h-8 px-3 flex items-center gap-1.5 rounded-lg border text-xs font-semibold transition-all cursor-pointer", showArchived ? "bg-teal-50 border-teal-200 text-teal-700" : "border-(--border-custom) text-(--text-muted) hover:bg-gray-50")}
+            >
+              <Archive size={13} />
+              {showArchived ? 'Voltar' : 'Arquivados'}
+              {archivedCharts.length > 0 && (
+                <span className={cn("px-1.5 py-0.5 rounded-full text-[0.55rem]", showArchived ? "bg-teal-200 text-teal-800" : "bg-gray-200 text-gray-600")}>
+                  {archivedCharts.length}
+                </span>
+              )}
+            </button>
+            <button
               onClick={() => navigate({ to: '/export-report' })}
               className="h-8 px-3 flex items-center gap-1.5 rounded-lg bg-linear-to-br from-brand to-teal-400 text-white text-xs font-semibold shadow-[0_2px_12px_rgba(20,184,166,0.3)] hover:-translate-y-px transition-all"
             >
@@ -183,18 +210,22 @@ export function DashboardPage() {
             })}
           </div>
 
-          {/* Charts row 1 */}
-          <div className="grid grid-cols-2 gap-4">
+          {/* Charts */}
+          <div className="flex flex-wrap gap-4">
             {/* Pie: Concentrations */}
-            <div className="border border-(--border-custom) rounded-xl p-4">
+            {isVisible('conc') && (
+            <div className="border border-(--border-custom) rounded-xl p-4 group flex-1 basis-[calc(50%-0.5rem)] min-w-[380px]">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-xs font-bold text-(--text)">Ciclos de Tratamento por Concentração</h3>
-                <div className="relative">
-                  <select value={concCardFilter} onChange={(e) => setConcCardFilter(e.target.value)} className="h-6 pl-2 pr-5 rounded-md border border-(--border-custom) bg-white text-[0.6rem] appearance-none cursor-pointer focus:outline-none">
-                    <option value="Todos">Todos</option>
-                    {tipos.map((t) => <option key={t} value={t}>{t}</option>)}
-                  </select>
-                  <ChevronDown size={9} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-(--text-muted) pointer-events-none" />
+                <div className="flex items-center gap-1">
+                  <div className="relative">
+                    <select value={concCardFilter} onChange={(e) => setConcCardFilter(e.target.value)} className="h-6 pl-2 pr-5 rounded-md border border-(--border-custom) bg-white text-[0.6rem] appearance-none cursor-pointer focus:outline-none">
+                      <option value="Todos">Todos</option>
+                      {tipos.map((t) => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                    <ChevronDown size={9} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-(--text-muted) pointer-events-none" />
+                  </div>
+                  <ArchiveBtn id="conc" />
                 </div>
               </div>
               <div className="h-48">
@@ -218,17 +249,22 @@ export function DashboardPage() {
                 ))}
               </div>
             </div>
+            )}
 
             {/* Bar: Phases */}
-            <div className="border border-(--border-custom) rounded-xl p-4">
+            {isVisible('phase') && (
+            <div className="border border-(--border-custom) rounded-xl p-4 group flex-1 basis-[calc(50%-0.5rem)] min-w-[380px]">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-xs font-bold text-(--text)">Distribuição de Fases</h3>
-                <div className="relative">
-                  <select value={phaseCardFilter} onChange={(e) => setPhaseCardFilter(e.target.value)} className="h-6 pl-2 pr-5 rounded-md border border-(--border-custom) bg-white text-[0.6rem] appearance-none cursor-pointer focus:outline-none">
-                    <option value="Todos">Todos os meses</option>
-                    {['Jan','Fev','Mar','Abr'].map((m) => <option key={m} value={m}>{m}</option>)}
-                  </select>
-                  <ChevronDown size={9} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-(--text-muted) pointer-events-none" />
+                <div className="flex items-center gap-1">
+                  <div className="relative">
+                    <select value={phaseCardFilter} onChange={(e) => setPhaseCardFilter(e.target.value)} className="h-6 pl-2 pr-5 rounded-md border border-(--border-custom) bg-white text-[0.6rem] appearance-none cursor-pointer focus:outline-none">
+                      <option value="Todos">Todos os meses</option>
+                      {['Jan','Fev','Mar','Abr'].map((m) => <option key={m} value={m}>{m}</option>)}
+                    </select>
+                    <ChevronDown size={9} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-(--text-muted) pointer-events-none" />
+                  </div>
+                  <ArchiveBtn id="phase" />
                 </div>
               </div>
               <div className="h-48">
@@ -252,20 +288,22 @@ export function DashboardPage() {
                 ))}
               </div>
             </div>
-          </div>
+            )}
 
-          {/* Charts row 2 */}
-          <div className="grid grid-cols-2 gap-4">
             {/* Line: Status */}
-            <div className="border border-(--border-custom) rounded-xl p-4">
+            {isVisible('status') && (
+            <div className="border border-(--border-custom) rounded-xl p-4 group flex-1 basis-[calc(50%-0.5rem)] min-w-[380px]">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-xs font-bold text-(--text)">Status de Imunoterapias</h3>
-                <div className="relative">
-                  <select value={statusCardFilter} onChange={(e) => setStatusCardFilter(e.target.value)} className="h-6 pl-2 pr-5 rounded-md border border-(--border-custom) bg-white text-[0.6rem] appearance-none cursor-pointer focus:outline-none">
-                    <option value="Todos">Todos os meses</option>
-                    {['Jan','Fev','Mar','Abr'].map((m) => <option key={m} value={m}>{m}</option>)}
-                  </select>
-                  <ChevronDown size={9} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-(--text-muted) pointer-events-none" />
+                <div className="flex items-center gap-1">
+                  <div className="relative">
+                    <select value={statusCardFilter} onChange={(e) => setStatusCardFilter(e.target.value)} className="h-6 pl-2 pr-5 rounded-md border border-(--border-custom) bg-white text-[0.6rem] appearance-none cursor-pointer focus:outline-none">
+                      <option value="Todos">Todos os meses</option>
+                      {['Jan','Fev','Mar','Abr'].map((m) => <option key={m} value={m}>{m}</option>)}
+                    </select>
+                    <ChevronDown size={9} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-(--text-muted) pointer-events-none" />
+                  </div>
+                  <ArchiveBtn id="status" />
                 </div>
               </div>
               <div className="h-48">
@@ -290,18 +328,23 @@ export function DashboardPage() {
                 ))}
               </div>
             </div>
+            )}
 
             {/* Bar: Top types */}
-            <div className="border border-(--border-custom) rounded-xl p-4">
+            {isVisible('type') && (
+            <div className="border border-(--border-custom) rounded-xl p-4 group flex-1 basis-[calc(50%-0.5rem)] min-w-[380px]">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-xs font-bold text-(--text)">Imunoterapias Ativas por Tipo</h3>
-                <div className="relative">
-                  <select value={typeCardFilter} onChange={(e) => setTypeCardFilter(e.target.value)} className="h-6 pl-2 pr-5 rounded-md border border-(--border-custom) bg-white text-[0.6rem] appearance-none cursor-pointer focus:outline-none">
-                    <option value="Todos">Todas as fases</option>
-                    <option value="Indução">Indução</option>
-                    <option value="Manutenção">Manutenção</option>
-                  </select>
-                  <ChevronDown size={9} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-(--text-muted) pointer-events-none" />
+                <div className="flex items-center gap-1">
+                  <div className="relative">
+                    <select value={typeCardFilter} onChange={(e) => setTypeCardFilter(e.target.value)} className="h-6 pl-2 pr-5 rounded-md border border-(--border-custom) bg-white text-[0.6rem] appearance-none cursor-pointer focus:outline-none">
+                      <option value="Todos">Todas as fases</option>
+                      <option value="Indução">Indução</option>
+                      <option value="Manutenção">Manutenção</option>
+                    </select>
+                    <ChevronDown size={9} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-(--text-muted) pointer-events-none" />
+                  </div>
+                  <ArchiveBtn id="type" />
                 </div>
               </div>
               <div className="space-y-3 mt-4">
@@ -324,18 +367,22 @@ export function DashboardPage() {
                 ))}
               </div>
             </div>
-          </div>
+            )}
 
-          {/* Charts row 3 */}
-          <div className="border border-(--border-custom) rounded-xl p-4">
+            {/* Bar: Volume vs Conc */}
+            {isVisible('vol') && (
+            <div className="border border-(--border-custom) rounded-xl p-4 group basis-full w-full">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-xs font-bold text-(--text)">Volume vs Concentração</h3>
-              <div className="relative">
-                <select value={volCardFilter} onChange={(e) => setVolCardFilter(e.target.value)} className="h-6 pl-2 pr-5 rounded-md border border-(--border-custom) bg-white text-[0.6rem] appearance-none cursor-pointer focus:outline-none">
-                  <option value="Todos">Todos os tipos</option>
-                  {tipos.map((t) => <option key={t} value={t}>{t}</option>)}
-                </select>
-                <ChevronDown size={9} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-(--text-muted) pointer-events-none" />
+              <div className="flex items-center gap-1">
+                <div className="relative">
+                  <select value={volCardFilter} onChange={(e) => setVolCardFilter(e.target.value)} className="h-6 pl-2 pr-5 rounded-md border border-(--border-custom) bg-white text-[0.6rem] appearance-none cursor-pointer focus:outline-none">
+                    <option value="Todos">Todos os tipos</option>
+                    {tipos.map((t) => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                  <ChevronDown size={9} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-(--text-muted) pointer-events-none" />
+                </div>
+                <ArchiveBtn id="vol" />
               </div>
             </div>
             <div className="h-52">
@@ -372,6 +419,8 @@ export function DashboardPage() {
                 </div>
               ))}
             </div>
+          </div>
+          )}
           </div>
         </div>
       </div>

@@ -334,8 +334,15 @@ export function PatientEvolutionPage() {
     navigate({ to: '/immunotherapies', search: { success: true, patientName: selectedPatient.nome } })
   }
 
+  const handleEnterKey = (e: React.KeyboardEvent) => {
+    if (e.key !== 'Enter' || (e.target as HTMLElement).tagName === 'TEXTAREA') return
+    e.preventDefault()
+    if (step < 3) handleContinue()
+    else handleSaveEvolution()
+  }
+
   return (
-    <div className="flex flex-1 flex-col bg-gray-50/80 p-4 min-h-0 overflow-hidden">
+    <div className="flex flex-1 flex-col bg-gray-50/80 p-4 min-h-0 overflow-hidden" onKeyDown={handleEnterKey}>
       <div className="flex flex-1 min-h-0 flex-col rounded-xl bg-white shadow-[0_4px_24px_rgba(0,0,0,0.06)] overflow-hidden">
         {/* Header */}
         <div className="border-b border-(--border-custom) px-5 py-4 flex items-center gap-3">
