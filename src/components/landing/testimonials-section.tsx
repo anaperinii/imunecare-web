@@ -33,7 +33,7 @@ export function TestimonialsSection() {
         <span className="inline-block text-[0.75rem] font-bold tracking-[2px] uppercase text-teal-600 bg-teal-50 border border-teal-200 px-4 py-1.5 rounded-full mb-4">
           Depoimentos
         </span>
-        <h2 className="text-[clamp(1.75rem,3.5vw,2.75rem)] font-extrabold tracking-[-1px] leading-[1.15] max-w-160">
+        <h2 className="text-[clamp(1.4rem,2.8vw,2.1rem)] font-extrabold tracking-[-0.5px] leading-[1.15] max-w-160">
           Quem usa, recomenda
         </h2>
       </div>

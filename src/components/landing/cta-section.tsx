@@ -4,7 +4,7 @@ export function CtaSection() {
   return (
     <section className="py-24 px-[5%] text-center bg-[linear-gradient(180deg,var(--bg)_0%,var(--color-teal-50)_100%)]">
       <div className="reveal">
-        <h2 className="text-[clamp(2rem,4vw,3.2rem)] font-extrabold tracking-[-1px] leading-[1.15] max-w-160 mx-auto mb-5 bg-[linear-gradient(135deg,var(--text),var(--color-teal-700))] bg-clip-text [-webkit-background-clip:text] [-webkit-text-fill-color:transparent]">
+        <h2 className="text-[clamp(1.5rem,3vw,2.3rem)] font-extrabold tracking-[-0.5px] leading-[1.15] max-w-160 mx-auto mb-5 bg-[linear-gradient(135deg,var(--text),var(--color-teal-700))] bg-clip-text [-webkit-background-clip:text] [-webkit-text-fill-color:transparent]">
           Gestão imunoterápica com controle e precisão
         </h2>
         <p className="text-base text-(--text-muted) max-w-110 mx-auto mb-10 leading-[1.7]">

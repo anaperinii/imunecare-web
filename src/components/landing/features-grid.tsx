@@ -33,7 +33,7 @@ export function FeaturesGrid() {
         <span className="inline-block text-[0.75rem] font-bold tracking-[2px] uppercase text-teal-600 bg-teal-50 border border-teal-200 px-4 py-1.5 rounded-full mb-4">
           Funcionalidades
         </span>
-        <h2 className="text-[clamp(1.75rem,3.5vw,2.75rem)] font-extrabold tracking-[-1px] leading-[1.15] max-w-160 mb-4">
+        <h2 className="text-[clamp(1.4rem,2.8vw,2.1rem)] font-extrabold tracking-[-0.5px] leading-[1.15] max-w-160 mb-4">
           Projetado para especialistas em imunoterapia alérgica
         </h2>
         <p className="text-base text-(--text-muted) max-w-130 leading-[1.7] mb-12">
