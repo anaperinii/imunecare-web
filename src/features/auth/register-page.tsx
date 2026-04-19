@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { validatePassword as sharedValidatePassword, validatePasswordConfirm } from '@/shared/lib/validators'
 import { useNavigate } from '@tanstack/react-router'
 import { AuthCard } from '@/features/auth/auth-card'
 import { Eye, EyeOff, ChevronDown, Smile, CheckCircle, Mail, ShieldCheck, ArrowRight } from 'lucide-react'
@@ -41,11 +42,10 @@ export function RegisterPage() {
     const e: Record<string, string> = {}
     if (!name.trim()) e.name = 'Nome é obrigatório'
     else if (name.trim().length < 3) e.name = 'Nome deve ter ao menos 3 caracteres'
-    if (!password) e.password = 'Senha é obrigatória'
-    else if (password.length < 8) e.password = 'Mínimo de 8 caracteres'
-    else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?])/.test(password)) e.password = 'Deve atender todos os requisitos de segurança'
-    if (!confirmPassword) e.confirmPassword = 'Confirmação é obrigatória'
-    else if (password !== confirmPassword) e.confirmPassword = 'As senhas não coincidem'
+    const pwErr = sharedValidatePassword(password)
+    if (pwErr) e.password = pwErr
+    const confirmErr = validatePasswordConfirm(password, confirmPassword)
+    if (confirmErr) e.confirmPassword = confirmErr
     if (!specialty) e.specialty = 'Selecione uma especialidade'
     setErrors(e)
     return Object.keys(e).length === 0

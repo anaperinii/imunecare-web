@@ -782,7 +782,7 @@ export function PatientEvolutionPage() {
                 <div className="bg-gray-50/60 p-4">
                   <div className="grid grid-cols-2 gap-px bg-(--border-custom) rounded-lg overflow-hidden border border-(--border-custom)">
                     {[
-                      { label: 'Data', value: form.dataAplicacao || '—' },
+                      { label: 'Data', value: form.dataAplicacao ? format(parse(form.dataAplicacao, 'yyyy-MM-dd', new Date()), 'dd/MM/yyyy') : '—' },
                       { label: 'Horário', value: form.horaInicio && form.horaFim ? `${form.horaInicio} – ${form.horaFim}` : '—' },
                       { label: 'Volume Aplicado', value: form.volumeAplicado ? `${form.volumeAplicado} ml` : '—' },
                       { label: 'Concentração', value: form.concentracao || '—' },

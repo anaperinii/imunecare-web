@@ -26,6 +26,7 @@ interface ImmunotherapiesState {
   setCicloFilter: (ciclo: string) => void
   setShowInativas: (show: boolean) => void
   setCurrentPage: (page: number) => void
+  addImmunotherapy: (imm: Immunotherapy) => void
 }
 
 export const useImmunotherapiesStore = create<ImmunotherapiesState>((set) => ({
@@ -54,4 +55,5 @@ export const useImmunotherapiesStore = create<ImmunotherapiesState>((set) => ({
   setCicloFilter: (ciclo) => set({ cicloFilter: ciclo }),
   setShowInativas: (show) => set({ showInativas: show }),
   setCurrentPage: (page) => set({ currentPage: page }),
+  addImmunotherapy: (imm) => set((state) => ({ immunotherapies: [imm, ...state.immunotherapies] })),
 }))

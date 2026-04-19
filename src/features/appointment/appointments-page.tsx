@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useNavigate } from '@tanstack/react-router'
 import { usePatientStore } from '@/features/patient/patient-store'
 import { useImmunotherapiesStore } from '@/features/immunotherapy/immunotherapies-store'
 import { useCan, useDoctorFilter } from '@/features/user/user-store'
@@ -34,6 +35,12 @@ export function AppointmentsPage() {
   const { immunotherapies } = useImmunotherapiesStore()
   const canNewAppointment = useCan('new_appointment')
   const doctorFilter = useDoctorFilter()
+  const navigate = useNavigate()
+
+  const openPatient = (patientId: string) => {
+    setSelectedApp(null)
+    navigate({ to: '/patient/$patientId', params: { patientId } })
+  }
 
   const applications = useMemo(() => {
     if (!doctorFilter) return allApplications
@@ -293,7 +300,12 @@ export function AppointmentsPage() {
                   {getPatientFullName(selectedApp.patientId).split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-bold text-(--text)">{getPatientFullName(selectedApp.patientId)}</div>
+                  <button
+                    onClick={() => openPatient(selectedApp.patientId)}
+                    className="text-sm font-bold text-(--text) hover:text-brand hover:underline transition-colors text-left truncate"
+                  >
+                    {getPatientFullName(selectedApp.patientId)}
+                  </button>
                   <div className="text-[0.65rem] text-(--text-muted)">{getPatientPhone()}</div>
                 </div>
                 <button

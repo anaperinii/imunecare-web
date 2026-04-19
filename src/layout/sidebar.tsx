@@ -2,7 +2,7 @@ import { Link, useLocation, useNavigate } from '@tanstack/react-router'
 import { cn } from '@/shared/lib/utils'
 import { useState, useRef, useEffect } from 'react'
 import { usePatientStore } from '@/features/patient/patient-store'
-import { useUserStore, useCan, PROFILES, ROLE_LABELS } from '@/features/user/user-store'
+import { useUserStore, PROFILES, ROLE_LABELS } from '@/features/user/user-store'
 import { useNotificationsStore, type Notification } from '@/features/notification/notifications-store'
 import { formatDistanceToNow } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -15,10 +15,10 @@ import {
   BarChart3,
   Settings,
   Bell,
+  UserCog,
+  Check,
   LogOut,
   X as XIcon,
-  Check,
-  UserCog,
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -26,11 +26,11 @@ interface SidebarProps {
   onToggle: () => void
 }
 
-const allMenuItems = [
-  { title: 'Imunoterapias', icon: Syringe, path: '/immunotherapies', gate: null as null | 'view_dashboard' },
-  { title: 'Agendamentos', icon: CalendarDays, path: '/appointments', gate: null as null | 'view_dashboard' },
-  { title: 'Dashboard', icon: BarChart3, path: '/dashboard', gate: 'view_dashboard' as const },
-  { title: 'Configurações', icon: Settings, path: '/settings', gate: null as null | 'view_dashboard' },
+const menuItems = [
+  { title: 'Imunoterapias', icon: Syringe, path: '/immunotherapies' },
+  { title: 'Agendamentos', icon: CalendarDays, path: '/appointments' },
+  { title: 'Dashboard', icon: BarChart3, path: '/dashboard' },
+  { title: 'Configurações', icon: Settings, path: '/settings' },
 ]
 
 const typeConfig: Record<Notification['type'], { color: string; bg: string; label: string }> = {
@@ -46,6 +46,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   const { notifications, markAsRead, markAllAsRead, unreadCount } = useNotificationsStore()
   const [showNotifications, setShowNotifications] = useState(false)
   const [showUserMenu, setShowUserMenu] = useState(false)
+  const [showLogoutModal, setShowLogoutModal] = useState(false)
   const notificationsRef = useRef<HTMLDivElement>(null)
   const notificationButtonRef = useRef<HTMLButtonElement>(null)
   const userMenuRef = useRef<HTMLDivElement>(null)
@@ -53,8 +54,6 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   const location = useLocation()
   const navigate = useNavigate()
   const { selectedPatient, setSelectedPatient } = usePatientStore()
-  const { current: currentUser, setProfile } = useUserStore()
-  const canViewDashboard = useCan('view_dashboard')
 
   useEffect(() => {
     if (selectedPatient && !location.pathname.startsWith('/patient/')) {
@@ -81,6 +80,9 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   const expandedItemClass = "flex items-center gap-2.5 rounded-lg px-3 py-2 text-[0.8rem] font-medium"
 
   const getInitials = (name: string) => name.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase()
+
+  const currentUser = useUserStore((s) => s.current)
+  const setProfile = useUserStore((s) => s.setProfile)
 
   return (
     <aside
@@ -121,7 +123,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
 
       {/* Navigation */}
       <nav className="flex-1 p-2 space-y-0.5 overflow-y-auto overflow-x-hidden">
-        {allMenuItems.filter((item) => !item.gate || (item.gate === 'view_dashboard' && canViewDashboard)).map((item) => {
+        {menuItems.map((item) => {
           const isActive = location.pathname === item.path
           const Icon = item.icon
           return (
@@ -342,7 +344,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
                 </div>
               </div>
               <button
-                onClick={() => { setShowUserMenu(false); navigate({ to: '/login' }) }}
+                onClick={() => { setShowUserMenu(false); setShowLogoutModal(true) }}
                 className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-xs font-medium text-(--text-muted) hover:bg-red-50 hover:text-red-500 transition-colors"
               >
                 <LogOut size={14} />
@@ -352,6 +354,47 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
           </div>
         )}
       </div>
+
+      {/* Modal de confirmação de logout */}
+      {showLogoutModal && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in-0 duration-200">
+          <div className="bg-white rounded-2xl shadow-[0_24px_64px_rgba(0,0,0,0.15)] p-6 w-full max-w-sm mx-4 animate-in zoom-in-95 duration-200">
+
+            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-red-50 mx-auto mb-4">
+              <LogOut size={20} className="text-red-500" />
+            </div>
+
+            <div className="text-center mb-6">
+              <h2 className="text-base font-bold text-(--text) mb-1.5">
+                Sair da conta?
+              </h2>
+              <p className="text-xs text-(--text-muted)">
+                Você será redirecionado para a tela de login. Deseja continuar?
+              </p>
+            </div>
+
+            <div className="flex gap-2.5">
+              <button
+                onClick={() => setShowLogoutModal(false)}
+                className="flex-1 h-9 rounded-lg border border-(--border-custom) text-xs font-semibold text-(--text-muted) hover:bg-gray-50"
+              >
+                Cancelar
+              </button>
+
+              <button
+                onClick={() => {
+                  setShowLogoutModal(false)
+                  navigate({ to: '/login' })
+                }}
+                className="flex-1 h-9 rounded-lg bg-red-500 hover:bg-red-600 text-white text-xs font-semibold"
+              >
+                Sair
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
     </aside>
   )
 }
