@@ -87,7 +87,7 @@ export function TeamsPage() {
             </button>
             <h1 className="text-2xl font-bold text-(--text)">Equipes e Convites</h1>
           </div>
-          <button onClick={() => setShowInviteModal(true)} className="h-8 px-3 flex items-center gap-1.5 rounded-lg bg-linear-to-br from-[#18C1CB] to-teal-400 text-white text-xs font-semibold shadow-[0_2px_12px_rgba(24,193,203,0.3)] hover:-translate-y-px transition-all cursor-pointer">
+          <button onClick={() => setShowInviteModal(true)} className="h-8 px-3 flex items-center gap-1.5 rounded-lg bg-linear-to-br from-brand to-teal-400 text-white text-xs font-semibold shadow-[0_2px_12px_rgba(24,193,203,0.3)] hover:-translate-y-px transition-all cursor-pointer">
             <Plus size={14} />
             Convidar membro
           </button>
@@ -97,16 +97,16 @@ export function TeamsPage() {
         <div className="border-b border-(--border-custom) px-5 flex items-center gap-1">
           <button
             onClick={() => setTab('members')}
-            className={cn("px-4 py-2.5 text-xs font-semibold border-b-2 transition-all", tab === 'members' ? "border-[#18C1CB] text-[#18C1CB]" : "border-transparent text-(--text-muted) hover:text-(--text)")}
+            className={cn("px-4 py-2.5 text-xs font-semibold border-b-2 transition-all", tab === 'members' ? "border-brand text-brand" : "border-transparent text-(--text-muted) hover:text-(--text)")}
           >
             Membros ({members.length})
           </button>
           <button
             onClick={() => setTab('invites')}
-            className={cn("px-4 py-2.5 text-xs font-semibold border-b-2 transition-all flex items-center gap-1.5", tab === 'invites' ? "border-[#18C1CB] text-[#18C1CB]" : "border-transparent text-(--text-muted) hover:text-(--text)")}
+            className={cn("px-4 py-2.5 text-xs font-semibold border-b-2 transition-all flex items-center gap-1.5", tab === 'invites' ? "border-brand text-brand" : "border-transparent text-(--text-muted) hover:text-(--text)")}
           >
             Convites
-            {pendingCount > 0 && <span className="text-[0.55rem] font-bold text-white bg-[#18C1CB] rounded-full px-1.5 py-px">{pendingCount}</span>}
+            {pendingCount > 0 && <span className="text-[0.55rem] font-bold text-white bg-brand rounded-full px-1.5 py-px">{pendingCount}</span>}
           </button>
         </div>
 
@@ -154,7 +154,7 @@ export function TeamsPage() {
                       <tr key={member.id} className="border-b border-(--border-custom) last:border-0 hover:bg-gray-50/50 transition-colors cursor-pointer">
                         <td className="px-5 py-3">
                           <div className="flex items-center gap-3">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br from-[#18C1CB] to-teal-400 text-white text-[0.6rem] font-bold shrink-0">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br from-brand to-teal-400 text-white text-[0.6rem] font-bold shrink-0">
                               {member.avatar}
                             </div>
                             <div>
@@ -301,7 +301,7 @@ export function TeamsPage() {
                             {invite.status === 'pendente' && (
                               <button
                                 onClick={() => setConfirmModal({ type: 'resend-invite', id: invite.id, name: invite.email })}
-                                className="h-7 px-2.5 rounded-md border border-(--border-custom) text-[0.6rem] font-medium text-(--text-muted) hover:border-[#18C1CB] hover:text-[#18C1CB] transition-all cursor-pointer flex items-center gap-1"
+                                className="h-7 px-2.5 rounded-md border border-(--border-custom) text-[0.6rem] font-medium text-(--text-muted) hover:border-brand hover:text-brand transition-all cursor-pointer flex items-center gap-1"
                               >
                                 <Send size={10} />
                                 Reenviar
@@ -360,8 +360,8 @@ export function TeamsPage() {
                       className={cn(
                         "h-9 rounded-lg border text-xs font-semibold transition-all flex items-center justify-center gap-1.5",
                         inviteRole === key
-                          ? "border-[#18C1CB] bg-[#E6F9FA] text-[#0FA8B2]"
-                          : "border-(--border-custom) text-(--text-muted) hover:border-[#18C1CB]/50"
+                          ? "border-brand bg-brand-50 text-brand-dark"
+                          : "border-(--border-custom) text-(--text-muted) hover:border-brand/50"
                       )}
                     >
                       <Shield size={12} />
@@ -370,9 +370,9 @@ export function TeamsPage() {
                   ))}
                 </div>
               </div>
-              <div className="bg-[#E6F9FA] border border-[#18C1CB]/20 rounded-lg p-3">
-                <div className="text-[0.65rem] font-semibold text-[#0FA8B2] mb-1">Sobre este perfil</div>
-                <div className="text-[0.6rem] text-[#0FA8B2]/80 leading-relaxed">
+              <div className="bg-brand-50 border border-brand/20 rounded-lg p-3">
+                <div className="text-[0.65rem] font-semibold text-brand-dark mb-1">Sobre este perfil</div>
+                <div className="text-[0.6rem] text-brand-dark/80 leading-relaxed">
                   {inviteRole === 'admin' && 'Acesso total ao sistema: gerenciar equipes, configurações, relatórios e todos os dados clínicos.'}
                   {inviteRole === 'medico' && 'Prescrever imunoterapias, acompanhar pacientes, ajustar protocolos e gerar relatórios clínicos.'}
                   {inviteRole === 'enfermeiro' && 'Registrar aplicações, evoluir pacientes, monitorar reações adversas e gerenciar agendamentos.'}
@@ -387,7 +387,7 @@ export function TeamsPage() {
               <button
                 onClick={() => setShowInviteModal(false)}
                 disabled={!inviteEmail}
-                className="h-8 px-4 rounded-lg bg-linear-to-br from-[#18C1CB] to-teal-400 text-white text-xs font-semibold hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(24,193,203,0.3)] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+                className="h-8 px-4 rounded-lg bg-linear-to-br from-brand to-teal-400 text-white text-xs font-semibold hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(24,193,203,0.3)] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
               >
                 Enviar convite
               </button>
@@ -457,8 +457,8 @@ export function TeamsPage() {
             {confirmModal.type === 'resend-invite' && (
               <>
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#E6F9FA] shrink-0">
-                    <Send size={16} className="text-[#18C1CB]" />
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50 shrink-0">
+                    <Send size={16} className="text-brand" />
                   </div>
                   <h3 className="text-sm font-bold text-(--text)">Reenviar convite</h3>
                 </div>
@@ -467,7 +467,7 @@ export function TeamsPage() {
                 </p>
                 <div className="flex justify-end gap-2">
                   <button onClick={() => setConfirmModal(null)} className="h-8 px-4 rounded-lg border border-(--border-custom) text-xs font-semibold text-(--text-muted) hover:bg-gray-50 transition-all cursor-pointer">Cancelar</button>
-                  <button onClick={() => setConfirmModal(null)} className="h-8 px-4 rounded-lg bg-linear-to-br from-[#18C1CB] to-teal-400 text-white text-xs font-semibold hover:-translate-y-px transition-all cursor-pointer">Reenviar</button>
+                  <button onClick={() => setConfirmModal(null)} className="h-8 px-4 rounded-lg bg-linear-to-br from-brand to-teal-400 text-white text-xs font-semibold hover:-translate-y-px transition-all cursor-pointer">Reenviar</button>
                 </div>
               </>
             )}

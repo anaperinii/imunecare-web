@@ -35,7 +35,7 @@ export function ProfilePage() {
             <h1 className="text-2xl font-bold text-(--text)">Meu Perfil</h1>
           </div>
           {!editing ? (
-            <button onClick={() => setEditing(true)} className="h-8 px-3 flex items-center gap-1.5 rounded-lg bg-linear-to-br from-[#18C1CB] to-teal-400 text-white text-xs font-semibold shadow-[0_2px_12px_rgba(24,193,203,0.3)] hover:-translate-y-px transition-all cursor-pointer">
+            <button onClick={() => setEditing(true)} className="h-8 px-3 flex items-center gap-1.5 rounded-lg bg-linear-to-br from-brand to-teal-400 text-white text-xs font-semibold shadow-[0_2px_12px_rgba(24,193,203,0.3)] hover:-translate-y-px transition-all cursor-pointer">
               Editar perfil
             </button>
           ) : (
@@ -43,7 +43,7 @@ export function ProfilePage() {
               <button onClick={() => setEditing(false)} className="h-8 px-3 rounded-lg border border-(--border-custom) text-xs font-semibold text-(--text-muted) hover:bg-gray-50 transition-all cursor-pointer">
                 Cancelar
               </button>
-              <button onClick={() => { setShowSaveModal(true) }} className="h-8 px-3 flex items-center gap-1.5 rounded-lg bg-linear-to-br from-[#18C1CB] to-teal-400 text-white text-xs font-semibold shadow-[0_2px_12px_rgba(24,193,203,0.3)] hover:-translate-y-px transition-all cursor-pointer">
+              <button onClick={() => { setShowSaveModal(true) }} className="h-8 px-3 flex items-center gap-1.5 rounded-lg bg-linear-to-br from-brand to-teal-400 text-white text-xs font-semibold shadow-[0_2px_12px_rgba(24,193,203,0.3)] hover:-translate-y-px transition-all cursor-pointer">
                 <Save size={13} />
                 Salvar alterações
               </button>
@@ -56,12 +56,12 @@ export function ProfilePage() {
             {/* Avatar section */}
             <div className="flex items-center gap-5">
               <div className="relative">
-                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-linear-to-br from-[#18C1CB] to-teal-400 text-2xl font-bold text-white">
+                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-linear-to-br from-brand to-teal-400 text-2xl font-bold text-white">
                   DU
                 </div>
                 {editing && (
-                  <button className="absolute bottom-0 right-0 flex h-7 w-7 items-center justify-center rounded-full bg-white border border-(--border-custom) shadow-sm hover:bg-[#E6F9FA] transition-all cursor-pointer">
-                    <Camera size={13} className="text-[#18C1CB]" />
+                  <button className="absolute bottom-0 right-0 flex h-7 w-7 items-center justify-center rounded-full bg-white border border-(--border-custom) shadow-sm hover:bg-brand-50 transition-all cursor-pointer">
+                    <Camera size={13} className="text-brand" />
                   </button>
                 )}
               </div>
@@ -155,15 +155,15 @@ export function ProfilePage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm" onClick={() => setShowSaveModal(false)}>
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm mx-4 p-5" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-3 mb-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#E6F9FA] shrink-0">
-                <Save size={16} className="text-[#18C1CB]" />
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50 shrink-0">
+                <Save size={16} className="text-brand" />
               </div>
               <h3 className="text-sm font-bold text-(--text)">Salvar alterações</h3>
             </div>
             <p className="text-xs text-(--text-muted) mb-5">As alterações no seu perfil serão salvas e aplicadas imediatamente.</p>
             <div className="flex justify-end gap-2">
               <button onClick={() => setShowSaveModal(false)} className="h-8 px-4 rounded-lg border border-(--border-custom) text-xs font-semibold text-(--text-muted) hover:bg-gray-50 transition-all cursor-pointer">Cancelar</button>
-              <button onClick={() => { setShowSaveModal(false); setEditing(false) }} className="h-8 px-4 rounded-lg bg-linear-to-br from-[#18C1CB] to-teal-400 text-white text-xs font-semibold hover:-translate-y-px transition-all cursor-pointer">Confirmar</button>
+              <button onClick={() => { setShowSaveModal(false); setEditing(false) }} className="h-8 px-4 rounded-lg bg-linear-to-br from-brand to-teal-400 text-white text-xs font-semibold hover:-translate-y-px transition-all cursor-pointer">Confirmar</button>
             </div>
           </div>
         </div>

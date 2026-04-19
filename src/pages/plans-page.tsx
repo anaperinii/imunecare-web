@@ -60,8 +60,8 @@ export function PlansPage() {
               <div className="p-4">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#18C1CB]/10 shrink-0">
-                      <Building size={18} className="text-[#18C1CB]" />
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand/10 shrink-0">
+                      <Building size={18} className="text-brand" />
                     </div>
                     <div>
                       <div className="text-sm font-bold text-(--text)">Professional</div>
@@ -91,10 +91,10 @@ export function PlansPage() {
                   })}
                 </div>
                 <div className="flex gap-2 mt-4">
-                  <button className="h-8 px-3 rounded-lg border border-(--border-custom) text-xs font-semibold text-(--text-muted) hover:border-[#18C1CB] hover:text-[#18C1CB] transition-all cursor-pointer">
+                  <button className="h-8 px-3 rounded-lg border border-(--border-custom) text-xs font-semibold text-(--text-muted) hover:border-brand hover:text-brand transition-all cursor-pointer">
                     Alterar método de pagamento
                   </button>
-                  <button className="h-8 px-3 rounded-lg border border-(--border-custom) text-xs font-semibold text-(--text-muted) hover:border-[#18C1CB] hover:text-[#18C1CB] transition-all cursor-pointer">
+                  <button className="h-8 px-3 rounded-lg border border-(--border-custom) text-xs font-semibold text-(--text-muted) hover:border-brand hover:text-brand transition-all cursor-pointer">
                     Ver faturas
                   </button>
                   <button className="h-8 px-3 rounded-lg border border-red-200 text-xs font-semibold text-red-400 hover:bg-red-50 hover:text-red-500 transition-all cursor-pointer">
@@ -119,18 +119,18 @@ export function PlansPage() {
                       key={plan.id}
                       className={cn(
                         "border rounded-xl overflow-hidden transition-all flex flex-col",
-                        plan.current ? "border-[#18C1CB] shadow-[0_0_0_1px_#18C1CB,0_8px_24px_rgba(24,193,203,0.1)]" : "border-(--border-custom) hover:border-gray-300"
+                        plan.current ? "border-brand shadow-[0_0_0_1px_#18C1CB,0_8px_24px_rgba(24,193,203,0.1)]" : "border-(--border-custom) hover:border-gray-300"
                       )}
                     >
                       {plan.current && (
-                        <div className="bg-linear-to-r from-[#18C1CB] to-teal-400 text-center py-1.5 text-[0.6rem] font-bold text-white uppercase tracking-wider">
+                        <div className="bg-linear-to-r from-brand to-teal-400 text-center py-1.5 text-[0.6rem] font-bold text-white uppercase tracking-wider">
                           Plano atual
                         </div>
                       )}
                       <div className="p-5 flex flex-col flex-1">
                         <div className="flex items-center gap-2.5 mb-3">
-                          <div className="flex h-9 w-9 items-center justify-center rounded-lg shrink-0 bg-[#18C1CB]/10">
-                            <Icon size={16} className="text-[#18C1CB]" />
+                          <div className="flex h-9 w-9 items-center justify-center rounded-lg shrink-0 bg-brand/10">
+                            <Icon size={16} className="text-brand" />
                           </div>
                           <div>
                             <div className="text-sm font-bold text-(--text)">{plan.name}</div>
@@ -146,7 +146,7 @@ export function PlansPage() {
                         <div className="space-y-2 flex-1">
                           {plan.features.map((f) => (
                             <div key={f} className="flex items-center gap-2 text-xs text-(--text-muted)">
-                              <Check size={12} className="text-[#18C1CB] shrink-0" />
+                              <Check size={12} className="text-brand shrink-0" />
                               {f}
                             </div>
                           ))}
@@ -158,11 +158,11 @@ export function PlansPage() {
 
                         <div className="mt-5">
                           {plan.current ? (
-                            <button className="w-full h-9 rounded-lg border border-[#18C1CB] text-xs font-semibold text-[#18C1CB] cursor-default">
+                            <button className="w-full h-9 rounded-lg border border-brand text-xs font-semibold text-brand cursor-default">
                               Plano atual
                             </button>
                           ) : (
-                            <button className="w-full h-9 rounded-lg bg-linear-to-br from-[#18C1CB] to-teal-400 text-white text-xs font-semibold transition-all cursor-pointer hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(24,193,203,0.3)]">
+                            <button className="w-full h-9 rounded-lg bg-linear-to-br from-brand to-teal-400 text-white text-xs font-semibold transition-all cursor-pointer hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(24,193,203,0.3)]">
                               {plan.price === 'Sob consulta' ? 'Falar com vendas' : 'Fazer upgrade'}
                             </button>
                           )}

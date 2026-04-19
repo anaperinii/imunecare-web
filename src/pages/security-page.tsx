@@ -51,15 +51,15 @@ export function SecurityPage() {
               <div className="p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#E6F9FA] shrink-0">
-                      <Lock size={14} className="text-[#18C1CB]" />
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-50 shrink-0">
+                      <Lock size={14} className="text-brand" />
                     </div>
                     <div>
                       <div className="text-xs font-semibold text-(--text)">Alterar senha</div>
                       <div className="text-[0.65rem] text-(--text-muted)">Última alteração há 30 dias</div>
                     </div>
                   </div>
-                  <button onClick={() => setShowPasswordModal(true)} className="h-8 px-3 rounded-lg border border-(--border-custom) text-xs font-semibold text-(--text-muted) hover:border-[#18C1CB] hover:text-[#18C1CB] transition-all cursor-pointer flex items-center gap-1.5">
+                  <button onClick={() => setShowPasswordModal(true)} className="h-8 px-3 rounded-lg border border-(--border-custom) text-xs font-semibold text-(--text-muted) hover:border-brand hover:text-brand transition-all cursor-pointer flex items-center gap-1.5">
                     Alterar
                     <ChevronRight size={12} />
                   </button>
@@ -67,8 +67,8 @@ export function SecurityPage() {
                 <div className="border-t border-(--border-custom)" />
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#E6F9FA] shrink-0">
-                      <Smartphone size={14} className="text-[#18C1CB]" />
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-50 shrink-0">
+                      <Smartphone size={14} className="text-brand" />
                     </div>
                     <div>
                       <div className="text-xs font-semibold text-(--text)">Autenticação em dois fatores (2FA)</div>
@@ -77,7 +77,7 @@ export function SecurityPage() {
                   </div>
                   <button
                     onClick={() => setTwoFaEnabled(!twoFaEnabled)}
-                    className={cn("h-6 w-11 rounded-full transition-all cursor-pointer relative", twoFaEnabled ? "bg-[#18C1CB]" : "bg-gray-300")}
+                    className={cn("h-6 w-11 rounded-full transition-all cursor-pointer relative", twoFaEnabled ? "bg-brand" : "bg-gray-300")}
                   >
                     <div className={cn("absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all", twoFaEnabled ? "left-5.5" : "left-0.5")} />
                   </button>
@@ -95,8 +95,8 @@ export function SecurityPage() {
                 {sessions.map((s) => (
                   <div key={s.id} className="px-4 py-3 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className={cn("flex h-8 w-8 items-center justify-center rounded-lg shrink-0", s.current ? "bg-[#E6F9FA]" : "bg-gray-100")}>
-                        <Smartphone size={14} className={s.current ? "text-[#18C1CB]" : "text-(--text-muted)"} />
+                      <div className={cn("flex h-8 w-8 items-center justify-center rounded-lg shrink-0", s.current ? "bg-brand-50" : "bg-gray-100")}>
+                        <Smartphone size={14} className={s.current ? "text-brand" : "text-(--text-muted)"} />
                       </div>
                       <div>
                         <div className="text-xs font-semibold text-(--text) flex items-center gap-1.5">
@@ -147,28 +147,28 @@ export function SecurityPage() {
               <div className="p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#E6F9FA] shrink-0">
-                      <Eye size={14} className="text-[#18C1CB]" />
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-50 shrink-0">
+                      <Eye size={14} className="text-brand" />
                     </div>
                     <div>
                       <div className="text-xs font-semibold text-(--text)">Visibilidade do perfil</div>
                       <div className="text-[0.65rem] text-(--text-muted)">Controle quem pode ver seus dados na equipe</div>
                     </div>
                   </div>
-                  <span className="text-[0.65rem] font-medium text-[#18C1CB] bg-[#E6F9FA] px-2 py-0.5 rounded-full">Equipe</span>
+                  <span className="text-[0.65rem] font-medium text-brand bg-brand-50 px-2 py-0.5 rounded-full">Equipe</span>
                 </div>
                 <div className="border-t border-(--border-custom)" />
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#E6F9FA] shrink-0">
-                      <FileDown size={14} className="text-[#18C1CB]" />
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-50 shrink-0">
+                      <FileDown size={14} className="text-brand" />
                     </div>
                     <div>
                       <div className="text-xs font-semibold text-(--text)">Exportar meus dados</div>
                       <div className="text-[0.65rem] text-(--text-muted)">Solicite uma cópia de todos os seus dados pessoais</div>
                     </div>
                   </div>
-                  <button onClick={() => setShowExportModal(true)} className="h-8 px-3 rounded-lg border border-(--border-custom) text-xs font-semibold text-(--text-muted) hover:border-[#18C1CB] hover:text-[#18C1CB] transition-all cursor-pointer flex items-center gap-1.5">
+                  <button onClick={() => setShowExportModal(true)} className="h-8 px-3 rounded-lg border border-(--border-custom) text-xs font-semibold text-(--text-muted) hover:border-brand hover:text-brand transition-all cursor-pointer flex items-center gap-1.5">
                     Solicitar
                     <ChevronRight size={12} />
                   </button>
@@ -176,15 +176,15 @@ export function SecurityPage() {
                 <div className="border-t border-(--border-custom)" />
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#E6F9FA] shrink-0">
-                      <UserX size={14} className="text-[#18C1CB]" />
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-50 shrink-0">
+                      <UserX size={14} className="text-brand" />
                     </div>
                     <div>
                       <div className="text-xs font-semibold text-(--text)">Anonimização de pacientes</div>
                       <div className="text-[0.65rem] text-(--text-muted)">Gerencie solicitações de anonimização de dados de pacientes (Art. 18 LGPD)</div>
                     </div>
                   </div>
-                  <button className="h-8 px-3 rounded-lg border border-(--border-custom) text-xs font-semibold text-(--text-muted) hover:border-[#18C1CB] hover:text-[#18C1CB] transition-all cursor-pointer flex items-center gap-1.5">
+                  <button className="h-8 px-3 rounded-lg border border-(--border-custom) text-xs font-semibold text-(--text-muted) hover:border-brand hover:text-brand transition-all cursor-pointer flex items-center gap-1.5">
                     Gerenciar
                     <ChevronRight size={12} />
                   </button>
@@ -219,7 +219,7 @@ export function SecurityPage() {
             </div>
             <div className="border-t border-(--border-custom) px-5 py-3 flex justify-end gap-2">
               <button onClick={() => setShowPasswordModal(false)} className="h-8 px-4 rounded-lg border border-(--border-custom) text-xs font-semibold text-(--text-muted) hover:bg-gray-50 transition-all cursor-pointer">Cancelar</button>
-              <button onClick={() => setShowPasswordModal(false)} className="h-8 px-4 rounded-lg bg-linear-to-br from-[#18C1CB] to-teal-400 text-white text-xs font-semibold hover:-translate-y-px transition-all cursor-pointer">Alterar senha</button>
+              <button onClick={() => setShowPasswordModal(false)} className="h-8 px-4 rounded-lg bg-linear-to-br from-brand to-teal-400 text-white text-xs font-semibold hover:-translate-y-px transition-all cursor-pointer">Alterar senha</button>
             </div>
           </div>
         </div>
@@ -230,15 +230,15 @@ export function SecurityPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm" onClick={() => setShowExportModal(false)}>
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm mx-4 p-5" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-3 mb-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#E6F9FA] shrink-0">
-                <FileDown size={16} className="text-[#18C1CB]" />
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50 shrink-0">
+                <FileDown size={16} className="text-brand" />
               </div>
               <h3 className="text-sm font-bold text-(--text)">Exportar dados</h3>
             </div>
             <p className="text-xs text-(--text-muted) mb-5">Uma cópia dos seus dados pessoais será preparada e enviada para seu e-mail em até 48 horas, conforme previsto pela LGPD.</p>
             <div className="flex justify-end gap-2">
               <button onClick={() => setShowExportModal(false)} className="h-8 px-4 rounded-lg border border-(--border-custom) text-xs font-semibold text-(--text-muted) hover:bg-gray-50 transition-all cursor-pointer">Cancelar</button>
-              <button onClick={() => setShowExportModal(false)} className="h-8 px-4 rounded-lg bg-linear-to-br from-[#18C1CB] to-teal-400 text-white text-xs font-semibold hover:-translate-y-px transition-all cursor-pointer">Solicitar exportação</button>
+              <button onClick={() => setShowExportModal(false)} className="h-8 px-4 rounded-lg bg-linear-to-br from-brand to-teal-400 text-white text-xs font-semibold hover:-translate-y-px transition-all cursor-pointer">Solicitar exportação</button>
             </div>
           </div>
         </div>
