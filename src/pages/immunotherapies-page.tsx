@@ -75,7 +75,7 @@ export function ImmunotherapiesPage() {
   }, [searchTerm, tipoFilter, cicloFilter, itemsPerPage, setCurrentPage])
 
   return (
-    <div className="flex h-full flex-col bg-gray-50/80">
+    <div className="flex flex-1 flex-col bg-gray-50/80 min-h-0 overflow-hidden">
       <div className="mx-4 my-4 flex flex-1 flex-col rounded-xl bg-white shadow-[0_4px_24px_rgba(0,0,0,0.06)] overflow-hidden">
         {/* Header */}
         <div className="border-b border-(--border-custom) px-5 py-4">
@@ -138,13 +138,13 @@ export function ImmunotherapiesPage() {
             </button>
 
             {/* Adicionar */}
-            <button className="h-8 px-3 flex items-center gap-1.5 rounded-lg bg-linear-to-br from-teal-500 to-cyan-500 text-white text-xs font-semibold shadow-[0_2px_12px_rgba(20,184,166,0.3)] hover:-translate-y-px hover:shadow-[0_4px_20px_rgba(20,184,166,0.4)] transition-all">
+            <button onClick={() => navigate({ to: '/add-immunotherapy' })} className="h-8 px-3 flex items-center gap-1.5 rounded-lg bg-linear-to-br from-teal-500 to-cyan-500 text-white text-xs font-semibold shadow-[0_2px_12px_rgba(20,184,166,0.3)] hover:-translate-y-px hover:shadow-[0_4px_20px_rgba(20,184,166,0.4)] transition-all">
               <Plus size={14} />
               Adicionar Imunoterapia
             </button>
 
             {/* Evoluir */}
-            <button className="h-8 px-3 flex items-center gap-1.5 rounded-lg border-[1.5px] border-teal-400 text-teal-600 text-xs font-semibold hover:bg-teal-50 hover:-translate-y-px hover:shadow-[0_4px_20px_rgba(20,184,166,0.25)] transition-all">
+            <button onClick={() => navigate({ to: '/patient-evolution' })} className="h-8 px-3 flex items-center gap-1.5 rounded-lg border-[1.5px] border-teal-400 text-teal-600 text-xs font-semibold hover:bg-teal-50 hover:-translate-y-px hover:shadow-[0_4px_20px_rgba(20,184,166,0.25)] transition-all">
               <FileText size={14} />
               Evoluir Paciente
             </button>

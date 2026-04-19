@@ -11,10 +11,12 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as PatientEvolutionRouteImport } from './routes/patient-evolution'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ImmunotherapiesRouteImport } from './routes/immunotherapies'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AppointmentsRouteImport } from './routes/appointments'
+import { Route as AddImmunotherapyRouteImport } from './routes/add-immunotherapy'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PatientPatientIdRouteImport } from './routes/patient.$patientId'
 
@@ -26,6 +28,11 @@ const SettingsRoute = SettingsRouteImport.update({
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
   path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PatientEvolutionRoute = PatientEvolutionRouteImport.update({
+  id: '/patient-evolution',
+  path: '/patient-evolution',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -48,6 +55,11 @@ const AppointmentsRoute = AppointmentsRouteImport.update({
   path: '/appointments',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AddImmunotherapyRoute = AddImmunotherapyRouteImport.update({
+  id: '/add-immunotherapy',
+  path: '/add-immunotherapy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -61,20 +73,24 @@ const PatientPatientIdRoute = PatientPatientIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/add-immunotherapy': typeof AddImmunotherapyRoute
   '/appointments': typeof AppointmentsRoute
   '/dashboard': typeof DashboardRoute
   '/immunotherapies': typeof ImmunotherapiesRoute
   '/login': typeof LoginRoute
+  '/patient-evolution': typeof PatientEvolutionRoute
   '/register': typeof RegisterRoute
   '/settings': typeof SettingsRoute
   '/patient/$patientId': typeof PatientPatientIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/add-immunotherapy': typeof AddImmunotherapyRoute
   '/appointments': typeof AppointmentsRoute
   '/dashboard': typeof DashboardRoute
   '/immunotherapies': typeof ImmunotherapiesRoute
   '/login': typeof LoginRoute
+  '/patient-evolution': typeof PatientEvolutionRoute
   '/register': typeof RegisterRoute
   '/settings': typeof SettingsRoute
   '/patient/$patientId': typeof PatientPatientIdRoute
@@ -82,10 +98,12 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/add-immunotherapy': typeof AddImmunotherapyRoute
   '/appointments': typeof AppointmentsRoute
   '/dashboard': typeof DashboardRoute
   '/immunotherapies': typeof ImmunotherapiesRoute
   '/login': typeof LoginRoute
+  '/patient-evolution': typeof PatientEvolutionRoute
   '/register': typeof RegisterRoute
   '/settings': typeof SettingsRoute
   '/patient/$patientId': typeof PatientPatientIdRoute
@@ -94,30 +112,36 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/add-immunotherapy'
     | '/appointments'
     | '/dashboard'
     | '/immunotherapies'
     | '/login'
+    | '/patient-evolution'
     | '/register'
     | '/settings'
     | '/patient/$patientId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/add-immunotherapy'
     | '/appointments'
     | '/dashboard'
     | '/immunotherapies'
     | '/login'
+    | '/patient-evolution'
     | '/register'
     | '/settings'
     | '/patient/$patientId'
   id:
     | '__root__'
     | '/'
+    | '/add-immunotherapy'
     | '/appointments'
     | '/dashboard'
     | '/immunotherapies'
     | '/login'
+    | '/patient-evolution'
     | '/register'
     | '/settings'
     | '/patient/$patientId'
@@ -125,10 +149,12 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AddImmunotherapyRoute: typeof AddImmunotherapyRoute
   AppointmentsRoute: typeof AppointmentsRoute
   DashboardRoute: typeof DashboardRoute
   ImmunotherapiesRoute: typeof ImmunotherapiesRoute
   LoginRoute: typeof LoginRoute
+  PatientEvolutionRoute: typeof PatientEvolutionRoute
   RegisterRoute: typeof RegisterRoute
   SettingsRoute: typeof SettingsRoute
   PatientPatientIdRoute: typeof PatientPatientIdRoute
@@ -148,6 +174,13 @@ declare module '@tanstack/react-router' {
       path: '/register'
       fullPath: '/register'
       preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/patient-evolution': {
+      id: '/patient-evolution'
+      path: '/patient-evolution'
+      fullPath: '/patient-evolution'
+      preLoaderRoute: typeof PatientEvolutionRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -178,6 +211,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppointmentsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/add-immunotherapy': {
+      id: '/add-immunotherapy'
+      path: '/add-immunotherapy'
+      fullPath: '/add-immunotherapy'
+      preLoaderRoute: typeof AddImmunotherapyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -197,10 +237,12 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AddImmunotherapyRoute: AddImmunotherapyRoute,
   AppointmentsRoute: AppointmentsRoute,
   DashboardRoute: DashboardRoute,
   ImmunotherapiesRoute: ImmunotherapiesRoute,
   LoginRoute: LoginRoute,
+  PatientEvolutionRoute: PatientEvolutionRoute,
   RegisterRoute: RegisterRoute,
   SettingsRoute: SettingsRoute,
   PatientPatientIdRoute: PatientPatientIdRoute,

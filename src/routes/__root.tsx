@@ -17,7 +17,7 @@ function PageTransition({ children }: { children: React.ReactNode }) {
   }, [])
 
   return (
-    <div className={cn("transition-opacity duration-300 ease-out", visible ? "opacity-100" : "opacity-0")}>
+    <div className={cn("transition-opacity duration-300 ease-out flex-1 flex flex-col min-h-0", visible ? "opacity-100" : "opacity-0")}>
       {children}
     </div>
   )
@@ -46,11 +46,7 @@ function RootComponent() {
         isCollapsed={isCollapsed}
         onToggle={toggle}
       />
-      <main
-        className={cn(
-          "flex-1 overflow-y-auto transition-all duration-300",
-        )}
-      >
+      <main className="flex-1 flex flex-col min-h-0 transition-all duration-300">
         <PageTransition key={location.pathname}>
           <Outlet />
         </PageTransition>
