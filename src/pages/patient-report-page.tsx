@@ -239,14 +239,9 @@ export function PatientReportPage() {
 
           {/* Right — Preview */}
           <div className="flex-1 overflow-y-auto p-5 bg-gray-50/50">
-            <div className="bg-white rounded-xl border border-(--border-custom) shadow-sm max-w-2xl mx-auto relative overflow-hidden">
-              {/* Watermark */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10 rotate-[-30deg]">
-                <span className="text-[3.5rem] font-extrabold text-gray-100 tracking-[0.3em] select-none uppercase">Confidencial</span>
-              </div>
-
+            <div className="bg-white rounded-xl border border-(--border-custom) shadow-sm max-w-2xl mx-auto">
               {/* Report header */}
-              <div className="px-6 py-5 border-b border-(--border-custom) relative z-20">
+              <div className="px-6 py-5 border-b border-(--border-custom)">
                 <div className="flex items-center justify-between">
                   <div>
                     <h2 className="text-sm font-bold text-(--text)">Relatório Clínico — {anonimizar ? mask(patient.nome) : patient.nome}</h2>
@@ -396,14 +391,17 @@ export function PatientReportPage() {
               </div>
 
               {/* Footer */}
-              <div className="px-6 py-3 border-t border-(--border-custom) relative z-20">
+              <div className="px-6 py-3 border-t border-(--border-custom)">
                 <div className="flex justify-between mb-2">
                   <span className="text-[0.6rem] text-(--text-muted)">ImuneCare © 2026</span>
                   <span className="text-[0.6rem] text-(--text-muted)">Página 1 de 1</span>
                 </div>
-                <p className="text-[0.5rem] text-(--text-muted)/60 leading-relaxed">
+                <p className="text-[0.5rem] text-(--text-muted)/60 leading-relaxed mb-2">
                   Documento protegido pela Lei Geral de Proteção de Dados (LGPD — Lei nº 13.709/2018). A reprodução, compartilhamento ou armazenamento não autorizado é proibido. O responsável pela exportação assume total responsabilidade pelo uso das informações.
                 </p>
+                <div className="text-center py-1.5 bg-gray-50 rounded-md border border-(--border-custom)">
+                  <span className="text-[0.7rem] font-bold text-gray-300 uppercase tracking-[0.2em]">Confidencial</span>
+                </div>
               </div>
             </div>
           </div>
