@@ -9,6 +9,7 @@ export interface Immunotherapy {
     numero: number
     dias: number
   }
+  modalidade: 'subcutânea' | 'sublingual'
 }
 
 interface ImmunotherapiesState {
@@ -27,15 +28,15 @@ interface ImmunotherapiesState {
 
 export const useImmunotherapiesStore = create<ImmunotherapiesState>((set) => ({
   immunotherapies: [
-    { id: '1', nome: 'Bárbara Sofia Diniz', tipo: 'Gramíneas', doseConcentracao: '1:10.000 - 0,1ml', cicloIntervalo: { numero: 1, dias: 7 } },
-    { id: '2', nome: 'Camilla Martins', tipo: 'Gramíneas', doseConcentracao: '1:1.000 - 0,2ml', cicloIntervalo: { numero: 1, dias: 7 } },
-    { id: '3', nome: 'Ana Clara de Souza Martins', tipo: 'Cão e Gato', doseConcentracao: '1:100 - 0,4ml', cicloIntervalo: { numero: 1, dias: 7 } },
-    { id: '4', nome: 'Valentina Bittencourt Farias', tipo: 'Cândida', doseConcentracao: '1:10 - 0,8ml', cicloIntervalo: { numero: 1, dias: 7 } },
-    { id: '5', nome: 'Heitor Guimarães de Assis', tipo: 'Ácaros', doseConcentracao: '1:10 - 0,5ml', cicloIntervalo: { numero: 1, dias: 14 } },
-    { id: '6', nome: 'Caroline Ferreira de Abreu', tipo: 'Herpes', doseConcentracao: '1:10 - 0,5ml', cicloIntervalo: { numero: 2, dias: 21 } },
-    { id: '7', nome: 'Marta Gabriela de Sousa', tipo: 'Gramíneas', doseConcentracao: '1:10 - 0,5ml', cicloIntervalo: { numero: 3, dias: 28 } },
-    { id: '8', nome: 'Patrício Gomes Cardoso', tipo: 'Cândida', doseConcentracao: '1:1.000 - 0,1ml', cicloIntervalo: { numero: 1, dias: 7 } },
-    { id: '9', nome: 'Pedro Luccas Pereira', tipo: 'Gramíneas', doseConcentracao: '1:100 - 0,2ml', cicloIntervalo: { numero: 1, dias: 7 } },
+    { id: '1', nome: 'Bárbara Sofia Diniz', tipo: 'Gramíneas', doseConcentracao: '1:10.000 - 0,1ml', cicloIntervalo: { numero: 1, dias: 7 }, modalidade: 'subcutânea' },
+    { id: '2', nome: 'Camilla Martins', tipo: 'Gramíneas', doseConcentracao: '1:1.000 - 0,2ml', cicloIntervalo: { numero: 1, dias: 7 }, modalidade: 'subcutânea' },
+    { id: '3', nome: 'Ana Clara de Souza Martins', tipo: 'Cão e Gato', doseConcentracao: '1:100 - 0,4ml', cicloIntervalo: { numero: 1, dias: 7 }, modalidade: 'sublingual' },
+    { id: '4', nome: 'Valentina Bittencourt Farias', tipo: 'Cândida', doseConcentracao: '1:10 - 0,8ml', cicloIntervalo: { numero: 1, dias: 7 }, modalidade: 'subcutânea' },
+    { id: '5', nome: 'Heitor Guimarães de Assis', tipo: 'Ácaros', doseConcentracao: '1:10 - 0,5ml', cicloIntervalo: { numero: 1, dias: 14 }, modalidade: 'subcutânea' },
+    { id: '6', nome: 'Caroline Ferreira de Abreu', tipo: 'Herpes', doseConcentracao: '1:10 - 0,5ml', cicloIntervalo: { numero: 2, dias: 21 }, modalidade: 'sublingual' },
+    { id: '7', nome: 'Marta Gabriela de Sousa', tipo: 'Gramíneas', doseConcentracao: '1:10 - 0,5ml', cicloIntervalo: { numero: 3, dias: 28 }, modalidade: 'subcutânea' },
+    { id: '8', nome: 'Patrício Gomes Cardoso', tipo: 'Cândida', doseConcentracao: '1:1.000 - 0,1ml', cicloIntervalo: { numero: 1, dias: 7 }, modalidade: 'sublingual' },
+    { id: '9', nome: 'Pedro Luccas Pereira', tipo: 'Gramíneas', doseConcentracao: '1:100 - 0,2ml', cicloIntervalo: { numero: 1, dias: 7 }, modalidade: 'subcutânea' },
   ],
   searchTerm: '',
   tipoFilter: 'Todos os tipos',
