@@ -149,7 +149,7 @@ export function ExportReportPage() {
                   <button
                     key={m.key}
                     onClick={() => setModality(m.key as 'sub' | 'sbl')}
-                    className={cn("flex-1 text-[0.65rem] font-semibold transition-all", modality === m.key ? "bg-linear-to-br from-brand to-teal-400 text-white" : "text-(--text-muted) hover:bg-gray-50")}
+                    className={cn("flex-1 px-3 text-xs font-semibold transition-all", modality === m.key ? "bg-linear-to-br from-brand to-teal-400 text-white" : "text-(--text-muted) hover:bg-gray-50")}
                   >
                     {m.label}
                   </button>

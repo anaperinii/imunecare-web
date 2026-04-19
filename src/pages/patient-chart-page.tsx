@@ -154,6 +154,7 @@ export function PatientChartPage() {
       patientId: selectedPatient.id,
       patientName: selectedPatient.nome,
       action: 'view_chart',
+      description: 'Consultou o prontuário',
     })
   }, [selectedPatient, currentUser, logAccess])
 
@@ -198,6 +199,7 @@ export function PatientChartPage() {
     ? `${lastRealized.concentracaoExtrato || lastRealized.dose.split(' - ')[0]} - ${lastRealized.volumeAplicado || lastRealized.dose.split(' - ')[1]}`
     : selectedPatient?.concentracaoDoseAtuais ?? '-'
 
+  // RNE-010: cálculo automático da próxima dose e intervalo
   const nextCalc = useMemo(() => calculateNextDose(currentDose, currentInterval), [currentDose, currentInterval])
 
   const nextDate = useMemo(() => {
