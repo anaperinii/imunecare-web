@@ -120,6 +120,26 @@
   to { transform: translateY(0); opacity: 1; }
 }
 
+@keyframes wave-flow {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(-120px); }
+}
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes bar-grow {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
 @layer base {
   ::-webkit-scrollbar {
     width: 6px;

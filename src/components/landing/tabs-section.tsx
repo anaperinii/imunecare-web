@@ -1,7 +1,11 @@
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import type { LucideIcon } from 'lucide-react'
-import { FileText, CalendarDays, Zap } from 'lucide-react'
+import { FileText, CalendarDays, LayoutDashboard, User } from 'lucide-react'
+import dashboardImg from '@/assets/dashboard-landing.png'
+import reportImg from '@/assets/report-landing.png'
+import appointmentsImg from '@/assets/appointments-landing.png'
+import patientImg from '@/assets/patient-landing.png'
 
 interface Tab {
   id: string
@@ -13,6 +17,14 @@ interface Tab {
 }
 
 const tabs: Tab[] = [
+  {
+    id: 'dashboard',
+    label: 'Dashboard',
+    title: 'Visão geral em tempo real',
+    description: 'Acompanhe os principais indicadores da sua clínica em um só lugar: pacientes ativos, distribuição por concentração, fases do protocolo e status de imunoterapias.',
+    link: 'Ver dashboard completo',
+    icon: LayoutDashboard,
+  },
   {
     id: 'reports',
     label: 'Relatórios Clínicos',
@@ -30,23 +42,30 @@ const tabs: Tab[] = [
     icon: CalendarDays,
   },
   {
-    id: 'automation',
-    label: 'Automações',
-    title: 'Automações de protocolo',
-    description: 'Configure alertas, progressão automática de doses e notificações adaptadas ao protocolo da sua clínica. Menos trabalho manual, mais segurança.',
-    link: 'Criar primeira automação',
-    icon: Zap,
+    id: 'patient',
+    label: 'Prontuário',
+    title: 'Prontuário eletrônico completo',
+    description: 'Acompanhe a evolução de cada paciente em detalhes: histórico de aplicações, progressão de doses, reações adversas, calendário e timeline completa do tratamento.',
+    link: 'Explorar prontuário',
+    icon: User,
   },
 ]
 
 export function TabsSection() {
-  const [activeTab, setActiveTab] = useState('reports')
+  const [activeTab, setActiveTab] = useState('dashboard')
   const active = tabs.find((t) => t.id === activeTab)!
-  const ActiveIcon = active.icon
 
   return (
-    <section className="py-24 px-[5%] bg-(--bg2)">
-      <div className="reveal text-center max-w-150 mx-auto mb-12">
+    <section className="py-24 px-[5%] relative overflow-hidden">
+      {/* Top seam (from TestimonialsSection bottom) */}
+      <div className="pointer-events-none absolute -top-28 -left-20 w-95 h-95 rounded-full bg-teal-200/20 blur-3xl" />
+      <div className="pointer-events-none absolute -top-32 -right-20 w-100 h-100 rounded-full bg-cyan-100/25 blur-3xl" />
+      {/* Mid decorative */}
+      <div className="pointer-events-none absolute top-1/2 left-1/3 w-75 h-75 rounded-full bg-teal-100/20 blur-3xl" />
+      {/* Bottom seam (continues into CtaSection) */}
+      <div className="pointer-events-none absolute -bottom-32 -left-16 w-100 h-100 rounded-full bg-linear-to-br from-teal-200/25 to-cyan-200/20 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-28 -right-20 w-95 h-95 rounded-full bg-teal-100/25 blur-3xl" />
+      <div className="reveal text-center max-w-150 mx-auto mb-12 relative">
         <span className="inline-block text-[0.75rem] font-bold tracking-[2px] uppercase text-teal-600 bg-white border border-teal-200 px-4 py-1.5 rounded-full mb-4">
           Aprofunde-se
         </span>
@@ -85,9 +104,38 @@ export function TabsSection() {
             {active.link} →
           </a>
         </div>
-        <div className="reveal bg-[linear-gradient(135deg,var(--color-teal-50),var(--color-teal-100))] border-[1.5px] border-teal-200 rounded-3xl min-h-70 flex items-center justify-center relative overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_30%,rgba(20,184,166,0.15)_0%,transparent_60%)]" />
-          <ActiveIcon size={64} className="relative z-10 text-teal-400" strokeWidth={1.5} />
+        <div className="reveal bg-gray-50/80 border border-(--border-custom) rounded-2xl p-3 relative overflow-hidden shadow-[0_8px_40px_rgba(0,70,40,0.08)]">
+          {/* Fake browser chrome */}
+          <div className="flex items-center gap-1.5 mb-2 px-1">
+            <div className="w-2 h-2 rounded-full bg-red-400" />
+            <div className="w-2 h-2 rounded-full bg-amber-400" />
+            <div className="w-2 h-2 rounded-full bg-emerald-400" />
+            <div className="ml-2 flex-1 bg-white border border-(--border-custom) rounded-md h-4 flex items-center px-2">
+              <span className="text-[0.5rem] text-(--text-muted) font-medium">
+                imunecare.com.br/{activeTab === 'dashboard' ? 'dashboard' : activeTab === 'reports' ? 'export-report' : activeTab === 'scheduling' ? 'appointments' : 'patient'}
+              </span>
+            </div>
+          </div>
+          {/* Screenshot container with crossfade */}
+          <div className="bg-white rounded-xl border border-(--border-custom) shadow-[0_2px_12px_rgba(0,70,40,0.05)] overflow-hidden relative">
+            {[
+              { id: 'dashboard', src: dashboardImg, alt: 'Dashboard' },
+              { id: 'reports', src: reportImg, alt: 'Relatório' },
+              { id: 'scheduling', src: appointmentsImg, alt: 'Agendamentos' },
+              { id: 'patient', src: patientImg, alt: 'Prontuário' },
+            ].map((tab, i) => (
+              <img
+                key={tab.id}
+                src={tab.src}
+                alt={tab.alt}
+                className={cn(
+                  "w-full block transition-opacity duration-500 ease-out",
+                  i === 0 ? "relative" : "absolute inset-0",
+                  activeTab === tab.id ? "opacity-100" : "opacity-0 pointer-events-none"
+                )}
+              />
+            ))}
+          </div>
         </div>
       </div>
     </section>

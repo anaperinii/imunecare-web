@@ -1,3 +1,5 @@
+import { Heart } from 'lucide-react'
+
 const footerColumns = [
   {
     title: 'Produto',
@@ -47,8 +49,8 @@ export function Footer() {
         <p className="text-[0.8rem] text-(--text-muted)">
           &copy; 2025 ImuneCare. Todos os direitos reservados.
         </p>
-        <p className="text-[0.8rem] text-(--text-muted)">
-          Feito com 💚 para a alergologia brasileira
+        <p className="text-[0.8rem] text-(--text-muted) inline-flex items-center gap-1">
+          Feito com <Heart size={13} className="text-red-400 fill-red-400" /> para a alergologia brasileira
         </p>
       </div>
     </footer>

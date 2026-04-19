@@ -39,8 +39,16 @@ const maxFeatures = Math.max(...plans.map((p) => p.features.length))
 
 export function PricingSection() {
   return (
-    <section id="pricing" className="py-24 px-[5%]">
-      <div className="reveal mb-14">
+    <section id="pricing" className="py-24 px-[5%] relative overflow-hidden">
+      {/* Top seam (from AiSection bottom) */}
+      <div className="pointer-events-none absolute -top-32 -left-20 w-100 h-100 rounded-full bg-linear-to-br from-teal-200/20 to-cyan-200/20 blur-3xl" />
+      <div className="pointer-events-none absolute -top-28 -right-20 w-95 h-95 rounded-full bg-cyan-200/20 blur-3xl" />
+      {/* Mid decorative */}
+      <div className="pointer-events-none absolute top-1/3 left-1/2 -translate-x-1/2 w-125 h-87.5 rounded-full bg-teal-100/25 blur-3xl" />
+      {/* Bottom seam (continues into TestimonialsSection) */}
+      <div className="pointer-events-none absolute -bottom-32 -left-16 w-95 h-95 rounded-full bg-cyan-100/25 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-28 -right-24 w-105 h-105 rounded-full bg-teal-200/20 blur-3xl" />
+      <div className="reveal mb-14 relative">
         <span className="inline-block text-[0.75rem] font-bold tracking-[2px] uppercase text-teal-600 bg-teal-50 border border-teal-200 px-4 py-1.5 rounded-full mb-4">
           Preços
         </span>

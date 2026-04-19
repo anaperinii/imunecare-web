@@ -1,31 +1,30 @@
 import { Link } from '@tanstack/react-router'
-import { TrendingUp, Zap } from 'lucide-react'
+import patientImg from '@/assets/patient-hero-section.png'
 
 export function HeroSection() {
   return (
-    <section className="min-h-screen pt-30 pb-20 px-[5%] grid grid-cols-1 lg:grid-cols-2 gap-[5%] items-center relative overflow-hidden bg-[radial-gradient(ellipse_80%_60%_at_70%_50%,rgba(20,184,166,0.07)_0%,transparent_70%),radial-gradient(ellipse_40%_40%_at_10%_80%,rgba(6,182,212,0.05)_0%,transparent_60%)]">
+    <section className="min-h-screen pt-30 pb-20 px-[5%] grid grid-cols-1 lg:grid-cols-2 gap-10 items-center relative overflow-hidden">
+      {/* Decorative blobs */}
+      <div className="pointer-events-none absolute -top-40 -right-40 w-125 h-125 rounded-full bg-linear-to-br from-teal-200/30 to-cyan-200/10 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-40 -left-40 w-112.5 h-112.5 rounded-full bg-linear-to-br from-cyan-200/20 to-teal-300/20 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-32 -right-20 w-95 h-95 rounded-full bg-linear-to-br from-teal-200/25 to-cyan-100/15 blur-3xl" />
+      <div className="pointer-events-none absolute top-1/3 left-1/2 -translate-x-1/2 w-75 h-75 rounded-full bg-teal-100/40 blur-3xl" />
       {/* Left content */}
       <div className="reveal">
-        {/* Badge */}
         <div className="inline-flex items-center gap-2 bg-teal-50 border border-teal-200 text-teal-700 px-4 py-1.5 rounded-full text-[0.8rem] font-semibold mb-6">
-          <span className="bg-teal-500 text-white px-2 py-0.5 rounded-full text-[0.7rem]">
-            Novo
-          </span>
-          Apresentando ImuneCare 2.0
+          <span className="bg-teal-500 text-white px-2 py-0.5 rounded-full text-[0.7rem]">Beta</span>
+          Versão beta em 2026
         </div>
 
-        {/* Heading */}
         <h1 className="text-[clamp(1.8rem,3.5vw,2.8rem)] font-extrabold leading-tight tracking-[-1px] mb-5 bg-[linear-gradient(150deg,var(--text)_0%,var(--color-teal-800)_60%,var(--color-cyan-600)_100%)] bg-clip-text [-webkit-background-clip:text] [-webkit-text-fill-color:transparent]">
           Centralize e otimize a gestão de imunoterapias alérgicas
         </h1>
 
-        {/* Subtitle */}
         <p className="text-[1.05rem] text-(--text-muted) leading-[1.7] max-w-120 mb-8">
           Plataforma completa para clínicas e profissionais de saúde acompanharem, gerenciarem e otimizarem protocolos de imunoterapia alérgica em um único lugar.
         </p>
 
-        {/* CTAs */}
-        <div className="flex gap-3 flex-wrap mb-10">
+        <div className="flex gap-3 flex-wrap">
           <Link
             to="/trial"
             className="px-6 py-2.5 rounded-full border-none bg-linear-to-br from-brand to-teal-400 text-white font-semibold text-[0.9rem] cursor-pointer transition-all duration-250 shadow-[0_4px_20px_rgba(24,193,203,0.35)] hover:-translate-y-0.5 hover:shadow-[0_8px_32px_rgba(24,193,203,0.4)] no-underline"
@@ -33,84 +32,60 @@ export function HeroSection() {
             Solicitar demonstração
           </Link>
         </div>
-
-        {/* Stats */}
-        <div className="flex gap-8 flex-wrap">
-          <div className="text-left">
-            <strong className="block text-[1.3rem] font-extrabold text-teal-600">1.2k+</strong>
-            <span className="text-[0.8rem] text-(--text-muted)">Profissionais ativos</span>
-          </div>
-          <div className="text-left">
-            <strong className="block text-[1.3rem] font-extrabold text-teal-600">18k+</strong>
-            <span className="text-[0.8rem] text-(--text-muted)">Pacientes cadastrados</span>
-          </div>
-          <div className="text-left">
-            <strong className="block text-[1.3rem] font-extrabold text-teal-600">98%</strong>
-            <span className="text-[0.8rem] text-(--text-muted)">Satisfação</span>
-          </div>
-        </div>
       </div>
 
-      {/* Right visual */}
-      <div className="relative hidden lg:flex items-center justify-center min-h-100 xl:min-h-120 2xl:min-h-140">
-        {/* Main card */}
-        <div
-          className="w-full max-w-125 xl:max-w-145 2xl:max-w-165 relative z-1"
-          style={{ animation: 'float 6s ease-in-out infinite' }}
-        >
-          <div className="w-full bg-linear-to-br from-teal-500 via-cyan-500 to-teal-400 rounded-[28px] 2xl:rounded-[36px] p-10 pb-14 xl:p-12 xl:pb-16 2xl:p-16 2xl:pb-20 relative overflow-hidden shadow-[0_32px_80px_rgba(20,184,166,0.35)]">
-            {/* Swirl decorations */}
-            <svg className="absolute -right-15 -top-15 w-70 h-70 2xl:w-90 2xl:h-90 opacity-25" viewBox="0 0 280 280" fill="none">
-              <path d="M240 40 C200 20 120 60 100 120 C80 180 140 220 180 200 C220 180 240 120 200 100 C160 80 100 120 120 160" stroke="white" strokeWidth="18" strokeLinecap="round" fill="none" />
-              <path d="M200 20 C160 0 80 40 60 100 C40 160 100 200 140 180" stroke="white" strokeWidth="12" strokeLinecap="round" fill="none" opacity=".6" />
-            </svg>
-            <svg className="absolute -left-10 -bottom-12.5 w-50 h-50 2xl:w-65 2xl:h-65 opacity-20" viewBox="0 0 200 200" fill="none">
-              <path d="M160 160 C120 140 40 160 20 120 C0 80 40 40 80 60 C120 80 140 140 100 160" stroke="white" strokeWidth="14" strokeLinecap="round" fill="none" />
-            </svg>
+      {/* Right: Tablet mockup with patient chart */}
+      <div className="hidden lg:flex items-center justify-center reveal overflow-visible" style={{ animationDelay: '0.1s', perspective: '1400px', perspectiveOrigin: '70% 50%' }}>
+        <div className="relative w-full max-w-5xl">
+          {/* Tablet frame with 3D depth effect */}
+          <div
+            className="bg-gray-900 rounded-4xl p-3 shadow-[0_40px_100px_rgba(0,70,40,0.35),0_16px_40px_rgba(20,184,166,0.25)] relative transition-transform"
+            style={{ transform: 'rotateY(-22deg) rotateX(4deg) translateX(40px)', transformStyle: 'preserve-3d' }}
+          >
+            {/* Depth gradient overlay — darker on the left side (further back) */}
+            <div className="absolute inset-0 rounded-4xl pointer-events-none" style={{ background: 'linear-gradient(to right, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.04) 40%, transparent 70%)', zIndex: 5 }} />
+            {/* Subtle top speaker */}
+            <div className="absolute top-2 left-1/2 -translate-x-1/2 w-12 h-1 rounded-full bg-gray-700" />
+            {/* Front camera */}
+            <div className="absolute top-4.5 right-6 w-1.5 h-1.5 rounded-full bg-gray-700 ring-1 ring-gray-600" />
 
-            <h2 className="text-[1.6rem] xl:text-[1.8rem] 2xl:text-[2.2rem] font-extrabold text-white leading-tight relative z-1 max-w-65 xl:max-w-70 2xl:max-w-85">
-              Acompanhe e aprimore o tratamento dos seus pacientes.
-            </h2>
+            {/* Screen */}
+            <div className="bg-white rounded-[1.4rem] overflow-hidden border border-gray-800 aspect-2/1">
+              <img src={patientImg} alt="Prontuário do paciente" className="w-full h-full object-cover object-top-left" />
+            </div>
 
-            {/* Dots */}
-            <div className="absolute bottom-5 right-7 xl:bottom-6 xl:right-8 2xl:bottom-8 2xl:right-10 flex gap-2 z-1">
-              <div className="w-8 xl:w-9 2xl:w-11 h-2 rounded bg-white" />
-              <div className="w-6 xl:w-7 2xl:w-9 h-2 rounded bg-white/40" />
-              <div className="w-6 xl:w-7 2xl:w-9 h-2 rounded bg-white/40" />
+            {/* Bottom home indicator */}
+            <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-20 h-1 rounded-full bg-gray-700" />
+          </div>
+
+          {/* Floating badge on top-left */}
+          <div className="absolute -top-4 -left-6 bg-white rounded-xl shadow-[0_8px_24px_rgba(0,70,40,0.12)] px-3 py-2 flex items-center gap-2 border border-(--border-custom) z-10">
+            <div className="w-8 h-8 rounded-full bg-teal-100 text-[0.65rem] font-extrabold text-brand flex items-center justify-center shrink-0">CF</div>
+            <div>
+              <div className="text-[0.7rem] font-bold text-(--text) leading-tight">Caroline Ferreira</div>
+              <div className="text-[0.55rem] text-(--text-muted)">Próxima · Hoje 14h30</div>
             </div>
           </div>
-        </div>
 
-        {/* Mini card: Adesão ao tratamento — top left */}
-        <div
-          className="absolute z-10 bg-white rounded-[14px] 2xl:rounded-[18px] px-4 py-3 xl:px-5 xl:py-3.5 2xl:px-6 2xl:py-4 shadow-[0_8px_32px_rgba(0,0,0,0.15)] flex items-center gap-3 2xl:gap-4 text-[0.8rem] xl:text-[0.85rem] 2xl:text-[0.95rem] font-semibold top-2 -left-10 xl:top-1 xl:-left-5 2xl:top-0 2xl:-left-2.5"
-          style={{ animation: 'float 4s ease-in-out infinite 1s' }}
-        >
-          <div className="w-9 h-9 xl:w-10 xl:h-10 2xl:w-12 2xl:h-12 rounded-[10px] 2xl:rounded-[14px] bg-linear-to-br from-teal-400 to-cyan-500 flex items-center justify-center text-white shrink-0">
-            <TrendingUp size={18} className="xl:hidden" />
-            <TrendingUp size={20} className="hidden xl:block 2xl:hidden" />
-            <TrendingUp size={24} className="hidden 2xl:block" />
+          {/* Floating card on bottom-right — Progressão */}
+          <div className="absolute -bottom-5 -right-5 bg-white rounded-xl shadow-[0_8px_24px_rgba(0,70,40,0.12)] px-3.5 py-2.5 border border-(--border-custom) z-10 w-52">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[0.55rem] font-bold text-(--text-muted) uppercase tracking-wider">Progressão</span>
+              <span className="text-[0.55rem] font-bold text-brand">75%</span>
+            </div>
+            <div className="flex items-center gap-1">
+              {[
+                { conc: '1:10.000', color: '#B6F2EC', active: true },
+                { conc: '1:1.000', color: '#2CD3C1', active: true },
+                { conc: '1:100', color: '#18C1CB', active: true },
+                { conc: '1:10', color: '#0E99A3', active: false },
+              ].map((s) => (
+                <div key={s.conc} className="flex-1 h-1.5 rounded-full" style={{ backgroundColor: s.active ? s.color : '#E5E7EB' }} />
+              ))}
+            </div>
+            <div className="text-[0.5rem] text-(--text-muted) mt-1.5 font-medium">Próxima dose: <span className="font-bold text-(--text)">1:10 — 0,5ml</span></div>
           </div>
-          <div>
-            <div className="text-(--text) whitespace-nowrap">Adesão ao tratamento</div>
-            <div className="text-teal-500 font-bold">+94%</div>
-          </div>
-        </div>
 
-        {/* Mini card: Alertas em tempo real — bottom right */}
-        <div
-          className="absolute z-10 bg-white rounded-[14px] 2xl:rounded-[18px] px-4 py-3 xl:px-5 xl:py-3.5 2xl:px-6 2xl:py-4 shadow-[0_8px_32px_rgba(0,0,0,0.15)] flex items-center gap-3 2xl:gap-4 text-[0.8rem] xl:text-[0.85rem] 2xl:text-[0.95rem] font-semibold bottom-8 -right-10 xl:bottom-9 xl:-right-7 2xl:bottom-10 2xl:-right-5"
-          style={{ animation: 'float 4s ease-in-out infinite 2.5s' }}
-        >
-          <div className="w-9 h-9 xl:w-10 xl:h-10 2xl:w-12 2xl:h-12 rounded-[10px] 2xl:rounded-[14px] bg-linear-to-br from-teal-400 to-cyan-500 flex items-center justify-center text-white shrink-0">
-            <Zap size={18} className="xl:hidden" />
-            <Zap size={20} className="hidden xl:block 2xl:hidden" />
-            <Zap size={24} className="hidden 2xl:block" />
-          </div>
-          <div>
-            <div className="text-(--text) whitespace-nowrap">Alertas em tempo real</div>
-            <div className="text-teal-500 font-bold">Ativo</div>
-          </div>
         </div>
       </div>
     </section>

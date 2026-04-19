@@ -16,7 +16,13 @@ const aiFeatures: AiFeature[] = [
 
 export function AiSection() {
   return (
-    <section id="ai" className="py-24 px-[5%]">
+    <section id="ai" className="py-24 px-[5%] relative overflow-hidden">
+      {/* Top seam (from SplitSection bottom) */}
+      <div className="pointer-events-none absolute -top-28 -left-16 w-95 h-95 rounded-full bg-linear-to-br from-cyan-200/20 to-teal-300/15 blur-3xl" />
+      <div className="pointer-events-none absolute -top-32 -right-24 w-100 h-100 rounded-full bg-teal-200/20 blur-3xl" />
+      {/* Bottom seam (continues into PricingSection) */}
+      <div className="pointer-events-none absolute -bottom-32 -left-20 w-100 h-100 rounded-full bg-linear-to-br from-teal-200/20 to-cyan-200/20 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-28 -right-20 w-95 h-95 rounded-full bg-cyan-200/20 blur-3xl" />
       <div className="reveal bg-linear-to-br from-teal-800 via-teal-700 to-cyan-600 rounded-4xl p-8 sm:p-12 lg:p-16 mx-0 overflow-hidden relative">
         {/* Radial overlay */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_80%_at_80%_50%,rgba(255,255,255,0.05)_0%,transparent_60%)]" />
