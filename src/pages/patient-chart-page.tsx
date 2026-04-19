@@ -14,10 +14,10 @@ import {
 } from 'lucide-react'
 
 const INTERVAL_COLORS: Record<number, { bg: string; text: string; dot: string }> = {
-  7: { bg: '#FFE7EA', text: '#DD2E71', dot: '#DD2E71' },
-  14: { bg: '#D8EBFF', text: '#2286E9', dot: '#2286E9' },
-  21: { bg: '#F2E7FF', text: '#7F20CD', dot: '#7F20CD' },
-  28: { bg: '#FFEDD6', text: '#DD742E', dot: '#DD742E' },
+  7: { bg: '#FDECF0', text: '#E8768E', dot: '#E8768E' },
+  14: { bg: '#FDEEE8', text: '#E8766A', dot: '#E8766A' },
+  21: { bg: '#DBEAFE', text: '#2563EB', dot: '#2563EB' },
+  28: { bg: '#EDE9FE', text: '#7C3AED', dot: '#7C3AED' },
 }
 const DEFAULT_COLOR = { bg: '#F3F4F6', text: '#374151', dot: '#6B7280' }
 
@@ -40,7 +40,7 @@ export function PatientChartPage() {
         setSelectedPatient({
           id: imm.id, nome: imm.nome, dataNascimento: '02/07/2000', idade: 25,
           telefone: '(62) 99557-1423', peso: '89.7 kg', cpf: '711.905.744-89',
-          medicoResponsavel: 'Dra. Karina Martins', status: 'ativo',
+          medicoResponsavel: 'Dra. Karina Martins', status: imm.status === 'ativo' ? 'ativo' as const : 'inativo' as const,
           tipoImunoterapia: imm.tipo, inicioInducao: '01/01/2020', inicioManutencao: null,
           viaAdministracao: 'Subcutânea', extrato: 'Der p 60 + der f 10% + blt 30%',
           concentracaoVolumeMeta: '1:10 - 0,5ml', metaAtingida: false,
@@ -137,8 +137,19 @@ export function PatientChartPage() {
   ]
   const allSteps = inductionSteps.flatMap((s) => s.vols.map((v) => `${s.conc} - ${v}`))
   const currentDoseStr = lastRealized?.dose || selectedPatient?.concentracaoDoseAtuais || '1:10.000 - 0,1ml'
-  const currentStepIndex = allSteps.findIndex((s) => currentDoseStr.includes(s.split(' - ')[0].trim()) && currentDoseStr.includes(s.split(' - ')[1].trim()))
-  const progressPct = Math.round(((currentStepIndex >= 0 ? currentStepIndex : 0) + 1) / allSteps.length * 100)
+  const currentStepIndex = useMemo(() => {
+    const parts = currentDoseStr.split(' - ')
+    const conc = parts[0]?.trim() || ''
+    const vol = parts[1]?.trim() || ''
+    return allSteps.findIndex((s) => {
+      const sc = s.split(' - ')[0].trim()
+      const sv = s.split(' - ')[1].trim()
+      return conc === sc && vol === sv
+    })
+  }, [currentDoseStr, allSteps])
+  // Se paciente em manutenção (intervalo > 7), progressão é 100%
+  const isMaintenance = currentInterval > 7
+  const progressPct = isMaintenance ? 100 : Math.round(((currentStepIndex >= 0 ? currentStepIndex : 0) + 1) / allSteps.length * 100)
 
   const getInitials = (name: string) =>
     name.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase()
@@ -164,18 +175,32 @@ export function PatientChartPage() {
               </div>
               <div className="min-w-0">
                 <h1 className="text-base font-extrabold text-(--text) leading-tight">{selectedPatient.nome}</h1>
-                <div className="flex items-center gap-1.5 mt-1">
-                  <span className="inline-block px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-700 text-[0.65rem] font-semibold">
-                    Tratamento Ativo
-                  </span>
+                <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                  {selectedPatient.status === 'ativo' ? (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[0.6rem] font-semibold border border-emerald-200">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                      Tratamento Ativo
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-(--text-muted) text-[0.6rem] font-semibold border border-gray-200">
+                      <span className="w-1.5 h-1.5 rounded-full bg-gray-400" />
+                      Tratamento Inativo
+                    </span>
+                  )}
                   {treatmentTime && (
-                    <span className="inline-block px-2 py-0.5 rounded-md bg-gray-100 text-gray-600 text-[0.65rem] font-medium">
+                    <span className="inline-block px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 text-[0.6rem] font-medium border border-gray-200">
                       {treatmentTime}
                     </span>
                   )}
                 </div>
               </div>
             </div>
+            {selectedPatient.status === 'inativo' && (
+              <div className="mt-2.5 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                <div className="text-[0.6rem] font-semibold text-amber-700 mb-0.5">Justificativa da inativação</div>
+                <div className="text-[0.6rem] text-amber-600 leading-relaxed">Paciente solicitou interrupção temporária do tratamento por motivos pessoais. Última aplicação em 15/02/2026. Retorno previsto para avaliação em 3 meses.</div>
+              </div>
+            )}
             <div className="mt-3 flex gap-1.5">
               <button
                 onClick={() => navigate({ to: '/patient-evolution', search: { patientId: selectedPatient.id } })}
@@ -438,8 +463,8 @@ export function PatientChartPage() {
                                   <div className="flex flex-col items-end gap-1">
                                     {isNext && <span className="text-[0.6rem] font-bold text-teal-700">PRÓXIMA</span>}
                                     <span
-                                      className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[0.6rem] font-semibold"
-                                      style={{ backgroundColor: color.bg, color: color.text }}
+                                      className="inline-flex items-center gap-1.5 px-2 py-px rounded-full text-[0.65rem] font-semibold border"
+                                      style={{ backgroundColor: color.bg, color: color.text, borderColor: color.dot + '30' }}
                                     >
                                       <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: color.dot }} />
                                       {app.ciclo.dias} dias

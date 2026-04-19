@@ -16,10 +16,10 @@ import {
 import { cn } from '@/lib/utils'
 
 const INTERVAL_COLORS: Record<number, { bg: string; text: string; dot: string }> = {
-  7: { bg: '#FFE7EA', text: '#DD2E71', dot: '#DD2E71' },
-  14: { bg: '#D8EBFF', text: '#2286E9', dot: '#2286E9' },
-  21: { bg: '#F2E7FF', text: '#7F20CD', dot: '#7F20CD' },
-  28: { bg: '#FFEDD6', text: '#DD742E', dot: '#DD742E' },
+  7: { bg: '#FDECF0', text: '#E8768E', dot: '#E8768E' },
+  14: { bg: '#FDEEE8', text: '#E8766A', dot: '#E8766A' },
+  21: { bg: '#DBEAFE', text: '#2563EB', dot: '#2563EB' },
+  28: { bg: '#EDE9FE', text: '#7C3AED', dot: '#7C3AED' },
 }
 
 const DEFAULT_COLOR = { bg: '#F3F4F6', text: '#374151', dot: '#6B7280' }
@@ -59,9 +59,10 @@ export function ImmunotherapiesPage() {
       const matchTipo = tipoFilter === 'Todos os tipos' || item.tipo === tipoFilter
       const matchCiclo =
         cicloFilter === 'Todos os intervalos' || item.cicloIntervalo.dias.toString() === cicloFilter
-      return matchSearch && matchTipo && matchCiclo
+      const matchStatus = showInativas ? item.status === 'inativo' : item.status === 'ativo'
+      return matchSearch && matchTipo && matchCiclo && matchStatus
     })
-  }, [immunotherapies, searchTerm, tipoFilter, cicloFilter])
+  }, [immunotherapies, searchTerm, tipoFilter, cicloFilter, showInativas])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage))
 
@@ -180,7 +181,7 @@ export function ImmunotherapiesPage() {
                         setSelectedPatient({
                           id: item.id, nome: item.nome, dataNascimento: '02/07/2000', idade: 25,
                           telefone: '(62) 99557-1423', peso: '89.7 kg', cpf: '711.905.744-89',
-                          medicoResponsavel: 'Dra. Karina Martins', status: 'ativo',
+                          medicoResponsavel: 'Dra. Karina Martins', status: item.status === 'ativo' ? 'ativo' as const : 'inativo' as const,
                           tipoImunoterapia: item.tipo, inicioInducao: '01/01/2020', inicioManutencao: null,
                           viaAdministracao: 'Subcutânea', extrato: 'Der p 60 + der f 10% + blt 30%',
                           concentracaoVolumeMeta: '1:10 - 0,5ml', metaAtingida: false,
@@ -190,7 +191,12 @@ export function ImmunotherapiesPage() {
                         navigate({ to: '/patient/$patientId', params: { patientId: item.id } })
                       }}
                     >
-                      <td className="px-4 py-2 text-xs font-medium text-(--text)">{item.nome}</td>
+                      <td className={cn("px-4 py-2 text-xs font-medium", item.status === 'inativo' ? "text-(--text-muted)" : "text-(--text)")}>
+                        <div className="flex items-center gap-2">
+                          {item.nome}
+                          {item.status === 'inativo' && <span className="text-[0.55rem] font-semibold px-1.5 py-px rounded-full bg-gray-100 text-(--text-muted) border border-gray-200">Inativo</span>}
+                        </div>
+                      </td>
                       <td className="px-4 py-2">
                         <span className="inline-block px-2 py-0.5 rounded-md bg-gray-100 text-[0.7rem] font-medium text-(--text-muted)">
                           {item.tipo}
@@ -199,11 +205,11 @@ export function ImmunotherapiesPage() {
                       <td className="px-4 py-2 text-xs text-(--text-muted)">{item.doseConcentracao}</td>
                       <td className="px-4 py-2">
                         <span
-                          className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[0.7rem] font-semibold"
-                          style={{ backgroundColor: color.bg, color: color.text }}
+                          className="inline-flex items-center gap-1.5 px-2 py-px rounded-full text-[0.65rem] font-semibold border"
+                          style={{ backgroundColor: color.bg, color: color.text, borderColor: color.dot + '30' }}
                         >
                           <span
-                            className="w-2 h-2 rounded-full shrink-0"
+                            className="w-1.5 h-1.5 rounded-full shrink-0"
                             style={{ backgroundColor: color.dot }}
                           />
                           {item.cicloIntervalo.dias} dias
