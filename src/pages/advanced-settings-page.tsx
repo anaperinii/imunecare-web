@@ -40,15 +40,15 @@ export function AdvancedSettingsPage() {
                     {i > 0 && <div className="border-t border-(--border-custom) mb-3" />}
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#E6F9FA] shrink-0">
-                          <item.icon size={14} className="text-[#18C1CB]" />
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-50 shrink-0">
+                          <item.icon size={14} className="text-brand" />
                         </div>
                         <div>
                           <div className="text-xs font-semibold text-(--text)">{item.label}</div>
                           <div className="text-[0.65rem] text-(--text-muted)">{item.desc}</div>
                         </div>
                       </div>
-                      <button onClick={() => item.set(!item.value)} className={cn("h-6 w-11 rounded-full transition-all cursor-pointer relative", item.value ? "bg-[#18C1CB]" : "bg-gray-300")}>
+                      <button onClick={() => item.set(!item.value)} className={cn("h-6 w-11 rounded-full transition-all cursor-pointer relative", item.value ? "bg-brand" : "bg-gray-300")}>
                         <div className={cn("absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all", item.value ? "left-5.5" : "left-0.5")} />
                       </button>
                     </div>
@@ -108,23 +108,23 @@ export function AdvancedSettingsPage() {
               <div className="p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#E6F9FA] shrink-0">
-                      <Database size={14} className="text-[#18C1CB]" />
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-50 shrink-0">
+                      <Database size={14} className="text-brand" />
                     </div>
                     <div>
                       <div className="text-xs font-semibold text-(--text)">Backup automático</div>
                       <div className="text-[0.65rem] text-(--text-muted)">Backup diário dos dados clínicos às 03:00</div>
                     </div>
                   </div>
-                  <button onClick={() => setAutoBackup(!autoBackup)} className={cn("h-6 w-11 rounded-full transition-all cursor-pointer relative", autoBackup ? "bg-[#18C1CB]" : "bg-gray-300")}>
+                  <button onClick={() => setAutoBackup(!autoBackup)} className={cn("h-6 w-11 rounded-full transition-all cursor-pointer relative", autoBackup ? "bg-brand" : "bg-gray-300")}>
                     <div className={cn("absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all", autoBackup ? "left-5.5" : "left-0.5")} />
                   </button>
                 </div>
                 <div className="border-t border-(--border-custom)" />
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#E6F9FA] shrink-0">
-                      <Server size={14} className="text-[#18C1CB]" />
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-50 shrink-0">
+                      <Server size={14} className="text-brand" />
                     </div>
                     <div>
                       <div className="text-xs font-semibold text-(--text)">Último backup</div>
