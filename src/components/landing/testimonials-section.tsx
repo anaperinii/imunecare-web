@@ -28,8 +28,16 @@ function TestimonialCard({ quote, name, handle, initials }: typeof testimonials[
 
 export function TestimonialsSection() {
   return (
-    <section id="testimonials" className="overflow-hidden py-20">
-      <div className="reveal px-[5%] pb-12">
+    <section id="testimonials" className="overflow-hidden py-20 relative">
+      {/* Top seam (from PricingSection bottom) */}
+      <div className="pointer-events-none absolute -top-32 -left-16 w-95 h-95 rounded-full bg-cyan-100/25 blur-3xl" />
+      <div className="pointer-events-none absolute -top-28 -right-24 w-105 h-105 rounded-full bg-teal-200/20 blur-3xl" />
+      {/* Mid decorative */}
+      <div className="pointer-events-none absolute top-1/2 right-1/4 w-75 h-75 rounded-full bg-teal-200/20 blur-3xl" />
+      {/* Bottom seam (continues into TabsSection) */}
+      <div className="pointer-events-none absolute -bottom-28 -left-20 w-95 h-95 rounded-full bg-teal-200/20 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-32 -right-20 w-100 h-100 rounded-full bg-cyan-100/25 blur-3xl" />
+      <div className="reveal px-[5%] pb-12 relative">
         <span className="inline-block text-[0.75rem] font-bold tracking-[2px] uppercase text-teal-600 bg-teal-50 border border-teal-200 px-4 py-1.5 rounded-full mb-4">
           Depoimentos
         </span>

@@ -21,7 +21,10 @@ function NumberItem({ target, suffix, label }: NumberItemProps) {
 
 export function NumbersSection() {
   return (
-    <div className="reveal text-center py-20 px-[5%] bg-teal-50">
+    <div className="reveal text-center py-20 px-[5%] bg-linear-to-br from-teal-50 via-teal-100/60 to-cyan-50 relative overflow-hidden">
+      <div className="pointer-events-none absolute top-1/2 left-0 -translate-y-1/2 w-125 h-125 rounded-full bg-teal-200/30 blur-3xl" />
+      <div className="pointer-events-none absolute top-0 right-0 w-75 h-75 rounded-full bg-cyan-200/30 blur-3xl" />
+      <div className="relative">
       <span className="inline-block text-[0.75rem] font-bold tracking-[2px] uppercase text-teal-600 bg-white border border-teal-200 px-4 py-1.5 rounded-full mb-4">
         Nossos números
       </span>
@@ -33,6 +36,7 @@ export function NumbersSection() {
         <NumberItem target={18000} suffix="+" label="Pacientes" />
         <NumberItem target={94000} suffix="+" label="Aplicações registradas" />
         <NumberItem target={99} suffix=".9%" label="Disponibilidade" />
+      </div>
       </div>
     </div>
   )
