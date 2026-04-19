@@ -115,6 +115,11 @@
   to { transform: translateX(0); opacity: 1; }
 }
 
+@keyframes slide-up-fade {
+  from { transform: translateY(16px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
 @layer base {
   ::-webkit-scrollbar {
     width: 6px;

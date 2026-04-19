@@ -1,8 +1,8 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { usePatientStore } from '@/store/patient-store'
 import { useImmunotherapiesStore } from '@/store/immunotherapies-store'
-import { Search, ChevronDown, X, ClipboardList, Syringe, CalendarDays } from 'lucide-react'
+import { Search, ChevronDown, ArrowLeft, ClipboardList, Syringe, CalendarDays, Info } from 'lucide-react'
 import { addDays, format, differenceInDays, parse } from 'date-fns'
 import { cn } from '@/lib/utils'
 
@@ -37,7 +37,57 @@ export function PatientEvolutionPage() {
     necessidadeMedicacaoPos: 'Não', medicacoesPos: '', notasPos: '',
   })
 
-  const set = (field: string, value: string) => setForm((p) => ({ ...p, [field]: value }))
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [touched, setTouched] = useState<Record<string, boolean>>({})
+
+  const set = (field: string, value: string) => {
+    setForm((p) => ({ ...p, [field]: value }))
+    if (errors[field]) setErrors((e) => { const n = { ...e }; delete n[field]; return n })
+  }
+
+  const touch = (field: string) => setTouched((t) => ({ ...t, [field]: true }))
+
+  const formatVolume = (v: string) => v.replace(/[^0-9,.]/g, '').replace(',', '.')
+  const formatConcentration = (v: string) => {
+    const cleaned = v.replace(/[^0-9.:]/g, '')
+    if (!cleaned.startsWith('1:') && cleaned.length > 0) {
+      const digits = cleaned.replace(/\D/g, '')
+      return digits.length > 0 ? `1:${digits}` : ''
+    }
+    return cleaned
+  }
+
+  const validateStep1 = useCallback((): boolean => {
+    const e: Record<string, string> = {}
+    if (!form.intervaloRelato.trim()) e.intervaloRelato = 'Relato do intervalo é obrigatório'
+    if (form.efeitoColateral === 'Sim' && !form.efeitosRelatados.trim()) e.efeitosRelatados = 'Descreva os efeitos colaterais'
+    if (form.necessidadeMedicacao === 'Sim' && !form.medicacoes.trim()) e.medicacoes = 'Informe as medicações administradas'
+    setErrors(e)
+    setTouched((t) => ({ ...t, intervaloRelato: true, efeitosRelatados: true, medicacoes: true }))
+    return Object.keys(e).length === 0
+  }, [form])
+
+  const validateStep2 = useCallback((): boolean => {
+    const e: Record<string, string> = {}
+    if (!form.dataAplicacao) e.dataAplicacao = 'Data é obrigatória'
+    if (!form.horaInicio) e.horaInicio = 'Hora de início é obrigatória'
+    if (!form.horaFim) e.horaFim = 'Hora de fim é obrigatória'
+    if (form.horaInicio && form.horaFim && form.horaInicio >= form.horaFim) e.horaFim = 'Hora fim deve ser após início'
+    if (!form.volumeAplicado.trim()) e.volumeAplicado = 'Volume é obrigatório'
+    else { const n = parseFloat(form.volumeAplicado); if (isNaN(n) || n <= 0 || n > 10) e.volumeAplicado = 'Volume inválido' }
+    if (!form.concentracao.trim()) e.concentracao = 'Concentração é obrigatória'
+    else if (!/^1:\d+(\.\d+)?$/.test(form.concentracao)) e.concentracao = 'Formato inválido (ex: 1:10)'
+    if (!form.intervaloProxima) e.intervaloProxima = 'Intervalo é obrigatório'
+    if (!form.responsavel.trim()) e.responsavel = 'Responsável é obrigatório'
+    if (form.efeitoColateralPos === 'Sim' && !form.efeitosRelatadosPos.trim()) e.efeitosRelatadosPos = 'Descreva os efeitos colaterais'
+    if (form.necessidadeMedicacaoPos === 'Sim' && !form.medicacoesPos.trim()) e.medicacoesPos = 'Informe as medicações'
+    setErrors(e)
+    setTouched((t) => ({
+      ...t, dataAplicacao: true, horaInicio: true, horaFim: true, volumeAplicado: true,
+      concentracao: true, intervaloProxima: true, responsavel: true, efeitosRelatadosPos: true, medicacoesPos: true,
+    }))
+    return Object.keys(e).length === 0
+  }, [form])
 
   const filtered = useMemo(() => {
     if (!search) return []
@@ -103,31 +153,48 @@ export function PatientEvolutionPage() {
     } catch { return null }
   }, [selectedPatient])
 
-  const inputClass = "w-full h-9 rounded-lg border border-(--border-custom) bg-gray-50/60 px-3 text-xs placeholder:text-(--text-muted)/60 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all"
-  const textareaClass = "w-full rounded-lg border border-(--border-custom) bg-gray-50/60 px-3 py-2 text-xs placeholder:text-(--text-muted)/60 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all resize-none"
+  const inputCls = (field?: string) => cn(
+    "w-full h-9 rounded-lg border bg-gray-50/60 px-3 text-xs placeholder:text-(--text-muted)/60 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all",
+    field && errors[field] && touched[field] ? "border-red-400 bg-red-50/30" : "border-(--border-custom)"
+  )
+  const textareaCls = (field?: string) => cn(
+    "w-full rounded-lg border bg-gray-50/60 px-3 py-2 text-xs placeholder:text-(--text-muted)/60 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all resize-none",
+    field && errors[field] && touched[field] ? "border-red-400 bg-red-50/30" : "border-(--border-custom)"
+  )
+  const ErrorMsg = ({ field }: { field: string }) => {
+    if (!errors[field] || !touched[field]) return null
+    return <span className="text-[0.6rem] text-red-500 mt-0.5 block">{errors[field]}</span>
+  }
+
+  const handleContinue = () => {
+    if (step === 0 && (!selectedPatient || selectedPatient.status === 'inativo')) return
+    if (step === 1 && !validateStep1()) return
+    if (step === 2 && !validateStep2()) return
+    setStep((s) => (s + 1) as 0 | 1 | 2 | 3)
+  }
 
   return (
     <div className="flex flex-1 flex-col bg-gray-50/80 p-4 min-h-0 overflow-hidden">
       <div className="flex flex-1 min-h-0 flex-col rounded-xl bg-white shadow-[0_4px_24px_rgba(0,0,0,0.06)] overflow-hidden">
         {/* Header */}
-        <div className="border-b border-(--border-custom) px-5 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-(--text)">Evolução do Paciente</h1>
+        <div className="border-b border-(--border-custom) px-5 py-4 flex items-center gap-3">
           <button onClick={() => setShowCancelModal(true)} className="h-8 w-8 flex items-center justify-center rounded-lg text-(--text-muted) hover:bg-red-50 hover:text-red-500 transition-all">
-            <X size={18} />
+            <ArrowLeft size={18} />
           </button>
+          <h1 className="text-2xl font-bold text-(--text)">Evolução do Paciente</h1>
         </div>
 
         {/* Steps */}
-        <div className="px-5 py-8 flex items-center justify-center gap-4">
+        <div className="px-5 py-7 flex items-center justify-center gap-4">
           {stepLabels.map((label, i) => (
             <div key={i} className="flex items-center gap-4">
               <div className="flex items-center gap-2.5">
-                <div className={cn("flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold transition-all", step === i ? "bg-linear-to-br from-brand to-teal-400 text-white" : step > i ? "bg-teal-100 text-teal-600 opacity-50" : "bg-gray-200 text-gray-500")}>
+                <div className={cn("flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold transition-all", step === i ? "bg-linear-to-br from-brand to-teal-400 text-white" : step > i ? "bg-teal-100 text-teal-600 opacity-50" : "bg-gray-200 text-gray-500")}>
                   {i + 1}
                 </div>
-                <span className={cn("text-sm font-medium", step === i ? "text-teal-600" : step > i ? "text-teal-600 opacity-50" : "text-gray-400")}>{label}</span>
+                <span className={cn("text-[0.8rem] font-medium", step === i ? "text-teal-600" : step > i ? "text-teal-600 opacity-50" : "text-gray-400")}>{label}</span>
               </div>
-              {i < 3 && <div className={cn("h-px w-16 border-t-[1.5px]", step > i ? "border-teal-400 border-solid" : "border-gray-200 border-dashed")} />}
+              {i < 3 && <div className={cn("h-px w-14 border-t-[1.5px]", step > i ? "border-teal-400 border-solid" : "border-gray-200 border-dashed")} />}
             </div>
           ))}
         </div>
@@ -146,7 +213,7 @@ export function PatientEvolutionPage() {
                   onChange={(e) => { setSearch(e.target.value); setShowSuggestions(true) }}
                   onFocus={() => setShowSuggestions(true)}
                   onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                  className={cn(inputClass, "pl-8", preselectedId && selectedPatient && "opacity-60 cursor-not-allowed")}
+                  className={cn(inputCls(), "pl-8", preselectedId && selectedPatient && "opacity-60 cursor-not-allowed")}
                 />
                 {showSuggestions && filtered.length > 0 && (
                   <div className="absolute z-10 w-full mt-1 bg-white border border-(--border-custom) rounded-lg shadow-lg max-h-48 overflow-y-auto">
@@ -226,6 +293,12 @@ export function PatientEvolutionPage() {
                   </div>
                 </div>
               )}
+              {selectedPatient && selectedPatient.status === 'inativo' && (
+                <div className="flex items-center gap-2.5 bg-red-50 border border-red-200 rounded-lg px-3.5 py-3 mt-3">
+                  <Info size={14} className="text-red-500 shrink-0" />
+                  <p className="text-xs text-red-700">Este paciente está <span className="font-semibold">inativo</span>. Não é possível registrar uma evolução para pacientes inativos.</p>
+                </div>
+              )}
             </div>
           )}
 
@@ -234,13 +307,14 @@ export function PatientEvolutionPage() {
               <h2 className="text-sm font-bold text-(--text)">Pré-Aplicação</h2>
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
-                  <label className="text-xs font-semibold text-(--text-muted) mb-1.5 block">Como o paciente passou durante o intervalo?</label>
-                  <textarea rows={3} placeholder="Descreva aqui" value={form.intervaloRelato} onChange={(e) => set('intervaloRelato', e.target.value)} className={textareaClass} />
+                  <label className="text-xs font-semibold text-(--text-muted) mb-1.5 block">Como o paciente passou durante o intervalo? <span className="text-red-400">*</span></label>
+                  <textarea rows={3} placeholder="Descreva aqui" value={form.intervaloRelato} onChange={(e) => set('intervaloRelato', e.target.value)} onBlur={() => touch('intervaloRelato')} className={textareaCls('intervaloRelato')} />
+                  <ErrorMsg field="intervaloRelato" />
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-(--text-muted) mb-1.5 block">Efeito colateral</label>
                   <div className="relative">
-                    <select value={form.efeitoColateral} onChange={(e) => set('efeitoColateral', e.target.value)} className={cn(inputClass, "appearance-none pr-8 cursor-pointer")}>
+                    <select value={form.efeitoColateral} onChange={(e) => set('efeitoColateral', e.target.value)} className={cn(inputCls(), "appearance-none pr-8 cursor-pointer")}>
                       <option value="Não">Não</option>
                       <option value="Sim">Sim</option>
                     </select>
@@ -250,7 +324,7 @@ export function PatientEvolutionPage() {
                 <div>
                   <label className="text-xs font-semibold text-(--text-muted) mb-1.5 block">Necessidade de medicação</label>
                   <div className="relative">
-                    <select value={form.necessidadeMedicacao} onChange={(e) => set('necessidadeMedicacao', e.target.value)} className={cn(inputClass, "appearance-none pr-8 cursor-pointer")}>
+                    <select value={form.necessidadeMedicacao} onChange={(e) => set('necessidadeMedicacao', e.target.value)} className={cn(inputCls(), "appearance-none pr-8 cursor-pointer")}>
                       <option value="Não">Não</option>
                       <option value="Sim">Sim</option>
                     </select>
@@ -258,28 +332,32 @@ export function PatientEvolutionPage() {
                   </div>
                 </div>
                 <div>
-                  <label className={cn("text-xs font-semibold mb-1.5 block", form.efeitoColateral === 'Sim' ? "text-(--text-muted)" : "text-(--text-muted)/40")}>Efeitos colaterais relatados</label>
+                  <label className={cn("text-xs font-semibold mb-1.5 block", form.efeitoColateral === 'Sim' ? "text-(--text-muted)" : "text-(--text-muted)/40")}>Efeitos colaterais relatados {form.efeitoColateral === 'Sim' && <span className="text-red-400">*</span>}</label>
                   <input
                     placeholder="Insira aqui"
                     disabled={form.efeitoColateral !== 'Sim'}
                     value={form.efeitosRelatados}
                     onChange={(e) => set('efeitosRelatados', e.target.value)}
-                    className={cn(inputClass, form.efeitoColateral !== 'Sim' && "opacity-40 cursor-not-allowed")}
+                    onBlur={() => touch('efeitosRelatados')}
+                    className={cn(form.efeitoColateral === 'Sim' ? inputCls('efeitosRelatados') : inputCls(), form.efeitoColateral !== 'Sim' && "opacity-40 cursor-not-allowed")}
                   />
+                  {form.efeitoColateral === 'Sim' && <ErrorMsg field="efeitosRelatados" />}
                 </div>
                 <div>
-                  <label className={cn("text-xs font-semibold mb-1.5 block", form.necessidadeMedicacao === 'Sim' ? "text-(--text-muted)" : "text-(--text-muted)/40")}>Medicações administradas</label>
+                  <label className={cn("text-xs font-semibold mb-1.5 block", form.necessidadeMedicacao === 'Sim' ? "text-(--text-muted)" : "text-(--text-muted)/40")}>Medicações administradas {form.necessidadeMedicacao === 'Sim' && <span className="text-red-400">*</span>}</label>
                   <input
                     placeholder="Insira aqui"
                     disabled={form.necessidadeMedicacao !== 'Sim'}
                     value={form.medicacoes}
                     onChange={(e) => set('medicacoes', e.target.value)}
-                    className={cn(inputClass, form.necessidadeMedicacao !== 'Sim' && "opacity-40 cursor-not-allowed")}
+                    onBlur={() => touch('medicacoes')}
+                    className={cn(form.necessidadeMedicacao === 'Sim' ? inputCls('medicacoes') : inputCls(), form.necessidadeMedicacao !== 'Sim' && "opacity-40 cursor-not-allowed")}
                   />
+                  {form.necessidadeMedicacao === 'Sim' && <ErrorMsg field="medicacoes" />}
                 </div>
                 <div className="col-span-2">
                   <label className="text-xs font-semibold text-(--text-muted) mb-1.5 block">Notas do responsável</label>
-                  <textarea rows={2} placeholder="Insira aqui" value={form.notasPre} onChange={(e) => set('notasPre', e.target.value)} className={textareaClass} />
+                  <textarea rows={2} placeholder="Insira aqui" value={form.notasPre} onChange={(e) => set('notasPre', e.target.value)} className={textareaCls()} />
                 </div>
               </div>
             </div>
@@ -291,30 +369,38 @@ export function PatientEvolutionPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-semibold text-(--text-muted) mb-1.5 block">Data da aplicação</label>
-                  <input type="date" value={form.dataAplicacao} onChange={(e) => set('dataAplicacao', e.target.value)} className={inputClass} />
+                  <input type="date" value={form.dataAplicacao} onChange={(e) => set('dataAplicacao', e.target.value)} onBlur={() => touch('dataAplicacao')} className={inputCls('dataAplicacao')} />
+                  <ErrorMsg field="dataAplicacao" />
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <label className="text-xs font-semibold text-(--text-muted) mb-1.5 block">Hora início</label>
-                    <input type="time" value={form.horaInicio} onChange={(e) => set('horaInicio', e.target.value)} className={inputClass} />
+                    <input type="time" value={form.horaInicio} onChange={(e) => set('horaInicio', e.target.value)} onBlur={() => touch('horaInicio')} className={inputCls('horaInicio')} />
+                    <ErrorMsg field="horaInicio" />
                   </div>
                   <div>
                     <label className="text-xs font-semibold text-(--text-muted) mb-1.5 block">Hora fim</label>
-                    <input type="time" value={form.horaFim} onChange={(e) => set('horaFim', e.target.value)} className={inputClass} />
+                    <input type="time" value={form.horaFim} onChange={(e) => set('horaFim', e.target.value)} onBlur={() => touch('horaFim')} className={inputCls('horaFim')} />
+                    <ErrorMsg field="horaFim" />
                   </div>
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-(--text-muted) mb-1.5 block">Volume aplicado</label>
-                  <input placeholder="Insira aqui" value={form.volumeAplicado} onChange={(e) => set('volumeAplicado', e.target.value)} className={inputClass} />
+                  <div className="relative">
+                    <input placeholder="Ex: 0.5" value={form.volumeAplicado} onChange={(e) => set('volumeAplicado', formatVolume(e.target.value))} onBlur={() => touch('volumeAplicado')} className={cn(inputCls('volumeAplicado'), "pr-10")} />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[0.65rem] font-semibold text-(--text-muted)">ml</span>
+                  </div>
+                  <ErrorMsg field="volumeAplicado" />
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-(--text-muted) mb-1.5 block">Concentração do extrato</label>
-                  <input placeholder="Insira aqui" value={form.concentracao} onChange={(e) => set('concentracao', e.target.value)} className={inputClass} />
+                  <input placeholder="1:10" value={form.concentracao} onChange={(e) => set('concentracao', formatConcentration(e.target.value))} onBlur={() => touch('concentracao')} className={inputCls('concentracao')} />
+                  <ErrorMsg field="concentracao" />
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-(--text-muted) mb-1.5 block">Intervalo próxima aplicação</label>
                   <div className="relative">
-                    <select value={form.intervaloProxima} onChange={(e) => set('intervaloProxima', e.target.value)} className={cn(inputClass, "appearance-none pr-8 cursor-pointer")}>
+                    <select value={form.intervaloProxima} onChange={(e) => set('intervaloProxima', e.target.value)} onBlur={() => touch('intervaloProxima')} className={cn(inputCls('intervaloProxima'), "appearance-none pr-8 cursor-pointer")}>
                       <option value="" disabled>Selecione</option>
                       <option value="7">7 dias</option>
                       <option value="14">14 dias</option>
@@ -323,15 +409,17 @@ export function PatientEvolutionPage() {
                     </select>
                     <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-(--text-muted) pointer-events-none" />
                   </div>
+                  <ErrorMsg field="intervaloProxima" />
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-(--text-muted) mb-1.5 block">Responsável</label>
-                  <input placeholder="Insira aqui" value={form.responsavel} onChange={(e) => set('responsavel', e.target.value)} className={inputClass} />
+                  <input placeholder="Nome do responsável" value={form.responsavel} onChange={(e) => set('responsavel', e.target.value)} onBlur={() => touch('responsavel')} className={inputCls('responsavel')} />
+                  <ErrorMsg field="responsavel" />
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-(--text-muted) mb-1.5 block">Efeito colateral</label>
                   <div className="relative">
-                    <select value={form.efeitoColateralPos} onChange={(e) => set('efeitoColateralPos', e.target.value)} className={cn(inputClass, "appearance-none pr-8 cursor-pointer")}>
+                    <select value={form.efeitoColateralPos} onChange={(e) => set('efeitoColateralPos', e.target.value)} className={cn(inputCls(), "appearance-none pr-8 cursor-pointer")}>
                       <option value="Não">Não</option>
                       <option value="Sim">Sim</option>
                     </select>
@@ -341,7 +429,7 @@ export function PatientEvolutionPage() {
                 <div>
                   <label className="text-xs font-semibold text-(--text-muted) mb-1.5 block">Necessidade de medicação</label>
                   <div className="relative">
-                    <select value={form.necessidadeMedicacaoPos} onChange={(e) => set('necessidadeMedicacaoPos', e.target.value)} className={cn(inputClass, "appearance-none pr-8 cursor-pointer")}>
+                    <select value={form.necessidadeMedicacaoPos} onChange={(e) => set('necessidadeMedicacaoPos', e.target.value)} className={cn(inputCls(), "appearance-none pr-8 cursor-pointer")}>
                       <option value="Não">Não</option>
                       <option value="Sim">Sim</option>
                     </select>
@@ -349,17 +437,19 @@ export function PatientEvolutionPage() {
                   </div>
                 </div>
                 {/* Conditional fields with fade-in */}
-                <div className={cn("transition-all duration-300 overflow-hidden", form.efeitoColateralPos === 'Sim' ? "max-h-20 opacity-100" : "max-h-0 opacity-0")}>
+                <div className={cn("transition-all duration-300 overflow-hidden", form.efeitoColateralPos === 'Sim' ? "max-h-24 opacity-100" : "max-h-0 opacity-0")}>
                   <label className="text-xs font-semibold text-(--text-muted) mb-1.5 block">Efeitos colaterais relatados</label>
-                  <input placeholder="Insira aqui" value={form.efeitosRelatadosPos} onChange={(e) => set('efeitosRelatadosPos', e.target.value)} className={inputClass} />
+                  <input placeholder="Insira aqui" value={form.efeitosRelatadosPos} onChange={(e) => set('efeitosRelatadosPos', e.target.value)} onBlur={() => touch('efeitosRelatadosPos')} className={inputCls('efeitosRelatadosPos')} />
+                  <ErrorMsg field="efeitosRelatadosPos" />
                 </div>
-                <div className={cn("transition-all duration-300 overflow-hidden", form.necessidadeMedicacaoPos === 'Sim' ? "max-h-20 opacity-100" : "max-h-0 opacity-0")}>
+                <div className={cn("transition-all duration-300 overflow-hidden", form.necessidadeMedicacaoPos === 'Sim' ? "max-h-24 opacity-100" : "max-h-0 opacity-0")}>
                   <label className="text-xs font-semibold text-(--text-muted) mb-1.5 block">Medicações administradas</label>
-                  <input placeholder="Insira aqui" value={form.medicacoesPos} onChange={(e) => set('medicacoesPos', e.target.value)} className={inputClass} />
+                  <input placeholder="Insira aqui" value={form.medicacoesPos} onChange={(e) => set('medicacoesPos', e.target.value)} onBlur={() => touch('medicacoesPos')} className={inputCls('medicacoesPos')} />
+                  <ErrorMsg field="medicacoesPos" />
                 </div>
                 <div className="col-span-2">
                   <label className="text-xs font-semibold text-(--text-muted) mb-1.5 block">Notas do responsável</label>
-                  <textarea rows={2} placeholder="Insira aqui" value={form.notasPos} onChange={(e) => set('notasPos', e.target.value)} className={textareaClass} />
+                  <textarea rows={2} placeholder="Insira aqui" value={form.notasPos} onChange={(e) => set('notasPos', e.target.value)} className={textareaCls()} />
                 </div>
               </div>
             </div>
@@ -379,32 +469,24 @@ export function PatientEvolutionPage() {
                   </div>
                   <span className="text-[0.65rem] font-semibold uppercase tracking-wider text-(--text-muted)">Pré-Aplicação</span>
                 </div>
-                <div className="bg-gray-50/50">
+                <div className="bg-gray-50/60 p-4">
                   {form.intervaloRelato && (
-                    <div className="mx-4 mt-3 mb-1 bg-teal-50 border-l-2 border-teal-400 rounded-r-lg px-3 py-2.5">
+                    <div className="mb-3 bg-teal-50 border-l-2 border-teal-400 rounded-r-lg px-3 py-2.5">
                       <div className="text-[0.6rem] font-semibold uppercase tracking-wider text-teal-700 mb-1">Relato do intervalo</div>
                       <div className="text-xs text-teal-900 leading-relaxed">{form.intervaloRelato}</div>
                     </div>
                   )}
-                  <div className="px-4">
+                  <div className="grid grid-cols-2 gap-px bg-(--border-custom) rounded-lg overflow-hidden border border-(--border-custom)">
                     {[
-                      { label: 'Efeito colateral', value: form.efeitoColateral, isChip: true },
-                      ...(form.efeitoColateral === 'Sim' ? [{ label: 'Efeitos relatados', value: form.efeitosRelatados }] : []),
-                      { label: 'Necessidade de medicação', value: form.necessidadeMedicacao, isChip: true },
-                      ...(form.necessidadeMedicacao === 'Sim' ? [{ label: 'Medicações', value: form.medicacoes }] : []),
-                      ...(form.notasPre ? [{ label: 'Notas', value: form.notasPre, isNote: true }] : []),
-                    ].map((field) => (
-                      <div key={field.label} className="flex items-center gap-2 py-2.5 border-b border-(--border-custom) last:border-0">
-                        <span className="text-xs text-(--text-muted) shrink-0">{field.label}:</span>
-                        {field.isChip ? (
-                          <span className={cn("text-xs font-medium px-2.5 py-0.5 rounded-full", field.value === 'Sim' ? "bg-amber-100 text-amber-700" : "bg-teal-50 text-teal-700")}>
-                            {field.value}
-                          </span>
-                        ) : field.isNote ? (
-                          <span className="text-xs text-(--text-muted) text-right max-w-[60%] leading-relaxed">{field.value}</span>
-                        ) : (
-                          <span className="text-xs font-medium text-(--text)">{field.value || '—'}</span>
-                        )}
+                      { label: 'Efeito Colateral', value: form.efeitoColateral },
+                      { label: 'Necessidade de Medicação', value: form.necessidadeMedicacao },
+                      ...(form.efeitoColateral === 'Sim' ? [{ label: 'Efeitos Relatados', value: form.efeitosRelatados || '—' }] : []),
+                      ...(form.necessidadeMedicacao === 'Sim' ? [{ label: 'Medicações', value: form.medicacoes || '—' }] : []),
+                      ...(form.notasPre ? [{ label: 'Notas', value: form.notasPre }] : []),
+                    ].map((item) => (
+                      <div key={item.label} className="bg-white px-3.5 py-2.5">
+                        <div className="text-[0.6rem] font-semibold uppercase tracking-wider text-(--text-muted) mb-0.5">{item.label}</div>
+                        <div className="text-xs font-medium text-(--text)">{item.value || '—'}</div>
                       </div>
                     ))}
                   </div>
@@ -418,37 +500,22 @@ export function PatientEvolutionPage() {
                   </div>
                   <span className="text-[0.65rem] font-semibold uppercase tracking-wider text-(--text-muted)">Pós-Aplicação</span>
                 </div>
-                <div className="bg-gray-50/50">
-                  <div className="grid grid-cols-2 gap-px bg-(--border-custom) m-4 rounded-lg overflow-hidden border border-(--border-custom)">
+                <div className="bg-gray-50/60 p-4">
+                  <div className="grid grid-cols-2 gap-px bg-(--border-custom) rounded-lg overflow-hidden border border-(--border-custom)">
                     {[
                       { label: 'Data', value: form.dataAplicacao || '—' },
                       { label: 'Horário', value: form.horaInicio && form.horaFim ? `${form.horaInicio} – ${form.horaFim}` : '—' },
-                      { label: 'Volume aplicado', value: form.volumeAplicado || '—', accent: true },
-                      { label: 'Concentração', value: form.concentracao || '—', accent: true },
-                      { label: 'Intervalo próxima dose', value: form.intervaloProxima ? `${form.intervaloProxima} dias` : '—' },
+                      { label: 'Volume Aplicado', value: form.volumeAplicado ? `${form.volumeAplicado} ml` : '—' },
+                      { label: 'Concentração', value: form.concentracao || '—' },
+                      { label: 'Intervalo Próxima Dose', value: form.intervaloProxima ? `${form.intervaloProxima} dias` : '—' },
                       { label: 'Responsável', value: form.responsavel || '—' },
+                      { label: 'Efeito Colateral', value: form.efeitoColateralPos },
+                      { label: 'Necessidade de Medicação', value: form.necessidadeMedicacaoPos },
+                      ...(form.notasPos ? [{ label: 'Notas', value: form.notasPos }] : []),
                     ].map((item) => (
                       <div key={item.label} className="bg-white px-3.5 py-2.5">
                         <div className="text-[0.6rem] font-semibold uppercase tracking-wider text-(--text-muted) mb-0.5">{item.label}</div>
-                        <div className={cn("text-xs font-medium", item.accent ? "text-teal-700" : "text-(--text)")}>{item.value}</div>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="px-4 pb-1">
-                    {[
-                      { label: 'Efeito colateral', value: form.efeitoColateralPos, isChip: true },
-                      { label: 'Necessidade de medicação', value: form.necessidadeMedicacaoPos, isChip: true },
-                      { label: 'Notas', value: form.notasPos },
-                    ].map((field) => (
-                      <div key={field.label} className="flex items-center gap-2 py-2.5 border-b border-(--border-custom) last:border-0">
-                        <span className="text-xs text-(--text-muted) shrink-0">{field.label}:</span>
-                        {field.isChip ? (
-                          <span className={cn("text-xs font-medium px-2.5 py-0.5 rounded-full", field.value === 'Sim' ? "bg-amber-100 text-amber-700" : "bg-teal-50 text-teal-700")}>
-                            {field.value}
-                          </span>
-                        ) : (
-                          <span className="text-xs text-(--text-muted)">{field.value || '—'}</span>
-                        )}
+                        <div className="text-xs font-medium text-(--text)">{item.value}</div>
                       </div>
                     ))}
                   </div>
@@ -474,15 +541,15 @@ export function PatientEvolutionPage() {
           )}
           {step < 3 ? (
             <button
-              onClick={() => { if (step === 0 && !selectedPatient) return; setStep((s) => (s + 1) as 0 | 1 | 2 | 3) }}
-              disabled={step === 0 && !selectedPatient}
+              onClick={handleContinue}
+              disabled={step === 0 && (!selectedPatient || selectedPatient.status === 'inativo')}
               className="h-8 px-4 rounded-lg bg-linear-to-br from-brand to-teal-400 text-white text-xs font-semibold hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(20,184,166,0.3)] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none"
             >
               Continuar
             </button>
           ) : (
-            <button onClick={() => navigate({ to: '/immunotherapies' })} className="h-8 px-4 rounded-lg bg-linear-to-br from-brand to-teal-400 text-white text-xs font-semibold hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(20,184,166,0.3)] transition-all">
-              Salvar
+            <button onClick={() => navigate({ to: '/immunotherapies', search: { success: true, patientName: selectedPatient?.nome } })} className="h-8 px-4 rounded-lg bg-linear-to-br from-brand to-teal-400 text-white text-xs font-semibold hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(20,184,166,0.3)] transition-all">
+              Salvar Evolução
             </button>
           )}
         </div>
