@@ -9,25 +9,59 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TeamsRouteImport } from './routes/teams'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as SecurityRouteImport } from './routes/security'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as PlansRouteImport } from './routes/plans'
+import { Route as PersonalizationRouteImport } from './routes/personalization'
 import { Route as PatientEvolutionRouteImport } from './routes/patient-evolution'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ImmunotherapiesRouteImport } from './routes/immunotherapies'
+import { Route as HelpRouteImport } from './routes/help'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AppointmentsRouteImport } from './routes/appointments'
+import { Route as AdvancedSettingsRouteImport } from './routes/advanced-settings'
 import { Route as AddImmunotherapyRouteImport } from './routes/add-immunotherapy'
+import { Route as AccessibilityRouteImport } from './routes/accessibility'
+import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PatientPatientIdRouteImport } from './routes/patient.$patientId'
 
+const TeamsRoute = TeamsRouteImport.update({
+  id: '/teams',
+  path: '/teams',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SecurityRoute = SecurityRouteImport.update({
+  id: '/security',
+  path: '/security',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
   path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlansRoute = PlansRouteImport.update({
+  id: '/plans',
+  path: '/plans',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PersonalizationRoute = PersonalizationRouteImport.update({
+  id: '/personalization',
+  path: '/personalization',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PatientEvolutionRoute = PatientEvolutionRouteImport.update({
@@ -45,6 +79,11 @@ const ImmunotherapiesRoute = ImmunotherapiesRouteImport.update({
   path: '/immunotherapies',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HelpRoute = HelpRouteImport.update({
+  id: '/help',
+  path: '/help',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -55,9 +94,24 @@ const AppointmentsRoute = AppointmentsRouteImport.update({
   path: '/appointments',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdvancedSettingsRoute = AdvancedSettingsRouteImport.update({
+  id: '/advanced-settings',
+  path: '/advanced-settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AddImmunotherapyRoute = AddImmunotherapyRouteImport.update({
   id: '/add-immunotherapy',
   path: '/add-immunotherapy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccessibilityRoute = AccessibilityRouteImport.update({
+  id: '/accessibility',
+  path: '/accessibility',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -73,95 +127,165 @@ const PatientPatientIdRoute = PatientPatientIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/accessibility': typeof AccessibilityRoute
   '/add-immunotherapy': typeof AddImmunotherapyRoute
+  '/advanced-settings': typeof AdvancedSettingsRoute
   '/appointments': typeof AppointmentsRoute
   '/dashboard': typeof DashboardRoute
+  '/help': typeof HelpRoute
   '/immunotherapies': typeof ImmunotherapiesRoute
   '/login': typeof LoginRoute
   '/patient-evolution': typeof PatientEvolutionRoute
+  '/personalization': typeof PersonalizationRoute
+  '/plans': typeof PlansRoute
+  '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
+  '/security': typeof SecurityRoute
   '/settings': typeof SettingsRoute
+  '/teams': typeof TeamsRoute
   '/patient/$patientId': typeof PatientPatientIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/accessibility': typeof AccessibilityRoute
   '/add-immunotherapy': typeof AddImmunotherapyRoute
+  '/advanced-settings': typeof AdvancedSettingsRoute
   '/appointments': typeof AppointmentsRoute
   '/dashboard': typeof DashboardRoute
+  '/help': typeof HelpRoute
   '/immunotherapies': typeof ImmunotherapiesRoute
   '/login': typeof LoginRoute
   '/patient-evolution': typeof PatientEvolutionRoute
+  '/personalization': typeof PersonalizationRoute
+  '/plans': typeof PlansRoute
+  '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
+  '/security': typeof SecurityRoute
   '/settings': typeof SettingsRoute
+  '/teams': typeof TeamsRoute
   '/patient/$patientId': typeof PatientPatientIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/accessibility': typeof AccessibilityRoute
   '/add-immunotherapy': typeof AddImmunotherapyRoute
+  '/advanced-settings': typeof AdvancedSettingsRoute
   '/appointments': typeof AppointmentsRoute
   '/dashboard': typeof DashboardRoute
+  '/help': typeof HelpRoute
   '/immunotherapies': typeof ImmunotherapiesRoute
   '/login': typeof LoginRoute
   '/patient-evolution': typeof PatientEvolutionRoute
+  '/personalization': typeof PersonalizationRoute
+  '/plans': typeof PlansRoute
+  '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
+  '/security': typeof SecurityRoute
   '/settings': typeof SettingsRoute
+  '/teams': typeof TeamsRoute
   '/patient/$patientId': typeof PatientPatientIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/about'
+    | '/accessibility'
     | '/add-immunotherapy'
+    | '/advanced-settings'
     | '/appointments'
     | '/dashboard'
+    | '/help'
     | '/immunotherapies'
     | '/login'
     | '/patient-evolution'
+    | '/personalization'
+    | '/plans'
+    | '/profile'
     | '/register'
+    | '/security'
     | '/settings'
+    | '/teams'
     | '/patient/$patientId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/about'
+    | '/accessibility'
     | '/add-immunotherapy'
+    | '/advanced-settings'
     | '/appointments'
     | '/dashboard'
+    | '/help'
     | '/immunotherapies'
     | '/login'
     | '/patient-evolution'
+    | '/personalization'
+    | '/plans'
+    | '/profile'
     | '/register'
+    | '/security'
     | '/settings'
+    | '/teams'
     | '/patient/$patientId'
   id:
     | '__root__'
     | '/'
+    | '/about'
+    | '/accessibility'
     | '/add-immunotherapy'
+    | '/advanced-settings'
     | '/appointments'
     | '/dashboard'
+    | '/help'
     | '/immunotherapies'
     | '/login'
     | '/patient-evolution'
+    | '/personalization'
+    | '/plans'
+    | '/profile'
     | '/register'
+    | '/security'
     | '/settings'
+    | '/teams'
     | '/patient/$patientId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AboutRoute: typeof AboutRoute
+  AccessibilityRoute: typeof AccessibilityRoute
   AddImmunotherapyRoute: typeof AddImmunotherapyRoute
+  AdvancedSettingsRoute: typeof AdvancedSettingsRoute
   AppointmentsRoute: typeof AppointmentsRoute
   DashboardRoute: typeof DashboardRoute
+  HelpRoute: typeof HelpRoute
   ImmunotherapiesRoute: typeof ImmunotherapiesRoute
   LoginRoute: typeof LoginRoute
   PatientEvolutionRoute: typeof PatientEvolutionRoute
+  PersonalizationRoute: typeof PersonalizationRoute
+  PlansRoute: typeof PlansRoute
+  ProfileRoute: typeof ProfileRoute
   RegisterRoute: typeof RegisterRoute
+  SecurityRoute: typeof SecurityRoute
   SettingsRoute: typeof SettingsRoute
+  TeamsRoute: typeof TeamsRoute
   PatientPatientIdRoute: typeof PatientPatientIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/teams': {
+      id: '/teams'
+      path: '/teams'
+      fullPath: '/teams'
+      preLoaderRoute: typeof TeamsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings': {
       id: '/settings'
       path: '/settings'
@@ -169,11 +293,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/security': {
+      id: '/security'
+      path: '/security'
+      fullPath: '/security'
+      preLoaderRoute: typeof SecurityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/register': {
       id: '/register'
       path: '/register'
       fullPath: '/register'
       preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/plans': {
+      id: '/plans'
+      path: '/plans'
+      fullPath: '/plans'
+      preLoaderRoute: typeof PlansRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/personalization': {
+      id: '/personalization'
+      path: '/personalization'
+      fullPath: '/personalization'
+      preLoaderRoute: typeof PersonalizationRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/patient-evolution': {
@@ -197,6 +349,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ImmunotherapiesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/help': {
+      id: '/help'
+      path: '/help'
+      fullPath: '/help'
+      preLoaderRoute: typeof HelpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard': {
       id: '/dashboard'
       path: '/dashboard'
@@ -211,11 +370,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppointmentsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/advanced-settings': {
+      id: '/advanced-settings'
+      path: '/advanced-settings'
+      fullPath: '/advanced-settings'
+      preLoaderRoute: typeof AdvancedSettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/add-immunotherapy': {
       id: '/add-immunotherapy'
       path: '/add-immunotherapy'
       fullPath: '/add-immunotherapy'
       preLoaderRoute: typeof AddImmunotherapyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/accessibility': {
+      id: '/accessibility'
+      path: '/accessibility'
+      fullPath: '/accessibility'
+      preLoaderRoute: typeof AccessibilityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -237,14 +417,23 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AboutRoute: AboutRoute,
+  AccessibilityRoute: AccessibilityRoute,
   AddImmunotherapyRoute: AddImmunotherapyRoute,
+  AdvancedSettingsRoute: AdvancedSettingsRoute,
   AppointmentsRoute: AppointmentsRoute,
   DashboardRoute: DashboardRoute,
+  HelpRoute: HelpRoute,
   ImmunotherapiesRoute: ImmunotherapiesRoute,
   LoginRoute: LoginRoute,
   PatientEvolutionRoute: PatientEvolutionRoute,
+  PersonalizationRoute: PersonalizationRoute,
+  PlansRoute: PlansRoute,
+  ProfileRoute: ProfileRoute,
   RegisterRoute: RegisterRoute,
+  SecurityRoute: SecurityRoute,
   SettingsRoute: SettingsRoute,
+  TeamsRoute: TeamsRoute,
   PatientPatientIdRoute: PatientPatientIdRoute,
 }
 export const routeTree = rootRouteImport
