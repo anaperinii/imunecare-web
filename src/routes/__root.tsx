@@ -2,6 +2,7 @@ import { createRootRoute, Outlet, useLocation } from '@tanstack/react-router'
 import { Header } from '@/components/header'
 import { Sidebar } from '@/components/sidebar'
 import { useState, useEffect } from 'react'
+import { useSidebarStore } from '@/store/sidebar-store'
 import { cn } from '@/lib/utils'
 
 const publicRoutes = ['/', '/login', '/register']
@@ -23,7 +24,7 @@ function PageTransition({ children }: { children: React.ReactNode }) {
 }
 
 function RootComponent() {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const { isCollapsed, toggle } = useSidebarStore()
   const location = useLocation()
   const isPublicRoute = publicRoutes.includes(location.pathname)
   const isAuthRoute = authRoutes.includes(location.pathname)
@@ -42,8 +43,8 @@ function RootComponent() {
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar
-        isCollapsed={sidebarCollapsed}
-        onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+        isCollapsed={isCollapsed}
+        onToggle={toggle}
       />
       <main
         className={cn(

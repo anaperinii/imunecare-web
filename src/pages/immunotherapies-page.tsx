@@ -79,7 +79,7 @@ export function ImmunotherapiesPage() {
       <div className="mx-4 my-4 flex flex-1 flex-col rounded-xl bg-white shadow-[0_4px_24px_rgba(0,0,0,0.06)] overflow-hidden">
         {/* Header */}
         <div className="border-b border-(--border-custom) px-5 py-4">
-          <h1 className="mb-3.5 text-xl font-extrabold text-(--text)">Imunoterapias</h1>
+          <h1 className="mb-3.5 text-2xl font-bold text-(--text)">Imunoterapias</h1>
 
           <div className="flex flex-wrap items-center gap-1.5">
             {/* Search */}
@@ -190,14 +190,14 @@ export function ImmunotherapiesPage() {
                         navigate({ to: '/patient/$patientId', params: { patientId: item.id } })
                       }}
                     >
-                      <td className="px-4 py-3 text-xs font-medium text-(--text)">{item.nome}</td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-2 text-xs font-medium text-(--text)">{item.nome}</td>
+                      <td className="px-4 py-2">
                         <span className="inline-block px-2 py-0.5 rounded-md bg-gray-100 text-[0.7rem] font-medium text-(--text-muted)">
                           {item.tipo}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-xs text-(--text-muted)">{item.doseConcentracao}</td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-2 text-xs text-(--text-muted)">{item.doseConcentracao}</td>
+                      <td className="px-4 py-2">
                         <span
                           className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[0.7rem] font-semibold"
                           style={{ backgroundColor: color.bg, color: color.text }}
