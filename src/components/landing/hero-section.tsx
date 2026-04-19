@@ -15,8 +15,8 @@ export function HeroSection() {
         </div>
 
         {/* Heading */}
-        <h1 className="text-[clamp(1.8rem,3.5vw,2.8rem)] font-extrabold leading-[1.1] tracking-[-1px] mb-5 bg-[linear-gradient(150deg,var(--text)_0%,var(--color-teal-800)_60%,var(--color-cyan-600)_100%)] bg-clip-text [-webkit-background-clip:text] [-webkit-text-fill-color:transparent]">
-          Centralize a gestão de imunoterapias alérgicas
+        <h1 className="text-[clamp(1.8rem,3.5vw,2.8rem)] font-extrabold leading-tight tracking-[-1px] mb-5 bg-[linear-gradient(150deg,var(--text)_0%,var(--color-teal-800)_60%,var(--color-cyan-600)_100%)] bg-clip-text [-webkit-background-clip:text] [-webkit-text-fill-color:transparent]">
+          Centralize e otimize a gestão de imunoterapias alérgicas
         </h1>
 
         {/* Subtitle */}
@@ -69,7 +69,7 @@ export function HeroSection() {
             </svg>
 
             <h2 className="text-[1.6rem] xl:text-[1.8rem] 2xl:text-[2.2rem] font-extrabold text-white leading-tight relative z-1 max-w-65 xl:max-w-70 2xl:max-w-85">
-              Acompanhe e otimize o tratamento dos seus pacientes.
+              Acompanhe e aprimore o tratamento dos seus pacientes.
             </h2>
 
             {/* Dots */}
