@@ -152,7 +152,7 @@ export function PatientChartPage() {
   }
 
   return (
-    <div className="flex h-full flex-col bg-gray-50/80">
+    <div className="flex flex-1 flex-col bg-gray-50/80 min-h-0 overflow-hidden">
       <div className="mx-4 my-4 flex flex-1 gap-4 min-h-0">
         {/* Left — Patient info */}
         <div className="flex w-[320px] shrink-0 flex-col rounded-xl bg-white shadow-[0_4px_24px_rgba(0,0,0,0.06)] overflow-hidden">
@@ -177,7 +177,10 @@ export function PatientChartPage() {
               </div>
             </div>
             <div className="mt-3 flex gap-1.5">
-              <button className="flex-1 h-8 rounded-lg bg-linear-to-br from-teal-500 to-cyan-500 text-white text-xs font-semibold hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(20,184,166,0.3)] transition-all">
+              <button
+                onClick={() => navigate({ to: '/patient-evolution', search: { patientId: selectedPatient.id } })}
+                className="flex-1 h-8 rounded-lg bg-linear-to-br from-teal-500 to-cyan-500 text-white text-xs font-semibold hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(20,184,166,0.3)] transition-all"
+              >
                 Evoluir Paciente
               </button>
               <button className="flex-1 h-8 rounded-lg border border-(--border-custom) text-xs font-medium text-(--text-muted) hover:border-teal-300 hover:text-teal-600 transition-all">
