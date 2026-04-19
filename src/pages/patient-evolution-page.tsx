@@ -2,11 +2,11 @@ import { useState, useMemo, useEffect } from 'react'
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { usePatientStore } from '@/store/patient-store'
 import { useImmunotherapiesStore } from '@/store/immunotherapies-store'
-import { Search, ChevronDown, X, ClipboardList, Syringe, Info } from 'lucide-react'
+import { Search, ChevronDown, X, ClipboardList, Syringe, CalendarDays } from 'lucide-react'
 import { addDays, format, differenceInDays, parse } from 'date-fns'
 import { cn } from '@/lib/utils'
 
-const stepLabels = ['Paciente', 'Pré-Aplicação', 'Pós-Aplicação', 'Revisão']
+const stepLabels = ['Paciente', 'Pré-Aplicação', 'Pós-Aplicação', 'Revisão dos Dados']
 
 export function PatientEvolutionPage() {
   const navigate = useNavigate()
@@ -345,52 +345,99 @@ export function PatientEvolutionPage() {
           )}
 
           {step === 3 && (
-            <div className="space-y-5">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <div className="flex items-center gap-2.5 mb-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-100/60">
-                      <ClipboardList size={15} className="text-teal-600" />
-                    </div>
-                    <h3 className="text-xs font-bold text-(--text)">Pré-Aplicação</h3>
+            <div className="space-y-3.5">
+              <div className="mb-4">
+                <h2 className="text-sm font-bold text-(--text)">Revisão da evolução</h2>
+                <p className="text-[0.7rem] text-(--text-muted) mt-1">Confirme os dados antes de registrar a dose.</p>
+              </div>
+
+              <div className="border border-(--border-custom) rounded-xl overflow-hidden">
+                <div className="flex items-center gap-2.5 px-4 py-3 border-b border-(--border-custom) bg-white">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-teal-100 shrink-0">
+                    <ClipboardList size={13} className="text-teal-600" />
                   </div>
-                  <div className="space-y-2">
-                    {[
-                      ['Relato do intervalo', form.intervaloRelato], ['Efeito colateral', form.efeitoColateral],
-                      ['Efeitos relatados', form.efeitosRelatados], ['Necessidade medicação', form.necessidadeMedicacao],
-                      ['Medicações', form.medicacoes], ['Notas', form.notasPre],
-                    ].map(([l, v]) => (
-                      <div key={l} className="text-xs"><span className="font-medium text-(--text-muted)">{l}: </span><span className="text-(--text)">{v || '-'}</span></div>
-                    ))}
-                  </div>
+                  <span className="text-[0.65rem] font-semibold uppercase tracking-wider text-(--text-muted)">Pré-Aplicação</span>
                 </div>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <div className="flex items-center gap-2.5 mb-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-100/60">
-                      <Syringe size={15} className="text-teal-600" />
+                <div className="bg-gray-50/50">
+                  {form.intervaloRelato && (
+                    <div className="mx-4 mt-3 mb-1 bg-teal-50 border-l-2 border-teal-400 rounded-r-lg px-3 py-2.5">
+                      <div className="text-[0.6rem] font-semibold uppercase tracking-wider text-teal-700 mb-1">Relato do intervalo</div>
+                      <div className="text-xs text-teal-900 leading-relaxed">{form.intervaloRelato}</div>
                     </div>
-                    <h3 className="text-xs font-bold text-(--text)">Pós-Aplicação</h3>
-                  </div>
-                  <div className="space-y-2">
+                  )}
+                  <div className="px-4">
                     {[
-                      ['Data', form.dataAplicacao], ['Horário', `${form.horaInicio || '-'} – ${form.horaFim || '-'}`],
-                      ['Volume', form.volumeAplicado], ['Concentração', form.concentracao],
-                      ['Intervalo próxima', form.intervaloProxima ? `${form.intervaloProxima} dias` : '-'],
-                      ['Responsável', form.responsavel], ['Efeito colateral', form.efeitoColateralPos],
-                      ['Necessidade medicação', form.necessidadeMedicacaoPos], ['Notas', form.notasPos],
-                    ].map(([l, v]) => (
-                      <div key={l} className="text-xs"><span className="font-medium text-(--text-muted)">{l}: </span><span className="text-(--text)">{v || '-'}</span></div>
+                      { label: 'Efeito colateral', value: form.efeitoColateral, isChip: true },
+                      ...(form.efeitoColateral === 'Sim' ? [{ label: 'Efeitos relatados', value: form.efeitosRelatados }] : []),
+                      { label: 'Necessidade de medicação', value: form.necessidadeMedicacao, isChip: true },
+                      ...(form.necessidadeMedicacao === 'Sim' ? [{ label: 'Medicações', value: form.medicacoes }] : []),
+                      ...(form.notasPre ? [{ label: 'Notas', value: form.notasPre, isNote: true }] : []),
+                    ].map((field) => (
+                      <div key={field.label} className="flex items-center justify-between py-2.5 border-b border-(--border-custom) last:border-0">
+                        <span className="text-xs text-(--text-muted)">{field.label}</span>
+                        {field.isChip ? (
+                          <span className={cn("text-xs font-medium px-2.5 py-0.5 rounded-full", field.value === 'Sim' ? "bg-amber-100 text-amber-700" : "bg-teal-50 text-teal-700")}>
+                            {field.value}
+                          </span>
+                        ) : field.isNote ? (
+                          <span className="text-xs text-(--text-muted) text-right max-w-[60%] leading-relaxed">{field.value}</span>
+                        ) : (
+                          <span className="text-xs font-medium text-(--text)">{field.value || '—'}</span>
+                        )}
+                      </div>
                     ))}
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-lg p-3.5">
-                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-100 shrink-0">
-                  <Info size={14} className="text-amber-600" />
+              <div className="border border-(--border-custom) rounded-xl overflow-hidden">
+                <div className="flex items-center gap-2.5 px-4 py-3 border-b border-(--border-custom) bg-white">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-teal-100 shrink-0">
+                    <Syringe size={13} className="text-teal-600" />
+                  </div>
+                  <span className="text-[0.65rem] font-semibold uppercase tracking-wider text-(--text-muted)">Pós-Aplicação</span>
                 </div>
-                <p className="text-xs text-amber-800 leading-relaxed">
-                  Após confirmar, a evolução será registrada e a próxima dose será agendada automaticamente com base no protocolo vigente.
+                <div className="bg-gray-50/50">
+                  <div className="grid grid-cols-2 gap-px bg-(--border-custom) m-4 rounded-lg overflow-hidden border border-(--border-custom)">
+                    {[
+                      { label: 'Data', value: form.dataAplicacao || '—' },
+                      { label: 'Horário', value: form.horaInicio && form.horaFim ? `${form.horaInicio} – ${form.horaFim}` : '—' },
+                      { label: 'Volume aplicado', value: form.volumeAplicado || '—', accent: true },
+                      { label: 'Concentração', value: form.concentracao || '—', accent: true },
+                      { label: 'Intervalo próxima dose', value: form.intervaloProxima ? `${form.intervaloProxima} dias` : '—' },
+                      { label: 'Responsável', value: form.responsavel || '—' },
+                    ].map((item) => (
+                      <div key={item.label} className="bg-white px-3.5 py-2.5">
+                        <div className="text-[0.6rem] font-semibold uppercase tracking-wider text-(--text-muted) mb-0.5">{item.label}</div>
+                        <div className={cn("text-xs font-medium", item.accent ? "text-teal-700" : "text-(--text)")}>{item.value}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="px-4 pb-1">
+                    {[
+                      { label: 'Efeito colateral', value: form.efeitoColateralPos, isChip: true },
+                      { label: 'Necessidade de medicação', value: form.necessidadeMedicacaoPos, isChip: true },
+                      { label: 'Notas', value: form.notasPos },
+                    ].map((field) => (
+                      <div key={field.label} className="flex items-center justify-between py-2.5 border-b border-(--border-custom) last:border-0">
+                        <span className="text-xs text-(--text-muted)">{field.label}</span>
+                        {field.isChip ? (
+                          <span className={cn("text-xs font-medium px-2.5 py-0.5 rounded-full", field.value === 'Sim' ? "bg-amber-100 text-amber-700" : "bg-teal-50 text-teal-700")}>
+                            {field.value}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-(--text-muted)">{field.value || '—'}</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2.5 bg-teal-50 border border-teal-200 rounded-lg px-3.5 py-3">
+                <CalendarDays size={15} className="text-teal-600 shrink-0" />
+                <p className="text-xs text-teal-800 leading-relaxed">
+                  Próxima dose agendada para <span className="font-bold">{nextDose?.date || '—'}</span> com base no protocolo vigente.
                 </p>
               </div>
             </div>

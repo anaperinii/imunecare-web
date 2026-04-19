@@ -112,39 +112,54 @@ export function AddImmunotherapyPage() {
           )}
 
           {step === 3 && (
-            <div className="space-y-5">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <div className="flex items-center gap-2.5 mb-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-100/60">
-                      <User size={15} className="text-teal-600" />
-                    </div>
-                    <h3 className="text-xs font-bold text-(--text)">Dados do Paciente</h3>
+            <div className="space-y-3.5">
+              <div className="mb-4">
+                <h2 className="text-sm font-bold text-(--text)">Revisão dos dados</h2>
+                <p className="text-[0.7rem] text-(--text-muted) mt-1">Confirme os dados antes de salvar a prescrição.</p>
+              </div>
+
+              <div className="border border-(--border-custom) rounded-xl overflow-hidden">
+                <div className="flex items-center gap-2.5 px-4 py-3 border-b border-(--border-custom) bg-white">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-teal-100 shrink-0">
+                    <User size={13} className="text-teal-600" />
                   </div>
-                  <div className="space-y-2">
-                    {[
-                      ['Nome', form.nome], ['CPF', form.cpf], ['Telefone', form.telefone],
-                      ['Data de Nascimento', form.dataNascimento ? format(new Date(form.dataNascimento + 'T12:00'), 'dd/MM/yyyy', { locale: ptBR }) : '-'],
-                      ['Peso', form.peso], ['Médico Responsável', form.medicoResponsavel],
-                    ].map(([l, v]) => (
-                      <div key={l} className="text-xs"><span className="font-medium text-(--text-muted)">{l}: </span><span className="text-(--text)">{v || '-'}</span></div>
-                    ))}
-                  </div>
+                  <span className="text-[0.65rem] font-semibold uppercase tracking-wider text-(--text-muted)">Dados do Paciente</span>
                 </div>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <div className="flex items-center gap-2.5 mb-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-100/60">
-                      <Syringe size={15} className="text-teal-600" />
+                <div className="bg-gray-50/50 px-4">
+                  {[
+                    ['Nome', form.nome], ['CPF', form.cpf], ['Telefone', form.telefone],
+                    ['Data de Nascimento', form.dataNascimento ? format(new Date(form.dataNascimento + 'T12:00'), 'dd/MM/yyyy', { locale: ptBR }) : '—'],
+                    ['Peso', form.peso], ['Médico Responsável', form.medicoResponsavel],
+                  ].map(([l, v]) => (
+                    <div key={l} className="flex items-center justify-between py-2.5 border-b border-(--border-custom) last:border-0">
+                      <span className="text-xs text-(--text-muted)">{l}</span>
+                      <span className="text-xs font-medium text-(--text)">{v || '—'}</span>
                     </div>
-                    <h3 className="text-xs font-bold text-(--text)">Dados da Imunoterapia</h3>
+                  ))}
+                </div>
+              </div>
+
+              <div className="border border-(--border-custom) rounded-xl overflow-hidden">
+                <div className="flex items-center gap-2.5 px-4 py-3 border-b border-(--border-custom) bg-white">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-teal-100 shrink-0">
+                    <Syringe size={13} className="text-teal-600" />
                   </div>
-                  <div className="space-y-2">
+                  <span className="text-[0.65rem] font-semibold uppercase tracking-wider text-(--text-muted)">Dados da Imunoterapia</span>
+                </div>
+                <div className="bg-gray-50/50">
+                  <div className="grid grid-cols-2 gap-px bg-(--border-custom) m-4 rounded-lg overflow-hidden border border-(--border-custom)">
                     {[
-                      ['Tipo', form.tipo], ['Via Cutânea', form.viaCutanea],
-                      ['Data de Início', form.dataInicio ? format(new Date(form.dataInicio + 'T12:00'), 'dd/MM/yyyy', { locale: ptBR }) : '-'],
-                      ['Extrato', form.extrato], ['Meta de Concentração', form.metaConcentracao], ['Meta de Volume', form.metaVolume],
-                    ].map(([l, v]) => (
-                      <div key={l} className="text-xs"><span className="font-medium text-(--text-muted)">{l}: </span><span className="text-(--text)">{v || '-'}</span></div>
+                      { label: 'Tipo', value: form.tipo || '—' },
+                      { label: 'Via Cutânea', value: form.viaCutanea || '—' },
+                      { label: 'Data de Início', value: form.dataInicio ? format(new Date(form.dataInicio + 'T12:00'), 'dd/MM/yyyy', { locale: ptBR }) : '—' },
+                      { label: 'Extrato', value: form.extrato || '—' },
+                      { label: 'Meta de Concentração', value: form.metaConcentracao || '—', accent: true },
+                      { label: 'Meta de Volume', value: form.metaVolume || '—', accent: true },
+                    ].map((item) => (
+                      <div key={item.label} className="bg-white px-3.5 py-2.5">
+                        <div className="text-[0.6rem] font-semibold uppercase tracking-wider text-(--text-muted) mb-0.5">{item.label}</div>
+                        <div className={cn("text-xs font-medium", item.accent ? "text-teal-700" : "text-(--text)")}>{item.value}</div>
+                      </div>
                     ))}
                   </div>
                 </div>
