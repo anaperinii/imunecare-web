@@ -6,7 +6,6 @@ import {
   Info,
   Users,
   CreditCard,
-  Accessibility,
   HelpCircle,
   ChevronRight,
 } from 'lucide-react'
@@ -22,11 +21,10 @@ interface SettingsOption {
 const settingsOptions: SettingsOption[] = [
   { icon: Shield, label: 'Segurança e Privacidade', description: 'Autenticação, sessões e políticas de acesso', route: '/security' },
   { icon: Settings, label: 'Configurações Avançadas', description: 'Parâmetros técnicos e integrações', route: '/advanced-settings' },
-  { icon: Monitor, label: 'Personalização do Sistema', description: 'Temas, idioma e preferências visuais', route: '/personalization' },
+  { icon: Monitor, label: 'Personalização e Acessibilidade', description: 'Temas, idioma, contraste e tamanho de fonte', route: '/personalization' },
   { icon: Info, label: 'Sobre o Sistema', description: 'Versão, licença e informações técnicas', route: '/about' },
   { icon: Users, label: 'Gerenciar Equipes e Convites', description: 'Membros, permissões e convites pendentes', route: '/teams' },
   { icon: CreditCard, label: 'Planos e Serviços', description: 'Assinatura, faturamento e limites', route: '/plans' },
-  { icon: Accessibility, label: 'Acessibilidade', description: 'Contraste, tamanho de fonte e navegação', route: '/accessibility' },
   { icon: HelpCircle, label: 'Ajuda', description: 'Central de ajuda, documentação e suporte', route: '/help' },
 ]
 
