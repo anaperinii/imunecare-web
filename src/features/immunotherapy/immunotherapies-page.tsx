@@ -2,13 +2,14 @@ import { useMemo, useState, useEffect } from 'react'
 import { useNavigate, useSearch, Link } from '@tanstack/react-router'
 import { useImmunotherapiesStore } from '@/features/immunotherapy/immunotherapies-store'
 import { useCustomTypesStore } from '@/features/immunotherapy/custom-types-store'
-import { usePatientStore, seedInactivationsFor } from '@/features/patient/patient-store'
+import { usePatientStore, seedInactivationsFor, seedCompletionsFor } from '@/features/patient/patient-store'
 import { useCan, useDoctorFilter } from '@/features/user/user-store'
 import {
   Search,
   Plus,
   FileText,
   Archive,
+  Check,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
@@ -52,11 +53,13 @@ export function ImmunotherapiesPage() {
     tipoFilter,
     cicloFilter,
     showInativas,
+    showConcluidas,
     currentPage,
     setSearchTerm,
     setTipoFilter,
     setCicloFilter,
     setShowInativas,
+    setShowConcluidas,
     setCurrentPage,
   } = useImmunotherapiesStore()
 
@@ -80,10 +83,10 @@ export function ImmunotherapiesPage() {
       const matchTipo = tipoFilter === 'Todos os tipos' || item.tipo === tipoFilter
       const matchCiclo =
         cicloFilter === 'Todos os intervalos' || item.cicloIntervalo.dias.toString() === cicloFilter
-      const matchStatus = showInativas ? item.status === 'inativo' : item.status === 'ativo'
+      const matchStatus = showInativas ? item.status === 'inativo' : showConcluidas ? item.status === 'concluido' : item.status === 'ativo'
       return matchDoctor && matchSearch && matchTipo && matchCiclo && matchStatus
     })
-  }, [immunotherapies, searchTerm, tipoFilter, cicloFilter, showInativas, doctorFilter])
+  }, [immunotherapies, searchTerm, tipoFilter, cicloFilter, showInativas, showConcluidas, doctorFilter])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage))
 
@@ -151,12 +154,26 @@ export function ImmunotherapiesPage() {
               className={cn(
                 "h-8 w-8 flex items-center justify-center rounded-lg border-[1.5px] transition-all",
                 showInativas
-                  ? "border-brand bg-teal-50 text-brand"
-                  : "border-(--border-custom) text-(--text-muted) hover:border-brand hover:text-brand hover:bg-teal-50"
+                  ? "border-yellow-400 bg-yellow-50 text-yellow-600"
+                  : "border-(--border-custom) text-(--text-muted) hover:border-yellow-400 hover:text-yellow-600 hover:bg-yellow-50"
               )}
               title="Imunoterapias inativas"
             >
               <Archive size={14} />
+            </button>
+
+            {/* Concluídas toggle */}
+            <button
+              onClick={() => setShowConcluidas(!showConcluidas)}
+              className={cn(
+                "h-8 w-8 flex items-center justify-center rounded-lg border-[1.5px] transition-all",
+                showConcluidas
+                  ? "border-cyan-400 bg-cyan-50 text-cyan-600"
+                  : "border-(--border-custom) text-(--text-muted) hover:border-cyan-400 hover:text-cyan-600 hover:bg-cyan-50"
+              )}
+              title="Imunoterapias concluídas"
+            >
+              <Check size={14} />
             </button>
 
             {/* Adicionar */}
@@ -206,13 +223,14 @@ export function ImmunotherapiesPage() {
                         setSelectedPatient({
                           id: item.id, nome: item.nome, dataNascimento: '02/07/2000', idade: 25,
                           telefone: '(62) 99557-1423', peso: '89.7 kg', cpf: '711.905.744-89',
-                          medicoResponsavel: item.medicoResponsavel, status: item.status === 'ativo' ? 'ativo' as const : 'inativo' as const,
+                          medicoResponsavel: item.medicoResponsavel, status: item.status,
                           tipoImunoterapia: item.tipo, inicioInducao: '01/01/2020', inicioManutencao: null,
                           viaAdministracao: 'Subcutânea', extrato: 'Der p 60 + der f 10% + blt 30%',
-                          concentracaoVolumeMeta: '1:10 - 0,5ml', metaAtingida: false,
+                          concentracaoVolumeMeta: '1:10 - 0,5ml', metaAtingida: item.status === 'concluido',
                           intervaloAtual: item.cicloIntervalo.dias, dataProximaAplicacao: '21/05/2025',
                           concentracaoDoseAtuais: item.doseConcentracao,
                           inactivations: item.status === 'inativo' ? seedInactivationsFor(item.id, item.doseConcentracao, item.cicloIntervalo.dias) : undefined,
+                          completions: item.status === 'concluido' ? seedCompletionsFor(item.id, item.doseConcentracao, item.cicloIntervalo.dias) : undefined,
                         })
                         navigate({ to: '/patient/$patientId', params: { patientId: item.id } })
                       }}
@@ -220,7 +238,8 @@ export function ImmunotherapiesPage() {
                       <td className={cn("px-4 py-2 text-xs font-medium", item.status === 'inativo' ? "text-(--text-muted)" : "text-(--text)")}>
                         <div className="flex items-center gap-2">
                           {item.nome}
-                          {item.status === 'inativo' && <span className="text-[0.55rem] font-semibold px-1.5 py-px rounded-full bg-gray-100 text-(--text-muted) border border-gray-200">Inativo</span>}
+                          {item.status === 'inativo' && <span className="text-[0.55rem] font-semibold px-1.5 py-px rounded-full bg-yellow-50 text-yellow-700 border border-yellow-200">Inativo</span>}
+                          {item.status === 'concluido' && <span className="text-[0.55rem] font-semibold px-1.5 py-px rounded-full bg-cyan-50 text-cyan-700 border border-cyan-200 inline-flex items-center gap-0.5"><CheckCircle size={8} />Concluído</span>}
                         </div>
                       </td>
                       <td className="px-4 py-2">

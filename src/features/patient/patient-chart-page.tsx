@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect, useRef } from 'react'
 import { useNavigate, useParams } from '@tanstack/react-router'
-import { usePatientStore, seedInactivationsFor, type Application, type ProtocolAdjustmentType, type InactivationCategory } from '@/features/patient/patient-store'
+import { usePatientStore, seedInactivationsFor, seedCompletionsFor, type Application, type ProtocolAdjustmentType, type InactivationCategory } from '@/features/patient/patient-store'
 import { useImmunotherapiesStore } from '@/features/immunotherapy/immunotherapies-store'
 import { useCan, useDoctorFilter, useUserStore } from '@/features/user/user-store'
 import { useAuditStore } from '@/features/audit/audit-store'
@@ -28,6 +28,10 @@ import {
   Power,
   PowerOff,
   Info,
+  CheckCircle,
+  RotateCw,
+  UserX,
+  UserCheck,
 } from 'lucide-react'
 
 const INTERVAL_COLORS: Record<number, { bg: string; text: string; dot: string }> = {
@@ -41,7 +45,7 @@ const DEFAULT_COLOR = { bg: '#F3F4F6', text: '#374151', dot: '#6B7280' }
 export function PatientChartPage() {
   const navigate = useNavigate()
   const { patientId } = useParams({ from: '/patient/$patientId' })
-  const { selectedPatient, applications, setSelectedPatient, inactivateImunoterapia, reactivateImunoterapia } = usePatientStore()
+  const { selectedPatient, applications, setSelectedPatient, inactivateImunoterapia, reactivateImunoterapia, completeImunoterapia, resumeImunoterapia } = usePatientStore()
   const canAdjustProtocol = useCan('adjust_protocol')
   const canInactivate = useCan('inactivate_immunotherapy')
   const canReactivate = useCan('reactivate_patient')
@@ -110,6 +114,31 @@ export function PatientChartPage() {
   const reactivateForm = useForm<{ concentracao: string; intervalo: string; justificativa: string; note: string }>({
     initial: { concentracao: '', intervalo: '', justificativa: '', note: '' },
   })
+  const [showStatusMenu, setShowStatusMenu] = useState(false)
+  const [showCompleteModal, setShowCompleteModal] = useState(false)
+  const [showCompleteToast, setShowCompleteToast] = useState(false)
+  const completeForm = useForm<{ justificativa: string; observacao: string; metaAtingida: 'sim' | 'nao' | '' }>({
+    initial: { justificativa: '', observacao: '', metaAtingida: '' },
+    validate: (v) => {
+      const e: { justificativa?: string; observacao?: string; metaAtingida?: string } = {}
+      if (!v.justificativa.trim()) e.justificativa = 'Justificativa é obrigatória'
+      else if (v.justificativa.trim().length < 10) e.justificativa = 'Justificativa deve ter ao menos 10 caracteres'
+      if (!v.metaAtingida) e.metaAtingida = 'Informe se a meta terapêutica foi atingida'
+      return e
+    },
+  })
+  const [showResumeModal, setShowResumeModal] = useState(false)
+  const [showResumeToast, setShowResumeToast] = useState(false)
+  const resumeForm = useForm<{ concentracao: string; intervalo: string; note: string }>({
+    initial: { concentracao: '', intervalo: '', note: '' },
+    validate: (v) => {
+      const e: { concentracao?: string; intervalo?: string; note?: string } = {}
+      if (!v.concentracao.trim()) e.concentracao = 'Concentração é obrigatória'
+      if (!v.intervalo.trim()) e.intervalo = 'Intervalo é obrigatório'
+      if (!v.note.trim()) e.note = 'Observação é obrigatória'
+      return e
+    },
+  })
   const [showInactivationHistory, setShowInactivationHistory] = useState(false)
   const [editForm, setEditForm] = useState({
     nome: '', telefone: '', peso: '', medicoResponsavel: '',
@@ -147,13 +176,14 @@ export function PatientChartPage() {
         setSelectedPatient({
           id: imm.id, nome: imm.nome, dataNascimento: '02/07/2000', idade: 25,
           telefone: '(62) 99557-1423', peso: '89.7 kg', cpf: '711.905.744-89',
-          medicoResponsavel: imm.medicoResponsavel, status: imm.status === 'ativo' ? 'ativo' as const : 'inativo' as const,
+          medicoResponsavel: imm.medicoResponsavel, status: imm.status,
           tipoImunoterapia: imm.tipo, inicioInducao: '01/01/2020', inicioManutencao: null,
           viaAdministracao: 'Subcutânea', extrato: 'Der p 60 + der f 10% + blt 30%',
-          concentracaoVolumeMeta: '1:10 - 0,5ml', metaAtingida: false,
+          concentracaoVolumeMeta: '1:10 - 0,5ml', metaAtingida: imm.status === 'concluido',
           intervaloAtual: imm.cicloIntervalo.dias, dataProximaAplicacao: '21/05/2025',
           concentracaoDoseAtuais: imm.doseConcentracao,
           inactivations: imm.status === 'inativo' ? seedInactivationsFor(imm.id, imm.doseConcentracao, imm.cicloIntervalo.dias) : undefined,
+          completions: imm.status === 'concluido' ? seedCompletionsFor(imm.id, imm.doseConcentracao, imm.cicloIntervalo.dias) : undefined,
         })
       } else {
         navigate({ to: '/immunotherapies' })
@@ -349,6 +379,12 @@ export function PatientChartPage() {
     return last && !last.reactivatedAt ? last : null
   }, [selectedPatient])
 
+  const activeCompletion = useMemo(() => {
+    if (!selectedPatient?.completions?.length) return null
+    const last = selectedPatient.completions[selectedPatient.completions.length - 1]
+    return last && !last.resumedAt ? last : null
+  }, [selectedPatient])
+
   const inactivationCount = selectedPatient?.inactivations?.length ?? 0
 
   const suggestedNextDose = useMemo(() => {
@@ -389,17 +425,85 @@ export function PatientChartPage() {
               <div className="min-w-0">
                 <h1 className="text-base font-extrabold text-(--text) leading-tight">{selectedPatient.nome}</h1>
                 <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                  {selectedPatient.status === 'ativo' ? (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[0.6rem] font-semibold border border-emerald-200">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                      Tratamento Ativo
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-yellow-50 text-yellow-700 text-[0.6rem] font-semibold border border-yellow-200">
-                      <span className="w-1.5 h-1.5 rounded-full bg-yellow-500" />
-                      Tratamento Inativo
-                    </span>
-                  )}
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowStatusMenu(!showStatusMenu)}
+                      className={cn(
+                        "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.6rem] font-semibold border cursor-pointer hover:opacity-80 transition-opacity",
+                        selectedPatient.status === 'ativo' ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
+                        selectedPatient.status === 'inativo' ? "bg-yellow-50 text-yellow-700 border-yellow-200" :
+                        "bg-cyan-50 text-cyan-700 border-cyan-200 shadow-sm"
+                      )}
+                    >
+                      {selectedPatient.status === 'ativo' && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />}
+                      {selectedPatient.status === 'inativo' && <span className="w-1.5 h-1.5 rounded-full bg-yellow-500" />}
+                      {selectedPatient.status === 'concluido' && <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse" />}
+                      Tratamento {selectedPatient.status === 'ativo' ? 'Ativo' : selectedPatient.status === 'inativo' ? 'Inativo' : 'Concluído'}
+                      <ChevronDown size={10} className="ml-0.5" />
+                    </button>
+
+                    {showStatusMenu && (
+                      <>
+                        <div className="fixed inset-0 z-40" onClick={() => setShowStatusMenu(false)} />
+                        <div className="absolute top-full left-0 mt-1.5 w-48 bg-white border border-(--border-custom) rounded-lg shadow-[0_4px_20px_rgba(0,0,0,0.08)] z-50 py-1 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                          {canInactivate && selectedPatient.status === 'ativo' && (
+                            <button
+                              onClick={() => { setShowStatusMenu(false); completeForm.reset(); setShowCompleteModal(true) }}
+                              className="w-full text-left px-3 py-2 text-xs text-cyan-600 hover:bg-cyan-50 font-medium transition-colors flex items-center gap-2 cursor-pointer"
+                            >
+                              <CheckCircle size={12} />
+                              Concluir tratamento
+                            </button>
+                          )}
+                          {canInactivate && selectedPatient.status === 'ativo' && (
+                            <button
+                              onClick={() => { setShowStatusMenu(false); inactivateForm.reset(); setShowInactivateModal(true) }}
+                              className="w-full text-left px-3 py-2 text-xs text-amber-600 hover:bg-amber-50 font-medium transition-colors flex items-center gap-2 cursor-pointer"
+                            >
+                              <UserX size={12} />
+                              Inativar paciente
+                            </button>
+                          )}
+                          {canReactivate && selectedPatient.status === 'inativo' && (
+                            <button
+                              onClick={() => {
+                                setShowStatusMenu(false)
+                                const snapshotInterval = activeInactivation?.snapshotIntervalo ?? selectedPatient.intervaloAtual
+                                reactivateForm.setValues({
+                                  concentracao: suggestedNextDose,
+                                  intervalo: String(snapshotInterval),
+                                  justificativa: '',
+                                  note: '',
+                                })
+                                setShowReactivateModal(true)
+                              }}
+                              className="w-full text-left px-3 py-2 text-xs text-emerald-600 hover:bg-emerald-50 font-medium transition-colors flex items-center gap-2 cursor-pointer"
+                            >
+                              <UserCheck size={12} />
+                              Reativar paciente
+                            </button>
+                          )}
+                          {canReactivate && selectedPatient.status === 'concluido' && (
+                            <button
+                              onClick={() => {
+                                setShowStatusMenu(false)
+                                resumeForm.setValues({
+                                  concentracao: selectedPatient.concentracaoDoseAtuais,
+                                  intervalo: String(selectedPatient.intervaloAtual),
+                                  note: '',
+                                })
+                                setShowResumeModal(true)
+                              }}
+                              className="w-full text-left px-3 py-2 text-xs text-emerald-600 hover:bg-emerald-50 font-medium transition-colors flex items-center gap-2 cursor-pointer"
+                            >
+                              <RotateCw size={12} />
+                              Retomar tratamento
+                            </button>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
                   {treatmentTime && (
                     <span className="inline-block px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 text-[0.6rem] font-medium border border-gray-200">
                       {treatmentTime}
@@ -425,34 +529,60 @@ export function PatientChartPage() {
                 <div className="text-[0.55rem] text-yellow-700/80 mt-0.5">Responsável: <span className="font-semibold">{activeInactivation.responsavel}</span></div>
               </div>
             )}
+            {selectedPatient.status === 'concluido' && activeCompletion && (
+              <div className="mt-2.5 bg-cyan-50 border border-cyan-200 rounded-lg px-3 py-2">
+                <div className="flex items-center justify-between mb-0.5">
+                  <div className="text-[0.6rem] font-semibold text-cyan-700 flex items-center gap-1">
+                    <CheckCircle size={10} />
+                    Tratamento concluído{activeCompletion.metaAtingida && ' · meta atingida'}
+                  </div>
+                  <div className="text-[0.55rem] text-cyan-700/80">{activeCompletion.date}</div>
+                </div>
+                <div className="text-[0.6rem] text-cyan-800 leading-relaxed">{activeCompletion.justificativa}</div>
+                {activeCompletion.observacao && <div className="text-[0.55rem] text-cyan-700/80 mt-1 italic">{activeCompletion.observacao}</div>}
+                <div className="text-[0.55rem] text-cyan-700/80 mt-0.5">Responsável: <span className="font-semibold">{activeCompletion.responsavel}</span></div>
+              </div>
+            )}
             <div className="mt-3 flex gap-1.5">
-              {selectedPatient.status === 'inativo' ? (
-                canReactivate && (
-                  <button
-                    onClick={() => {
-                      const snapshotInterval = activeInactivation?.snapshotIntervalo ?? selectedPatient.intervaloAtual
-                      reactivateForm.setValues({
-                        concentracao: suggestedNextDose,
-                        intervalo: String(snapshotInterval),
-                        justificativa: '',
-                        note: '',
-                      })
-                      setShowReactivateModal(true)
-                    }}
-                    className="flex-1 h-8 rounded-lg text-xs font-semibold transition-all bg-linear-to-br from-emerald-400 to-emerald-500 text-white cursor-pointer hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(52,211,153,0.3)]"
-                  >
-                    Reativar paciente
-                  </button>
-                )
-              ) : (
-                canEvolve && (
-                  <button
-                    onClick={() => navigate({ to: '/patient-evolution', search: { patientId: selectedPatient.id } })}
-                    className="flex-1 h-8 rounded-lg text-xs font-semibold transition-all bg-linear-to-br from-brand to-teal-400 text-white cursor-pointer hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(20,184,166,0.3)]"
-                  >
-                    Evoluir Paciente
-                  </button>
-                )
+              {selectedPatient.status === 'inativo' && canReactivate && (
+                <button
+                  onClick={() => {
+                    const snapshotInterval = activeInactivation?.snapshotIntervalo ?? selectedPatient.intervaloAtual
+                    reactivateForm.setValues({
+                      concentracao: suggestedNextDose,
+                      intervalo: String(snapshotInterval),
+                      justificativa: '',
+                      note: '',
+                    })
+                    setShowReactivateModal(true)
+                  }}
+                  className="flex-1 h-8 rounded-lg text-xs font-semibold transition-all bg-linear-to-br from-emerald-400 to-emerald-500 text-white cursor-pointer hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(52,211,153,0.3)]"
+                >
+                  Reativar paciente
+                </button>
+              )}
+              {selectedPatient.status === 'concluido' && canReactivate && (
+                <button
+                  onClick={() => {
+                    resumeForm.setValues({
+                      concentracao: selectedPatient.concentracaoDoseAtuais,
+                      intervalo: String(selectedPatient.intervaloAtual),
+                      note: '',
+                    })
+                    setShowResumeModal(true)
+                  }}
+                  className="flex-1 h-8 rounded-lg text-xs font-semibold transition-all bg-linear-to-br from-cyan-400 to-cyan-500 text-white cursor-pointer hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(34,211,238,0.3)]"
+                >
+                  Retomar tratamento
+                </button>
+              )}
+              {selectedPatient.status === 'ativo' && canEvolve && (
+                <button
+                  onClick={() => navigate({ to: '/patient-evolution', search: { patientId: selectedPatient.id } })}
+                  className="flex-1 h-8 rounded-lg text-xs font-semibold transition-all bg-linear-to-br from-brand to-teal-400 text-white cursor-pointer hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(20,184,166,0.3)]"
+                >
+                  Evoluir Paciente
+                </button>
               )}
               {canEmitReport && (
                 <button
@@ -572,8 +702,8 @@ export function PatientChartPage() {
                             })
                             setShowAdjustModal(true)
                           }}
-                          disabled={selectedPatient.status === 'inativo'}
-                          className={cn("flex-1 h-7 rounded-lg text-[0.65rem] font-semibold transition-all flex items-center justify-center gap-1.5 border-[1.5px]", selectedPatient.status === 'inativo' ? "border-gray-200 text-gray-300 cursor-not-allowed" : "border-brand text-brand hover:bg-teal-50 cursor-pointer")}
+                          disabled={selectedPatient.status !== 'ativo'}
+                          className={cn("flex-1 h-7 rounded-lg text-[0.65rem] font-semibold transition-all flex items-center justify-center gap-1.5 border-[1.5px]", selectedPatient.status !== 'ativo' ? "border-gray-200 text-gray-300 cursor-not-allowed" : "border-brand text-brand hover:bg-teal-50 cursor-pointer")}
                         >
                           <SlidersHorizontal size={11} />
                           Ajustar protocolo
@@ -1564,6 +1694,159 @@ export function PatientChartPage() {
       </Modal>
 
       <Modal
+        open={showCompleteModal}
+        onClose={() => setShowCompleteModal(false)}
+        title="Concluir tratamento"
+        size="lg"
+        footer={<>
+          <Button variant="outline" onClick={() => setShowCompleteModal(false)}>Voltar</Button>
+          <Button
+            variant="primary"
+            onClick={() => {
+              if (!completeForm.validate()) return
+              const v = completeForm.values
+              const date = new Date().toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).replace(',', ' às')
+              completeImunoterapia({
+                id: `comp-${Date.now()}`,
+                date,
+                justificativa: v.justificativa.trim(),
+                observacao: v.observacao.trim(),
+                responsavel: selectedPatient.medicoResponsavel,
+                snapshotConcentracao: selectedPatient.concentracaoDoseAtuais,
+                snapshotIntervalo: selectedPatient.intervaloAtual,
+                metaAtingida: v.metaAtingida === 'sim',
+              })
+              setShowCompleteModal(false)
+              setShowCompleteToast(true)
+              setTimeout(() => setShowCompleteToast(false), 6000)
+            }}
+          >Concluir tratamento</Button>
+        </>}
+      >
+        <div className="flex items-start gap-2 bg-cyan-50 border border-cyan-200 rounded-lg px-3 py-2.5">
+          <CheckCircle size={14} className="text-cyan-600 shrink-0 mt-0.5" />
+          <p className="text-[0.65rem] text-cyan-900 leading-relaxed">
+            Use <span className="font-bold">Concluir tratamento</span> para marcar o encerramento com sucesso (meta atingida ou alta clínica). As aplicações são interrompidas mas o histórico permanece acessível. Diferente de inativar, o paciente pode ser <span className="font-bold">retomado</span> posteriormente caso os sintomas retornem.
+          </p>
+        </div>
+
+        <FieldLabel label="Meta terapêutica atingida?" required error={completeForm.errorOf('metaAtingida')}>
+          <div className="grid grid-cols-2 gap-2">
+            {[{ v: 'sim', label: 'Sim, meta atingida' }, { v: 'nao', label: 'Não (alta clínica)' }].map((opt) => (
+              <button
+                key={opt.v}
+                type="button"
+                onClick={() => completeForm.set('metaAtingida', opt.v as 'sim' | 'nao')}
+                className={cn("h-9 px-3 rounded-lg border-[1.5px] text-xs font-semibold transition-all", completeForm.values.metaAtingida === opt.v ? "border-cyan-500 bg-cyan-50 text-cyan-700" : "border-(--border-custom) text-(--text-muted) hover:border-cyan-300")}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </FieldLabel>
+
+        <FieldLabel label="Justificativa clínica" required error={completeForm.errorOf('justificativa')}>
+          <TextArea
+            value={completeForm.values.justificativa}
+            onChange={(e) => completeForm.set('justificativa', e.target.value)}
+            onBlur={() => completeForm.touch('justificativa')}
+            invalid={completeForm.showError('justificativa')}
+            rows={3}
+            placeholder="Motivo do encerramento (ex: sintomas controlados há X meses, protocolo SCIT completo, etc.)"
+          />
+        </FieldLabel>
+
+        <FieldLabel label="Observações (opcional)">
+          <TextArea
+            value={completeForm.values.observacao}
+            onChange={(e) => completeForm.set('observacao', e.target.value)}
+            rows={2}
+            placeholder="Orientações finais ao paciente, recomendações de acompanhamento, etc."
+          />
+        </FieldLabel>
+
+        <div className="bg-gray-50 border border-(--border-custom) rounded-lg px-3 py-2 flex items-center justify-between">
+          <span className="text-[0.65rem] text-(--text-muted)">Responsável pela conclusão</span>
+          <span className="text-[0.7rem] font-semibold text-(--text)">{selectedPatient.medicoResponsavel}</span>
+        </div>
+      </Modal>
+
+      <Modal
+        open={showResumeModal}
+        onClose={() => setShowResumeModal(false)}
+        title="Retomar tratamento"
+        size="lg"
+        footer={<>
+          <Button variant="outline" onClick={() => setShowResumeModal(false)}>Voltar</Button>
+          <Button
+            variant="primary"
+            onClick={() => {
+              if (!resumeForm.validate()) return
+              const v = resumeForm.values
+              const intervaloStr = v.intervalo.trim()
+              if (!/^\d+$/.test(intervaloStr)) {
+                resumeForm.setErrors({ intervalo: 'Informe um número válido de dias' })
+                return
+              }
+              resumeImunoterapia({
+                note: v.note.trim(),
+                resumedBy: selectedPatient.medicoResponsavel,
+                resumeConcentracao: v.concentracao.trim(),
+                resumeIntervalo: Number(intervaloStr),
+              })
+              setShowResumeModal(false)
+              setShowResumeToast(true)
+              setTimeout(() => setShowResumeToast(false), 6000)
+            }}
+          >Retomar tratamento</Button>
+        </>}
+      >
+        <div className="flex items-start gap-2 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2.5">
+          <Info size={14} className="text-emerald-700 shrink-0 mt-0.5" />
+          <p className="text-[0.65rem] text-emerald-900 leading-relaxed">
+            O paciente voltará para <span className="font-bold">ativo</span>. Confirme o ponto de retomada do protocolo — geralmente o mesmo ponto em que o tratamento foi concluído, ajustado pelo médico conforme avaliação clínica atual.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <FieldLabel label="Concentração/volume" required error={resumeForm.errorOf('concentracao')}>
+            <TextInput
+              value={resumeForm.values.concentracao}
+              onChange={(e) => resumeForm.set('concentracao', e.target.value)}
+              onBlur={() => resumeForm.touch('concentracao')}
+              invalid={resumeForm.showError('concentracao')}
+              placeholder="ex: 1:10 - 0,5ml"
+            />
+          </FieldLabel>
+          <FieldLabel label="Intervalo (dias)" required error={resumeForm.errorOf('intervalo')}>
+            <TextInput
+              value={resumeForm.values.intervalo}
+              onChange={(e) => resumeForm.set('intervalo', e.target.value)}
+              onBlur={() => resumeForm.touch('intervalo')}
+              invalid={resumeForm.showError('intervalo')}
+              placeholder="ex: 28"
+            />
+          </FieldLabel>
+        </div>
+
+        <FieldLabel label="Observação clínica" required error={resumeForm.errorOf('note')}>
+          <TextArea
+            value={resumeForm.values.note}
+            onChange={(e) => resumeForm.set('note', e.target.value)}
+            onBlur={() => resumeForm.touch('note')}
+            invalid={resumeForm.showError('note')}
+            rows={3}
+            placeholder="Motivo da retomada, avaliação atual do paciente, etc."
+          />
+        </FieldLabel>
+
+        <div className="bg-gray-50 border border-(--border-custom) rounded-lg px-3 py-2 flex items-center justify-between">
+          <span className="text-[0.65rem] text-(--text-muted)">Responsável pela retomada</span>
+          <span className="text-[0.7rem] font-semibold text-(--text)">{selectedPatient.medicoResponsavel}</span>
+        </div>
+      </Modal>
+
+      <Modal
         open={showInactivationHistory && !!selectedPatient.inactivations && selectedPatient.inactivations.length > 0}
         onClose={() => setShowInactivationHistory(false)}
         title="Histórico de inativações"
@@ -1639,6 +1922,22 @@ export function PatientChartPage() {
         icon={<Power size={16} />}
         title="Paciente reativado"
         description="O paciente está ativo novamente e pode continuar o protocolo a partir do ponto definido."
+      />
+      <Toast
+        open={showCompleteToast}
+        onClose={() => setShowCompleteToast(false)}
+        variant="info"
+        icon={<CheckCircle size={16} />}
+        title="Tratamento concluído"
+        description="O histórico permanece acessível. Use 'Retomar tratamento' se o paciente precisar recomeçar as aplicações."
+      />
+      <Toast
+        open={showResumeToast}
+        onClose={() => setShowResumeToast(false)}
+        variant="success"
+        icon={<RotateCw size={16} />}
+        title="Tratamento retomado"
+        description="O paciente voltou a ser ativo e pode continuar o protocolo."
       />
 
       <Modal

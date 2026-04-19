@@ -34,6 +34,22 @@ export interface Inactivation {
   reactivateJustificativa?: string
 }
 
+export interface Completion {
+  id: string
+  date: string
+  justificativa: string
+  observacao: string
+  responsavel: string
+  snapshotConcentracao: string
+  snapshotIntervalo: number
+  metaAtingida: boolean
+  resumedAt?: string
+  resumeNote?: string
+  resumedBy?: string
+  resumeConcentracao?: string
+  resumeIntervalo?: number
+}
+
 export interface ProtocolAdjustment {
   id: string
   date: string
@@ -55,7 +71,7 @@ export interface Patient {
   peso: string
   cpf: string
   medicoResponsavel: string
-  status: 'ativo' | 'inativo'
+  status: 'ativo' | 'inativo' | 'concluido'
   tipoImunoterapia: string
   inicioInducao: string
   inicioManutencao: string | null
@@ -68,6 +84,7 @@ export interface Patient {
   concentracaoDoseAtuais: string
   protocolAdjustments?: ProtocolAdjustment[]
   inactivations?: Inactivation[]
+  completions?: Completion[]
 }
 
 export interface Application {
@@ -99,6 +116,8 @@ interface PatientState {
   addProtocolAdjustment: (adjustment: ProtocolAdjustment) => void
   inactivateImunoterapia: (inactivation: Inactivation) => void
   reactivateImunoterapia: (payload: { note: string; reactivatedBy: string; reactivateConcentracao: string; reactivateIntervalo: number; justificativa: string }) => void
+  completeImunoterapia: (completion: Completion) => void
+  resumeImunoterapia: (payload: { note: string; resumedBy: string; resumeConcentracao: string; resumeIntervalo: number }) => void
   /** Registra uma aplicação realizada e agenda a próxima automaticamente. */
   recordEvolution: (payload: { realizada: Application; proxima: Application }) => void
 }
@@ -113,6 +132,17 @@ export function seedInactivationsFor(patientId: string, snapshotConcentracao: st
   const seed = INACTIVATION_SEEDS[patientId]
   if (!seed) return undefined
   return [{ id: `inact-seed-${patientId}`, ...seed, snapshotConcentracao, snapshotIntervalo }]
+}
+
+const COMPLETION_SEEDS: Record<string, Omit<Completion, 'id' | 'snapshotConcentracao' | 'snapshotIntervalo'>> = {
+  '13': { date: '12/03/2026 às 10:20', justificativa: 'Meta terapêutica atingida — paciente sem sintomas há 6 meses consecutivos.', observacao: 'Paciente orientada sobre alta e acompanhamento anual. Reação clínica excelente.', responsavel: 'Dra. Karina Martins', metaAtingida: true },
+  '14': { date: '28/02/2026 às 16:45', justificativa: 'Tratamento concluído conforme protocolo SCIT (3 anos). Paciente dessensibilizado.', observacao: 'Alta com recomendação de acompanhamento caso sintomas retornem.', responsavel: 'Dr. André Lima', metaAtingida: true },
+}
+
+export function seedCompletionsFor(patientId: string, snapshotConcentracao: string, snapshotIntervalo: number): Completion[] | undefined {
+  const seed = COMPLETION_SEEDS[patientId]
+  if (!seed) return undefined
+  return [{ id: `comp-seed-${patientId}`, ...seed, snapshotConcentracao, snapshotIntervalo }]
 }
 
 // ════════════════════════════════════════════════════════════════════
@@ -315,6 +345,41 @@ export const usePatientStore = create<PatientState>((set) => ({
         ...s.selectedPatient,
         status: 'inativo',
         inactivations: [...(s.selectedPatient.inactivations || []), inactivation],
+      },
+    }
+  }),
+  completeImunoterapia: (completion) => set((s) => {
+    if (!s.selectedPatient) return s
+    return {
+      selectedPatient: {
+        ...s.selectedPatient,
+        status: 'concluido',
+        completions: [...(s.selectedPatient.completions || []), completion],
+      },
+    }
+  }),
+  resumeImunoterapia: ({ note, resumedBy, resumeConcentracao, resumeIntervalo }) => set((s) => {
+    if (!s.selectedPatient) return s
+    const list = s.selectedPatient.completions || []
+    if (list.length === 0) return s
+    const updated = [...list]
+    const lastIdx = updated.length - 1
+    const resumedAt = new Date().toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).replace(',', ' às')
+    updated[lastIdx] = {
+      ...updated[lastIdx],
+      resumedAt,
+      resumeNote: note,
+      resumedBy,
+      resumeConcentracao,
+      resumeIntervalo,
+    }
+    return {
+      selectedPatient: {
+        ...s.selectedPatient,
+        status: 'ativo',
+        concentracaoDoseAtuais: resumeConcentracao,
+        intervaloAtual: resumeIntervalo,
+        completions: updated,
       },
     }
   }),

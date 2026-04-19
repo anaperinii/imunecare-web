@@ -10,7 +10,7 @@ export interface Immunotherapy {
     dias: number
   }
   modalidade: 'subcutânea' | 'sublingual'
-  status: 'ativo' | 'inativo'
+  status: 'ativo' | 'inativo' | 'concluido'
   medicoResponsavel: string
 }
 
@@ -20,11 +20,13 @@ interface ImmunotherapiesState {
   tipoFilter: string
   cicloFilter: string
   showInativas: boolean
+  showConcluidas: boolean
   currentPage: number
   setSearchTerm: (term: string) => void
   setTipoFilter: (tipo: string) => void
   setCicloFilter: (ciclo: string) => void
   setShowInativas: (show: boolean) => void
+  setShowConcluidas: (show: boolean) => void
   setCurrentPage: (page: number) => void
   addImmunotherapy: (imm: Immunotherapy) => void
 }
@@ -44,16 +46,21 @@ export const useImmunotherapiesStore = create<ImmunotherapiesState>((set) => ({
     { id: '10', nome: 'Lucas Ferreira Lima', tipo: 'Ácaros', doseConcentracao: '1:100 - 0,4ml', cicloIntervalo: { numero: 1, dias: 7 }, modalidade: 'subcutânea', status: 'inativo', medicoResponsavel: 'Dra. Karina Martins' },
     { id: '11', nome: 'Juliana Mendes Costa', tipo: 'Gramíneas', doseConcentracao: '1:10 - 0,5ml', cicloIntervalo: { numero: 2, dias: 14 }, modalidade: 'subcutânea', status: 'inativo', medicoResponsavel: 'Dra. Karina Martins' },
     { id: '12', nome: 'Roberto Alves Neto', tipo: 'Cândida', doseConcentracao: '1:1.000 - 0,2ml', cicloIntervalo: { numero: 1, dias: 7 }, modalidade: 'sublingual', status: 'inativo', medicoResponsavel: 'Dr. André Lima' },
+    // Concluídos
+    { id: '13', nome: 'Sofia Almeida Pinheiro', tipo: 'Ácaros', doseConcentracao: '1:10 - 0,5ml', cicloIntervalo: { numero: 3, dias: 28 }, modalidade: 'subcutânea', status: 'concluido', medicoResponsavel: 'Dra. Karina Martins' },
+    { id: '14', nome: 'Eduardo Campos Borges', tipo: 'Gramíneas', doseConcentracao: '1:10 - 0,5ml', cicloIntervalo: { numero: 3, dias: 28 }, modalidade: 'subcutânea', status: 'concluido', medicoResponsavel: 'Dr. André Lima' },
   ],
   searchTerm: '',
   tipoFilter: 'Todos os tipos',
   cicloFilter: 'Todos os intervalos',
   showInativas: false,
+  showConcluidas: false,
   currentPage: 1,
   setSearchTerm: (term) => set({ searchTerm: term }),
   setTipoFilter: (tipo) => set({ tipoFilter: tipo }),
   setCicloFilter: (ciclo) => set({ cicloFilter: ciclo }),
-  setShowInativas: (show) => set({ showInativas: show }),
+  setShowInativas: (show) => set({ showInativas: show, showConcluidas: show ? false : false }),
+  setShowConcluidas: (show) => set({ showConcluidas: show, showInativas: show ? false : false }),
   setCurrentPage: (page) => set({ currentPage: page }),
   addImmunotherapy: (imm) => set((state) => ({ immunotherapies: [imm, ...state.immunotherapies] })),
 }))
