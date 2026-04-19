@@ -96,29 +96,26 @@ export function ExportReportPage() {
           {/* Left — Config */}
           <div className="w-88 shrink-0 border-r border-(--border-custom) overflow-y-auto">
             {/* Config header */}
-            <div className="flex items-center justify-between px-5 pt-5 pb-3">
-              <span className="text-xs font-bold text-(--text)">Configurações do Relatório</span>
-              <button className="h-7 w-7 flex items-center justify-center rounded-lg text-(--text-muted) hover:bg-brand-50 hover:text-brand transition-all">
-                <Settings size={14} />
-              </button>
-            </div>
-            <div className="px-5 pb-5 space-y-5">
-            {/* Modality toggle */}
-            <div>
-              <label className="text-xs font-semibold text-(--text-muted) mb-2 block">Modalidade</label>
-              <div className="flex h-9 rounded-lg border border-(--border-custom) overflow-hidden">
+            <div className="flex items-center justify-between px-5 pt-5 pb-3 gap-2">
+              <div className="flex h-8 rounded-lg border border-(--border-custom) overflow-hidden flex-1">
                 {[{ key: 'sub', label: 'Subcutânea' }, { key: 'sbl', label: 'Sublingual' }].map((m) => (
                   <button
                     key={m.key}
                     onClick={() => setModality(m.key as 'sub' | 'sbl')}
-                    className={cn("flex-1 text-xs font-semibold transition-all", modality === m.key ? "bg-linear-to-br from-brand to-teal-400 text-white" : "text-(--text-muted) hover:bg-gray-50")}
+                    className={cn("flex-1 text-[0.65rem] font-semibold transition-all", modality === m.key ? "bg-linear-to-br from-brand to-teal-400 text-white" : "text-(--text-muted) hover:bg-gray-50")}
                   >
                     {m.label}
                   </button>
                 ))}
               </div>
+              <button
+                className="h-8 w-8 flex items-center justify-center rounded-lg border-[1.5px] border-(--border-custom) text-(--text-muted) hover:border-brand hover:text-brand hover:bg-teal-50 transition-all shrink-0"
+                title="Configurações avançadas"
+              >
+                <Settings size={14} />
+              </button>
             </div>
-
+            <div className="px-5 pb-5 space-y-5">
             {/* File name */}
             <div>
               <label className="text-xs font-semibold text-(--text-muted) mb-1.5 block">Nome do arquivo</label>

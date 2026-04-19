@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect } from 'react'
 import { useNavigate, useSearch, Link } from '@tanstack/react-router'
 import { useImmunotherapiesStore } from '@/store/immunotherapies-store'
-import { usePatientStore } from '@/store/patient-store'
+import { usePatientStore, seedInactivationsFor } from '@/store/patient-store'
 import {
   Search,
   Plus,
@@ -201,6 +201,7 @@ export function ImmunotherapiesPage() {
                           concentracaoVolumeMeta: '1:10 - 0,5ml', metaAtingida: false,
                           intervaloAtual: item.cicloIntervalo.dias, dataProximaAplicacao: '21/05/2025',
                           concentracaoDoseAtuais: item.doseConcentracao,
+                          inactivations: item.status === 'inativo' ? seedInactivationsFor(item.id, item.doseConcentracao, item.cicloIntervalo.dias) : undefined,
                         })
                         navigate({ to: '/patient/$patientId', params: { patientId: item.id } })
                       }}
