@@ -20,10 +20,10 @@ import {
 import { ptBR } from 'date-fns/locale'
 
 const INTERVAL_COLORS: Record<number, { bg: string; text: string; dot: string }> = {
-  7: { bg: '#FFE7EA', text: '#DD2E71', dot: '#DD2E71' },
-  14: { bg: '#D8EBFF', text: '#2286E9', dot: '#2286E9' },
-  21: { bg: '#F2E7FF', text: '#7F20CD', dot: '#7F20CD' },
-  28: { bg: '#FFEDD6', text: '#DD742E', dot: '#DD742E' },
+  7: { bg: '#FDECF0', text: '#E8768E', dot: '#E8768E' },
+  14: { bg: '#FDEEE8', text: '#E8766A', dot: '#E8766A' },
+  21: { bg: '#DBEAFE', text: '#2563EB', dot: '#2563EB' },
+  28: { bg: '#EDE9FE', text: '#7C3AED', dot: '#7C3AED' },
 }
 const DEFAULT_COLOR = { bg: '#F3F4F6', text: '#374151', dot: '#6B7280' }
 
@@ -245,8 +245,8 @@ export function AppointmentsPage() {
                     <div className="flex items-center gap-2 mt-1.5">
                       <span className="text-[0.6rem] font-medium text-(--text-muted)">{app.dose}</span>
                       <span
-                        className="inline-flex items-center gap-1 px-1.5 py-px rounded-full text-[0.55rem] font-semibold"
-                        style={{ backgroundColor: color.bg, color: color.text }}
+                        className="inline-flex items-center gap-1 px-2 py-px rounded-full text-[0.55rem] font-semibold border"
+                        style={{ backgroundColor: color.bg, color: color.text, borderColor: color.dot + '30' }}
                       >
                         <span className="w-1 h-1 rounded-full" style={{ backgroundColor: color.dot }} />
                         {app.ciclo.dias}d
