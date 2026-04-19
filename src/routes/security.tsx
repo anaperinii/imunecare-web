@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { SecurityPage } from '@/pages/security-page'
+import { SecurityPage } from '@/features/settings/security-page'
 
 export const Route = createFileRoute('/security')({
   component: SecurityPage,
