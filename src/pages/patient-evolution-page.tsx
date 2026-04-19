@@ -9,6 +9,14 @@ import { cn } from '@/lib/utils'
 
 const stepLabels = ['Paciente', 'Pré-Aplicação', 'Pós-Aplicação', 'Revisão dos Dados']
 
+// Equipe de execução habilitada para registrar aplicações (enfermeiros + técnicos em enfermagem ativos)
+const RESPONSAVEIS_APLICACAO = [
+  { name: 'Jaqueline Oliveira', role: 'Enfermeira' },
+  { name: 'Carlos Eduardo Silva', role: 'Enfermeiro' },
+  { name: 'Rafael Mendes', role: 'Técnico em Enfermagem' },
+  { name: 'Mariana Costa', role: 'Técnica em Enfermagem' },
+]
+
 export function PatientEvolutionPage() {
   const navigate = useNavigate()
   const { patientId: preselectedId } = useSearch({ from: '/patient-evolution' })
@@ -44,8 +52,28 @@ export function PatientEvolutionPage() {
   const [touched, setTouched] = useState<Record<string, boolean>>({})
 
   const set = (field: string, value: string) => {
-    setForm((p) => ({ ...p, [field]: value }))
+    setForm((p) => {
+      // RNE-013: ao preencher hora de início, sugerir hora fim = início + 30min
+      // se hora fim ainda não foi preenchida. Usuário pode editar livremente depois.
+      if (field === 'horaInicio' && value && !p.horaFim) {
+        return { ...p, horaInicio: value, horaFim: addMinutesToTime(value, 30) }
+      }
+      return { ...p, [field]: value }
+    })
     if (errors[field]) setErrors((e) => { const n = { ...e }; delete n[field]; return n })
+  }
+
+  // RNE-013: janela de observação pós-aplicação
+  function addMinutesToTime(time: string, minutes: number): string {
+    const parts = time.split(':')
+    if (parts.length !== 2) return ''
+    const h = parseInt(parts[0], 10)
+    const m = parseInt(parts[1], 10)
+    if (isNaN(h) || isNaN(m)) return ''
+    const total = h * 60 + m + minutes
+    const newH = Math.floor(total / 60) % 24
+    const newM = total % 60
+    return `${String(newH).padStart(2, '0')}:${String(newM).padStart(2, '0')}`
   }
 
   const touch = (field: string) => setTouched((t) => ({ ...t, [field]: true }))
@@ -416,7 +444,20 @@ export function PatientEvolutionPage() {
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-(--text-muted) mb-1.5 block">Responsável</label>
-                  <input placeholder="Nome do responsável" value={form.responsavel} onChange={(e) => set('responsavel', e.target.value)} onBlur={() => touch('responsavel')} className={inputCls('responsavel')} />
+                  <div className="relative">
+                    <select
+                      value={form.responsavel}
+                      onChange={(e) => set('responsavel', e.target.value)}
+                      onBlur={() => touch('responsavel')}
+                      className={cn(inputCls('responsavel'), "appearance-none pr-8 cursor-pointer")}
+                    >
+                      <option value="" disabled>Selecione o responsável pela aplicação</option>
+                      {RESPONSAVEIS_APLICACAO.map((r) => (
+                        <option key={r.name} value={r.name}>{r.name} — {r.role}</option>
+                      ))}
+                    </select>
+                    <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-(--text-muted) pointer-events-none" />
+                  </div>
                   <ErrorMsg field="responsavel" />
                 </div>
                 <div>
