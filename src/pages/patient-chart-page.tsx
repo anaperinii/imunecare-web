@@ -159,7 +159,7 @@ export function PatientChartPage() {
           {/* Header */}
           <div className="border-b border-(--border-custom) px-5 py-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-linear-to-br from-teal-500 to-cyan-500 text-base font-bold text-white shrink-0">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-linear-to-br from-brand to-teal-400 text-base font-bold text-white shrink-0">
                 {getInitials(selectedPatient.nome)}
               </div>
               <div className="min-w-0">
@@ -179,7 +179,7 @@ export function PatientChartPage() {
             <div className="mt-3 flex gap-1.5">
               <button
                 onClick={() => navigate({ to: '/patient-evolution', search: { patientId: selectedPatient.id } })}
-                className="flex-1 h-8 rounded-lg bg-linear-to-br from-teal-500 to-cyan-500 text-white text-xs font-semibold hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(20,184,166,0.3)] transition-all"
+                className="flex-1 h-8 rounded-lg bg-linear-to-br from-brand to-teal-400 text-white text-xs font-semibold hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(20,184,166,0.3)] transition-all"
               >
                 Evoluir Paciente
               </button>
@@ -350,7 +350,7 @@ export function PatientChartPage() {
                   className={cn(
                     "shrink-0 px-3 py-1 rounded-full text-[0.65rem] font-semibold border transition-all",
                     monthFilter === 'all'
-                      ? "bg-linear-to-br from-teal-500 to-cyan-500 text-white border-transparent"
+                      ? "bg-linear-to-br from-brand to-teal-400 text-white border-transparent"
                       : "bg-white text-(--text-muted) border-(--border-custom) hover:border-teal-300 hover:text-teal-600"
                   )}
                 >
@@ -363,7 +363,7 @@ export function PatientChartPage() {
                     className={cn(
                       "shrink-0 px-3 py-1 rounded-full text-[0.65rem] font-semibold border transition-all",
                       monthFilter === m.key
-                        ? "bg-linear-to-br from-teal-500 to-cyan-500 text-white border-transparent"
+                        ? "bg-linear-to-br from-brand to-teal-400 text-white border-transparent"
                         : "bg-white text-(--text-muted) border-(--border-custom) hover:border-teal-300 hover:text-teal-600"
                     )}
                   >
@@ -480,7 +480,7 @@ export function PatientChartPage() {
                   className={cn(
                     "px-4 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200",
                     modalTab === 'pre'
-                      ? "bg-linear-to-br from-teal-500 to-cyan-500 text-white shadow-sm"
+                      ? "bg-linear-to-br from-brand to-teal-400 text-white shadow-sm"
                       : "bg-teal-50 text-teal-600 hover:bg-teal-100"
                   )}
                 >
@@ -491,7 +491,7 @@ export function PatientChartPage() {
                   className={cn(
                     "px-4 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200",
                     modalTab === 'pos'
-                      ? "bg-linear-to-br from-teal-500 to-cyan-500 text-white shadow-sm"
+                      ? "bg-linear-to-br from-brand to-teal-400 text-white shadow-sm"
                       : "bg-teal-50 text-teal-600 hover:bg-teal-100"
                   )}
                 >

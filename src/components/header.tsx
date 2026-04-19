@@ -79,7 +79,7 @@ export function Header({ isAuthPage = false }: HeaderProps) {
           </Link>
           <Link
             to="/register"
-            className="px-4 py-1.5 rounded-full border-none bg-linear-to-br from-teal-500 to-cyan-500 text-white font-semibold text-[0.8rem] cursor-pointer transition-all duration-200 shadow-[0_2px_12px_rgba(20,184,166,0.3)] hover:-translate-y-px hover:shadow-[0_4px_20px_rgba(20,184,166,0.4)] no-underline"
+            className="px-4 py-1.5 rounded-full border-none bg-linear-to-br from-brand to-teal-400 text-white font-semibold text-[0.8rem] cursor-pointer transition-all duration-200 shadow-[0_2px_12px_rgba(20,184,166,0.3)] hover:-translate-y-px hover:shadow-[0_4px_20px_rgba(20,184,166,0.4)] no-underline"
           >
             Começar agora
           </Link>
@@ -133,7 +133,7 @@ export function Header({ isAuthPage = false }: HeaderProps) {
             </Link>
             <Link
               to="/register"
-              className="text-center px-4 py-2.5 rounded-full border-none bg-linear-to-br from-teal-500 to-cyan-500 text-white font-semibold text-sm shadow-[0_2px_12px_rgba(20,184,166,0.3)] no-underline"
+              className="text-center px-4 py-2.5 rounded-full border-none bg-linear-to-br from-brand to-teal-400 text-white font-semibold text-sm shadow-[0_2px_12px_rgba(20,184,166,0.3)] no-underline"
             >
               Começar agora
             </Link>

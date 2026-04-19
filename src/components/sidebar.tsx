@@ -30,7 +30,7 @@ const menuItems = [
 ]
 
 const typeConfig: Record<Notification['type'], { color: string; bg: string; label: string }> = {
-  appointment: { color: 'text-teal-600', bg: 'bg-teal-50', label: 'Agendamento' },
+  appointment: { color: 'text-brand', bg: 'bg-teal-50', label: 'Agendamento' },
   alert: { color: 'text-amber-600', bg: 'bg-amber-50', label: 'Alerta' },
   protocol: { color: 'text-violet-600', bg: 'bg-violet-50', label: 'Protocolo' },
   system: { color: 'text-gray-500', bg: 'bg-gray-100', label: 'Sistema' },
@@ -101,7 +101,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
 
       <button
         onClick={onToggle}
-        className="absolute -right-2.5 top-4 flex h-5 w-5 items-center justify-center rounded-full bg-white border border-(--border-custom) text-(--text-muted) shadow-[0_2px_6px_rgba(0,0,0,0.08)] hover:shadow-[0_3px_10px_rgba(13,148,136,0.15)] hover:border-teal-300 hover:text-teal-600 transition-all duration-200 z-20"
+        className="absolute -right-2.5 top-4 flex h-5 w-5 items-center justify-center rounded-full bg-white border border-(--border-custom) text-(--text-muted) shadow-[0_2px_6px_rgba(0,0,0,0.08)] hover:shadow-[0_3px_10px_rgba(13,148,136,0.15)] hover:border-brand-light hover:text-brand transition-all duration-200 z-20"
         aria-label={isCollapsed ? 'Expandir sidebar' : 'Colapsar sidebar'}
       >
         {isCollapsed ? (
@@ -124,17 +124,17 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
                 "group relative no-underline transition-all duration-200",
                 isCollapsed ? collapsedItemClass : expandedItemClass,
                 isActive
-                  ? "bg-linear-to-r from-teal-500/10 to-cyan-500/10 text-teal-600"
-                  : "text-(--text-muted) hover:bg-teal-50 hover:text-teal-600"
+                  ? "bg-linear-to-r from-teal-500/10 to-cyan-500/10 text-brand"
+                  : "text-(--text-muted) hover:bg-brand-50 hover:text-brand"
               )}
             >
               {isActive && !isCollapsed && (
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 rounded-r-full bg-linear-to-b from-teal-500 to-cyan-500" />
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 rounded-r-full bg-linear-to-b from-brand to-teal-400" />
               )}
-              <Icon size={18} className={cn("shrink-0 transition-colors duration-200", isActive ? "text-teal-600" : "group-hover:text-teal-500")} />
+              <Icon size={18} className={cn("shrink-0 transition-colors duration-200", isActive ? "text-brand" : "group-hover:text-brand")} />
               {!isCollapsed && <span>{item.title}</span>}
               {isCollapsed && (
-                <div className="absolute left-full ml-2 px-2 py-1 rounded-md bg-teal-600 text-white text-[0.7rem] font-medium whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 shadow-md z-50">
+                <div className="absolute left-full ml-2 px-2 py-1 rounded-md bg-brand text-white text-[0.7rem] font-medium whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 shadow-md z-50">
                   {item.title}
                 </div>
               )}
@@ -148,17 +148,17 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
             ref={notificationButtonRef}
             onClick={() => setShowNotifications(!showNotifications)}
             className={cn(
-              "group w-full transition-all duration-200 text-(--text-muted) hover:bg-teal-50 hover:text-teal-600",
+              "group w-full transition-all duration-200 text-(--text-muted) hover:bg-brand-50 hover:text-brand",
               isCollapsed ? collapsedItemClass : expandedItemClass,
             )}
           >
             <div className="relative shrink-0">
-              <Bell size={18} className="group-hover:text-teal-500 transition-colors" />
+              <Bell size={18} className="group-hover:text-brand transition-colors" />
               {unreadCount() > 0 && <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-linear-to-br from-red-500 to-red-600 text-[8px] font-bold text-white">{unreadCount()}</span>}
             </div>
             {!isCollapsed && <span>Notificações</span>}
             {isCollapsed && (
-              <div className="absolute left-full ml-2 px-2 py-1 rounded-md bg-teal-600 text-white text-[0.7rem] font-medium whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 shadow-md z-50">
+              <div className="absolute left-full ml-2 px-2 py-1 rounded-md bg-brand text-white text-[0.7rem] font-medium whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 shadow-md z-50">
                 Notificações
               </div>
             )}
@@ -174,7 +174,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
                   </div>
                   <div className="flex items-center gap-1.5">
                     {unreadCount() > 0 && (
-                      <button onClick={markAllAsRead} className="text-[0.6rem] font-medium text-teal-600 hover:underline">
+                      <button onClick={markAllAsRead} className="text-[0.6rem] font-medium text-brand hover:underline">
                         Marcar todas como lidas
                       </button>
                     )}
@@ -196,7 +196,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
                           className={cn("px-3.5 py-2.5 border-b border-(--border-custom) last:border-0 cursor-pointer transition-colors hover:bg-gray-50", !n.read && "bg-teal-50/30")}
                         >
                           <div className="flex items-start gap-2.5">
-                            {!n.read && <div className="w-1.5 h-1.5 rounded-full bg-teal-500 mt-1.5 shrink-0" />}
+                            {!n.read && <div className="w-1.5 h-1.5 rounded-full bg-brand mt-1.5 shrink-0" />}
                             <div className={cn("flex-1 min-w-0", n.read && "ml-4")}>
                               <div className="flex items-center gap-2 mb-0.5">
                                 <span className={cn("text-[0.55rem] font-semibold px-1.5 py-px rounded-full", tc.bg, tc.color)}>{tc.label}</span>
@@ -226,10 +226,10 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
               "group relative no-underline transition-all duration-200",
               isCollapsed
                 ? "flex items-center justify-center w-9 h-9 mx-auto rounded-lg"
-                : "flex items-center gap-2.5 rounded-lg px-3 py-2 bg-teal-500/10 text-teal-600"
+                : "flex items-center gap-2.5 rounded-lg px-3 py-2 bg-brand/10 text-brand"
             )}
           >
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-teal-500 text-white text-[0.6rem] font-bold">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand text-white text-[0.6rem] font-bold">
               {getInitials(selectedPatient.nome)}
             </div>
             {!isCollapsed && (
@@ -244,7 +244,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
                     setSelectedPatient(null)
                     navigate({ to: '/immunotherapies' })
                   }}
-                  className="ml-1.5 flex h-5 w-5 items-center justify-center rounded hover:bg-teal-500/20 transition-colors shrink-0"
+                  className="ml-1.5 flex h-5 w-5 items-center justify-center rounded hover:bg-brand/20 transition-colors shrink-0"
                 >
                   <XIcon size={12} />
                 </button>
@@ -273,11 +273,11 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
           ref={userButtonRef}
           onClick={() => setShowUserMenu(!showUserMenu)}
           className={cn(
-            "group w-full transition-all duration-200 text-(--text-muted) hover:bg-teal-50",
+            "group w-full transition-all duration-200 text-(--text-muted) hover:bg-brand-50",
             isCollapsed ? "flex items-center justify-center w-9 h-9 mx-auto rounded-lg" : "flex items-center gap-2.5 rounded-lg px-3 py-2"
           )}
         >
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-linear-to-br from-teal-400 to-cyan-500 text-white text-[0.65rem] font-bold shadow-[0_2px_6px_rgba(20,184,166,0.3)]">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-linear-to-br from-brand to-teal-400 text-white text-[0.65rem] font-bold shadow-[0_2px_6px_rgba(20,184,166,0.3)]">
             <User size={14} />
           </div>
           {!isCollapsed && (
@@ -287,7 +287,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
             </div>
           )}
           {isCollapsed && (
-            <div className="absolute left-full ml-2 px-2 py-1 rounded-md bg-teal-600 text-white text-[0.7rem] font-medium whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 shadow-md z-50">
+            <div className="absolute left-full ml-2 px-2 py-1 rounded-md bg-brand text-white text-[0.7rem] font-medium whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 shadow-md z-50">
               Dr. Usuário
             </div>
           )}

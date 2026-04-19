@@ -67,7 +67,7 @@ export function TabsSection() {
             className={cn(
               "px-5 py-2 rounded-full border-[1.5px] font-semibold text-[0.875rem] cursor-pointer transition-all duration-200",
               activeTab === tab.id
-                ? "bg-linear-to-br from-teal-500 to-cyan-500 border-transparent text-white shadow-[0_4px_16px_rgba(20,184,166,0.3)]"
+                ? "bg-linear-to-br from-brand to-teal-400 border-transparent text-white shadow-[0_4px_16px_rgba(20,184,166,0.3)]"
                 : "border-(--border-custom) bg-transparent text-(--text-muted) hover:border-teal-300 hover:text-teal-600"
             )}
           >

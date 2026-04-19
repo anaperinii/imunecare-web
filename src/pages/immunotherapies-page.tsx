@@ -138,7 +138,7 @@ export function ImmunotherapiesPage() {
             </button>
 
             {/* Adicionar */}
-            <button onClick={() => navigate({ to: '/add-immunotherapy' })} className="h-8 px-3 flex items-center gap-1.5 rounded-lg bg-linear-to-br from-teal-500 to-cyan-500 text-white text-xs font-semibold shadow-[0_2px_12px_rgba(20,184,166,0.3)] hover:-translate-y-px hover:shadow-[0_4px_20px_rgba(20,184,166,0.4)] transition-all">
+            <button onClick={() => navigate({ to: '/add-immunotherapy' })} className="h-8 px-3 flex items-center gap-1.5 rounded-lg bg-linear-to-br from-brand to-teal-400 text-white text-xs font-semibold shadow-[0_2px_12px_rgba(20,184,166,0.3)] hover:-translate-y-px hover:shadow-[0_4px_20px_rgba(20,184,166,0.4)] transition-all">
               <Plus size={14} />
               Adicionar Imunoterapia
             </button>

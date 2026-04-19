@@ -143,7 +143,7 @@ export function RegisterPage() {
 
           <button
             onClick={handleRegister}
-            className="w-full h-10 rounded-xl text-sm font-semibold text-white bg-linear-to-br from-teal-500 to-cyan-500 shadow-[0_2px_12px_rgba(20,184,166,0.3)] hover:-translate-y-px hover:shadow-[0_4px_20px_rgba(20,184,166,0.4)] transition-all cursor-pointer border-none"
+            className="w-full h-10 rounded-xl text-sm font-semibold text-white bg-linear-to-br from-brand to-teal-400 shadow-[0_2px_12px_rgba(20,184,166,0.3)] hover:-translate-y-px hover:shadow-[0_4px_20px_rgba(20,184,166,0.4)] transition-all cursor-pointer border-none"
           >
             Começar agora
           </button>

@@ -13,7 +13,7 @@ export function CtaSection() {
         <div className="flex gap-3 justify-center flex-wrap">
           <Link
             to="/register"
-            className="px-6 py-2.5 rounded-full border-none bg-linear-to-br from-teal-500 to-cyan-500 text-white font-semibold text-[0.9rem] cursor-pointer transition-all duration-250 shadow-[0_4px_20px_rgba(20,184,166,0.35)] hover:-translate-y-0.5 hover:shadow-[0_8px_32px_rgba(20,184,166,0.4)] no-underline"
+            className="px-6 py-2.5 rounded-full border-none bg-linear-to-br from-brand to-teal-400 text-white font-semibold text-[0.9rem] cursor-pointer transition-all duration-250 shadow-[0_4px_20px_rgba(20,184,166,0.35)] hover:-translate-y-0.5 hover:shadow-[0_8px_32px_rgba(20,184,166,0.4)] no-underline"
           >
             Começar agora
           </Link>

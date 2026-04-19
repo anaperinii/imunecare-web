@@ -122,7 +122,7 @@ export function PatientEvolutionPage() {
           {stepLabels.map((label, i) => (
             <div key={i} className="flex items-center gap-4">
               <div className="flex items-center gap-2.5">
-                <div className={cn("flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold transition-all", step === i ? "bg-linear-to-br from-teal-500 to-cyan-500 text-white" : step > i ? "bg-teal-100 text-teal-600 opacity-50" : "bg-gray-200 text-gray-500")}>
+                <div className={cn("flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold transition-all", step === i ? "bg-linear-to-br from-brand to-teal-400 text-white" : step > i ? "bg-teal-100 text-teal-600 opacity-50" : "bg-gray-200 text-gray-500")}>
                   {i + 1}
                 </div>
                 <span className={cn("text-sm font-medium", step === i ? "text-teal-600" : step > i ? "text-teal-600 opacity-50" : "text-gray-400")}>{label}</span>
@@ -163,7 +163,7 @@ export function PatientEvolutionPage() {
                 <div className="border border-(--border-custom) rounded-xl mt-4 overflow-hidden">
                   {/* Patient header */}
                   <div className="px-4 py-3.5 border-b border-(--border-custom) flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-linear-to-br from-teal-500 to-cyan-500 text-sm font-bold text-white shrink-0">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-linear-to-br from-brand to-teal-400 text-sm font-bold text-white shrink-0">
                       {selectedPatient.nome.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase()}
                     </div>
                     <div className="min-w-0 flex-1">
@@ -476,12 +476,12 @@ export function PatientEvolutionPage() {
             <button
               onClick={() => { if (step === 0 && !selectedPatient) return; setStep((s) => (s + 1) as 0 | 1 | 2 | 3) }}
               disabled={step === 0 && !selectedPatient}
-              className="h-8 px-4 rounded-lg bg-linear-to-br from-teal-500 to-cyan-500 text-white text-xs font-semibold hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(20,184,166,0.3)] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none"
+              className="h-8 px-4 rounded-lg bg-linear-to-br from-brand to-teal-400 text-white text-xs font-semibold hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(20,184,166,0.3)] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none"
             >
               Continuar
             </button>
           ) : (
-            <button onClick={() => navigate({ to: '/immunotherapies' })} className="h-8 px-4 rounded-lg bg-linear-to-br from-teal-500 to-cyan-500 text-white text-xs font-semibold hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(20,184,166,0.3)] transition-all">
+            <button onClick={() => navigate({ to: '/immunotherapies' })} className="h-8 px-4 rounded-lg bg-linear-to-br from-brand to-teal-400 text-white text-xs font-semibold hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(20,184,166,0.3)] transition-all">
               Salvar
             </button>
           )}
