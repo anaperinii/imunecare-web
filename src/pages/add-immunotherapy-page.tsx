@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { ChevronDown, ArrowLeft, User, Syringe, Info } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -7,175 +7,43 @@ import { ptBR } from 'date-fns/locale'
 
 const stepLabels = ['Dados do Paciente', 'Dados da Imunoterapia', 'Revisão dos Dados']
 
-// --- Formatters ---
-function formatCPF(value: string): string {
-  const digits = value.replace(/\D/g, '').slice(0, 11)
-  if (digits.length <= 3) return digits
-  if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`
-  if (digits.length <= 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`
-  return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`
-}
-
-function formatPhone(value: string): string {
-  const digits = value.replace(/\D/g, '').slice(0, 11)
-  if (digits.length <= 2) return digits.length ? `(${digits}` : ''
-  if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`
-  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`
-}
-
-function formatWeight(value: string): string {
-  const cleaned = value.replace(/[^0-9,.]/g, '').replace(',', '.')
-  const parts = cleaned.split('.')
-  if (parts.length > 2) return parts[0] + '.' + parts.slice(1).join('')
-  return cleaned
-}
-
-function formatConcentration(value: string): string {
-  const cleaned = value.replace(/[^0-9.:]/g, '')
-  if (!cleaned.startsWith('1:') && cleaned.length > 0) {
-    const digits = cleaned.replace(/\D/g, '')
-    if (digits.length > 0) return `1:${digits}`
-    return ''
-  }
-  return cleaned
-}
-
-function formatVolume(value: string): string {
-  const cleaned = value.replace(/[^0-9,.]/g, '').replace(',', '.')
-  const parts = cleaned.split('.')
-  if (parts.length > 2) return parts[0] + '.' + parts.slice(1).join('')
-  return cleaned
-}
-
-// --- Validators ---
-function validateCPF(cpf: string): boolean {
-  const digits = cpf.replace(/\D/g, '')
-  if (digits.length !== 11) return false
-  if (/^(\d)\1+$/.test(digits)) return false
-  let sum = 0
-  for (let i = 0; i < 9; i++) sum += parseInt(digits[i]) * (10 - i)
-  let check = 11 - (sum % 11)
-  if (check >= 10) check = 0
-  if (parseInt(digits[9]) !== check) return false
-  sum = 0
-  for (let i = 0; i < 10; i++) sum += parseInt(digits[i]) * (11 - i)
-  check = 11 - (sum % 11)
-  if (check >= 10) check = 0
-  return parseInt(digits[10]) === check
-}
-
-function validatePhone(phone: string): boolean {
-  return phone.replace(/\D/g, '').length === 11
-}
-
-function validateWeight(weight: string): boolean {
-  const num = parseFloat(weight)
-  return !isNaN(num) && num > 0 && num <= 500
-}
-
-function validateConcentration(conc: string): boolean {
-  return /^1:\d+(\.\d+)?$/.test(conc)
-}
-
-function validateVolume(vol: string): boolean {
-  const num = parseFloat(vol)
-  return !isNaN(num) && num > 0 && num <= 10
-}
-
-interface FieldErrors {
-  [key: string]: string
-}
-
 export function AddImmunotherapyPage() {
   const navigate = useNavigate()
   const [step, setStep] = useState<1 | 2 | 3>(1)
   const [showCancelModal, setShowCancelModal] = useState(false)
-  const [errors, setErrors] = useState<FieldErrors>({})
-  const [touched, setTouched] = useState<Record<string, boolean>>({})
   const [form, setForm] = useState({
     nome: '', cpf: '', telefone: '', dataNascimento: '', peso: '', medicoResponsavel: '',
     tipo: '', viaCutanea: '', dataInicio: '', extrato: '', metaConcentracao: '', metaVolume: '',
   })
 
-  const set = (field: string, value: string) => {
-    setForm((p) => ({ ...p, [field]: value }))
-    if (errors[field]) setErrors((e) => { const n = { ...e }; delete n[field]; return n })
-  }
+  const set = (field: string, value: string) => setForm((p) => ({ ...p, [field]: value }))
 
-  const touch = (field: string) => setTouched((t) => ({ ...t, [field]: true }))
-
-  const validateStep1 = useCallback((): boolean => {
-    const e: FieldErrors = {}
-    if (!form.nome.trim()) e.nome = 'Nome é obrigatório'
-    else if (form.nome.trim().length < 3) e.nome = 'Nome deve ter ao menos 3 caracteres'
-    if (!form.cpf.trim()) e.cpf = 'CPF é obrigatório'
-    else if (!validateCPF(form.cpf)) e.cpf = 'CPF inválido'
-    if (!form.telefone.trim()) e.telefone = 'Telefone é obrigatório'
-    else if (!validatePhone(form.telefone)) e.telefone = 'Telefone inválido'
-    if (!form.dataNascimento) e.dataNascimento = 'Data de nascimento é obrigatória'
-    if (!form.peso.trim()) e.peso = 'Peso é obrigatório'
-    else if (!validateWeight(form.peso)) e.peso = 'Peso inválido'
-    if (!form.medicoResponsavel.trim()) e.medicoResponsavel = 'Médico responsável é obrigatório'
-    setErrors(e)
-    setTouched({ nome: true, cpf: true, telefone: true, dataNascimento: true, peso: true, medicoResponsavel: true })
-    return Object.keys(e).length === 0
-  }, [form])
-
-  const validateStep2 = useCallback((): boolean => {
-    const e: FieldErrors = {}
-    if (!form.tipo.trim()) e.tipo = 'Tipo é obrigatório'
-    if (!form.viaCutanea) e.viaCutanea = 'Via cutânea é obrigatória'
-    if (!form.dataInicio) e.dataInicio = 'Data de início é obrigatória'
-    if (!form.extrato.trim()) e.extrato = 'Extrato é obrigatório'
-    if (!form.metaConcentracao.trim()) e.metaConcentracao = 'Meta de concentração é obrigatória'
-    else if (!validateConcentration(form.metaConcentracao)) e.metaConcentracao = 'Formato inválido (ex: 1:10)'
-    if (!form.metaVolume.trim()) e.metaVolume = 'Meta de volume é obrigatória'
-    else if (!validateVolume(form.metaVolume)) e.metaVolume = 'Volume inválido'
-    setErrors(e)
-    setTouched({ ...touched, tipo: true, viaCutanea: true, dataInicio: true, extrato: true, metaConcentracao: true, metaVolume: true })
-    return Object.keys(e).length === 0
-  }, [form, touched])
-
-  const inputClass = (field?: string) => cn(
-    "w-full h-9 rounded-lg border bg-gray-50/60 px-3 text-xs placeholder:text-(--text-muted)/60 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all",
-    field && errors[field] && touched[field] ? "border-red-400 bg-red-50/30" : "border-(--border-custom)"
-  )
-
-  const ErrorMsg = ({ field }: { field: string }) => {
-    if (!errors[field] || !touched[field]) return null
-    return <span className="text-[0.6rem] text-red-500 mt-0.5 block">{errors[field]}</span>
-  }
-
-  const handleContinue = () => {
-    if (step === 1 && !validateStep1()) return
-    if (step === 2 && !validateStep2()) return
-    setStep((s) => (s + 1) as 1 | 2 | 3)
-  }
+  const inputClass = "w-full h-9 rounded-lg border border-(--border-custom) bg-gray-50/60 px-3 text-xs placeholder:text-(--text-muted)/60 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all"
 
   return (
     <div className="flex flex-1 flex-col bg-gray-50/80 p-4 min-h-0 overflow-hidden">
       <div className="flex flex-1 min-h-0 flex-col rounded-xl bg-white shadow-[0_4px_24px_rgba(0,0,0,0.06)] overflow-hidden">
         {/* Header */}
         <div className="border-b border-(--border-custom) px-5 py-4 flex items-center gap-3">
-          <button onClick={() => setShowCancelModal(true)} className="h-8 w-8 flex items-center justify-center rounded-lg text-(--text-muted) hover:bg-red-50 hover:text-red-500 transition-all">
-            <ArrowLeft size={18} />
+          <button onClick={() => setShowCancelModal(true)} className="h-8 w-8 flex items-center justify-center rounded-lg text-(--text-muted) hover:bg-gray-50 transition-all cursor-pointer">
+            <ArrowLeft size={16} />
           </button>
           <h1 className="text-2xl font-bold text-(--text)">Adicionar Imunoterapia</h1>
         </div>
 
         {/* Steps */}
-        <div className="px-5 py-7 flex items-center justify-center gap-4">
+        <div className="px-5 py-8 flex items-center justify-center gap-4">
           {stepLabels.map((label, i) => {
             const s = i + 1
             return (
               <div key={s} className="flex items-center gap-4">
                 <div className="flex items-center gap-2.5">
-                  <div className={cn("flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold transition-all", step === s ? "bg-linear-to-br from-brand to-teal-400 text-white" : step > s ? "bg-teal-100 text-teal-600 opacity-50" : "bg-gray-200 text-gray-500")}>
+                  <div className={cn("flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold transition-all", step === s ? "bg-linear-to-br from-brand to-teal-400 text-white" : step > s ? "bg-teal-100 text-teal-600 opacity-50" : "bg-gray-200 text-gray-500")}>
                     {s}
                   </div>
-                  <span className={cn("text-[0.8rem] font-medium", step === s ? "text-teal-600" : step > s ? "text-teal-600 opacity-50" : "text-gray-400")}>{label}</span>
+                  <span className={cn("text-sm font-medium", step === s ? "text-teal-600" : step > s ? "text-teal-600 opacity-50" : "text-gray-400")}>{label}</span>
                 </div>
-                {s < 3 && <div className={cn("h-px w-14 border-t-[1.5px]", step > s ? "border-teal-400 border-solid" : "border-gray-200 border-dashed")} />}
+                {s < 3 && <div className={cn("h-px w-16 border-t-[1.5px]", step > s ? "border-teal-400 border-solid" : "border-gray-200 border-dashed")} />}
               </div>
             )
           })}
@@ -187,39 +55,19 @@ export function AddImmunotherapyPage() {
             <div className="space-y-5">
               <h2 className="text-sm font-bold text-(--text)">Dados do Paciente</h2>
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-semibold text-(--text-muted) mb-1.5 block">Nome do Paciente</label>
-                  <input placeholder="Nome completo" value={form.nome} onChange={(e) => set('nome', e.target.value)} onBlur={() => touch('nome')} className={inputClass('nome')} />
-                  <ErrorMsg field="nome" />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-(--text-muted) mb-1.5 block">CPF</label>
-                  <input placeholder="000.000.000-00" value={form.cpf} onChange={(e) => set('cpf', formatCPF(e.target.value))} onBlur={() => touch('cpf')} className={inputClass('cpf')} />
-                  <ErrorMsg field="cpf" />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-(--text-muted) mb-1.5 block">Telefone</label>
-                  <input placeholder="(00) 00000-0000" value={form.telefone} onChange={(e) => set('telefone', formatPhone(e.target.value))} onBlur={() => touch('telefone')} className={inputClass('telefone')} />
-                  <ErrorMsg field="telefone" />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-(--text-muted) mb-1.5 block">Data de Nascimento</label>
-                  <input type="date" value={form.dataNascimento} onChange={(e) => set('dataNascimento', e.target.value)} onBlur={() => touch('dataNascimento')} className={inputClass('dataNascimento')} />
-                  <ErrorMsg field="dataNascimento" />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-(--text-muted) mb-1.5 block">Peso</label>
-                  <div className="relative">
-                    <input placeholder="Ex: 72.5" value={form.peso} onChange={(e) => set('peso', formatWeight(e.target.value))} onBlur={() => touch('peso')} className={cn(inputClass('peso'), "pr-10")} />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[0.65rem] font-semibold text-(--text-muted)">kg</span>
+                {[
+                  { id: 'nome', label: 'Nome do Paciente', type: 'text' },
+                  { id: 'cpf', label: 'CPF', type: 'text' },
+                  { id: 'telefone', label: 'Telefone', type: 'text' },
+                  { id: 'dataNascimento', label: 'Data de Nascimento', type: 'date' },
+                  { id: 'peso', label: 'Peso', type: 'text' },
+                  { id: 'medicoResponsavel', label: 'Médico Responsável', type: 'text' },
+                ].map((f) => (
+                  <div key={f.id}>
+                    <label className="text-xs font-semibold text-(--text-muted) mb-1.5 block">{f.label}</label>
+                    <input type={f.type} placeholder="Insira aqui" value={form[f.id as keyof typeof form]} onChange={(e) => set(f.id, e.target.value)} className={inputClass} />
                   </div>
-                  <ErrorMsg field="peso" />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-(--text-muted) mb-1.5 block">Médico Responsável</label>
-                  <input placeholder="Nome do médico" value={form.medicoResponsavel} onChange={(e) => set('medicoResponsavel', e.target.value)} onBlur={() => touch('medicoResponsavel')} className={inputClass('medicoResponsavel')} />
-                  <ErrorMsg field="medicoResponsavel" />
-                </div>
+                ))}
               </div>
             </div>
           )}
@@ -230,55 +78,34 @@ export function AddImmunotherapyPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-semibold text-(--text-muted) mb-1.5 block">Tipo</label>
-                  <div className="relative">
-                    <select value={form.tipo} onChange={(e) => set('tipo', e.target.value)} onBlur={() => touch('tipo')} className={cn(inputClass('tipo'), "appearance-none pr-8 cursor-pointer")}>
-                      <option value="" disabled>Selecione o tipo</option>
-                      <option value="Ácaros">Ácaros</option>
-                      <option value="Gramíneas">Gramíneas</option>
-                      <option value="Cão e Gato">Cão e Gato</option>
-                      <option value="Cândida">Cândida</option>
-                      <option value="Herpes">Herpes</option>
-                      <option value="Fungos">Fungos</option>
-                      <option value="Insetos">Insetos</option>
-                    </select>
-                    <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-(--text-muted) pointer-events-none" />
-                  </div>
-                  <ErrorMsg field="tipo" />
+                  <input placeholder="Insira aqui" value={form.tipo} onChange={(e) => set('tipo', e.target.value)} className={inputClass} />
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-(--text-muted) mb-1.5 block">Via Cutânea</label>
                   <div className="relative">
-                    <select value={form.viaCutanea} onChange={(e) => set('viaCutanea', e.target.value)} onBlur={() => touch('viaCutanea')} className={cn(inputClass('viaCutanea'), "appearance-none pr-8 cursor-pointer")}>
+                    <select value={form.viaCutanea} onChange={(e) => set('viaCutanea', e.target.value)} className={cn(inputClass, "appearance-none pr-8 cursor-pointer")}>
                       <option value="" disabled>Selecione</option>
                       <option value="Subcutânea">Subcutânea</option>
                       <option value="Sublingual">Sublingual</option>
                     </select>
                     <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-(--text-muted) pointer-events-none" />
                   </div>
-                  <ErrorMsg field="viaCutanea" />
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-(--text-muted) mb-1.5 block">Data de Início</label>
-                  <input type="date" value={form.dataInicio} onChange={(e) => set('dataInicio', e.target.value)} onBlur={() => touch('dataInicio')} className={inputClass('dataInicio')} />
-                  <ErrorMsg field="dataInicio" />
+                  <input type="date" value={form.dataInicio} onChange={(e) => set('dataInicio', e.target.value)} className={inputClass} />
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-(--text-muted) mb-1.5 block">Extrato</label>
-                  <input placeholder="Ex: Der p 60 + Der f 10% + Blt 30%" value={form.extrato} onChange={(e) => set('extrato', e.target.value)} onBlur={() => touch('extrato')} className={inputClass('extrato')} />
-                  <ErrorMsg field="extrato" />
+                  <input placeholder="Insira aqui" value={form.extrato} onChange={(e) => set('extrato', e.target.value)} className={inputClass} />
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-(--text-muted) mb-1.5 block">Meta de Concentração</label>
-                  <input placeholder="1:10" value={form.metaConcentracao} onChange={(e) => set('metaConcentracao', formatConcentration(e.target.value))} onBlur={() => touch('metaConcentracao')} className={inputClass('metaConcentracao')} />
-                  <ErrorMsg field="metaConcentracao" />
+                  <input placeholder="Insira aqui" value={form.metaConcentracao} onChange={(e) => set('metaConcentracao', e.target.value)} className={inputClass} />
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-(--text-muted) mb-1.5 block">Meta de Volume</label>
-                  <div className="relative">
-                    <input placeholder="Ex: 0.5" value={form.metaVolume} onChange={(e) => set('metaVolume', formatVolume(e.target.value))} onBlur={() => touch('metaVolume')} className={cn(inputClass('metaVolume'), "pr-10")} />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[0.65rem] font-semibold text-(--text-muted)">ml</span>
-                  </div>
-                  <ErrorMsg field="metaVolume" />
+                  <input placeholder="Insira aqui" value={form.metaVolume} onChange={(e) => set('metaVolume', e.target.value)} className={inputClass} />
                 </div>
               </div>
             </div>
@@ -291,7 +118,6 @@ export function AddImmunotherapyPage() {
                 <p className="text-[0.7rem] text-(--text-muted) mt-1">Confirme os dados antes de salvar a prescrição.</p>
               </div>
 
-              {/* Dados do Paciente */}
               <div className="border border-(--border-custom) rounded-xl overflow-hidden">
                 <div className="flex items-center gap-2.5 px-4 py-3 border-b border-(--border-custom) bg-white">
                   <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-teal-100 shrink-0">
@@ -299,26 +125,20 @@ export function AddImmunotherapyPage() {
                   </div>
                   <span className="text-[0.65rem] font-semibold uppercase tracking-wider text-(--text-muted)">Dados do Paciente</span>
                 </div>
-                <div className="bg-gray-50/60 p-4">
-                  <div className="grid grid-cols-2 gap-px bg-(--border-custom) rounded-lg overflow-hidden border border-(--border-custom)">
-                    {[
-                      { label: 'Nome', value: form.nome || '—' },
-                      { label: 'CPF', value: form.cpf || '—' },
-                      { label: 'Telefone', value: form.telefone || '—' },
-                      { label: 'Data de Nascimento', value: form.dataNascimento ? format(new Date(form.dataNascimento + 'T12:00'), 'dd/MM/yyyy', { locale: ptBR }) : '—' },
-                      { label: 'Peso', value: form.peso ? `${form.peso} kg` : '—' },
-                      { label: 'Médico Responsável', value: form.medicoResponsavel || '—' },
-                    ].map((item) => (
-                      <div key={item.label} className="bg-white px-3.5 py-2.5">
-                        <div className="text-[0.6rem] font-semibold uppercase tracking-wider text-(--text-muted) mb-0.5">{item.label}</div>
-                        <div className="text-xs font-medium text-(--text)">{item.value}</div>
-                      </div>
-                    ))}
-                  </div>
+                <div className="bg-gray-50/50 px-4">
+                  {[
+                    ['Nome', form.nome], ['CPF', form.cpf], ['Telefone', form.telefone],
+                    ['Data de Nascimento', form.dataNascimento ? format(new Date(form.dataNascimento + 'T12:00'), 'dd/MM/yyyy', { locale: ptBR }) : '—'],
+                    ['Peso', form.peso], ['Médico Responsável', form.medicoResponsavel],
+                  ].map(([l, v]) => (
+                    <div key={l} className="flex items-center gap-2 py-2.5 border-b border-(--border-custom) last:border-0">
+                      <span className="text-xs text-(--text-muted)">{l}:</span>
+                      <span className="text-xs font-medium text-(--text)">{v || '—'}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
 
-              {/* Dados da Imunoterapia */}
               <div className="border border-(--border-custom) rounded-xl overflow-hidden">
                 <div className="flex items-center gap-2.5 px-4 py-3 border-b border-(--border-custom) bg-white">
                   <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-teal-100 shrink-0">
@@ -326,19 +146,19 @@ export function AddImmunotherapyPage() {
                   </div>
                   <span className="text-[0.65rem] font-semibold uppercase tracking-wider text-(--text-muted)">Dados da Imunoterapia</span>
                 </div>
-                <div className="bg-gray-50/60 p-4">
-                  <div className="grid grid-cols-2 gap-px bg-(--border-custom) rounded-lg overflow-hidden border border-(--border-custom)">
+                <div className="bg-gray-50/50">
+                  <div className="grid grid-cols-2 gap-px bg-(--border-custom) m-4 rounded-lg overflow-hidden border border-(--border-custom)">
                     {[
                       { label: 'Tipo', value: form.tipo || '—' },
                       { label: 'Via Cutânea', value: form.viaCutanea || '—' },
                       { label: 'Data de Início', value: form.dataInicio ? format(new Date(form.dataInicio + 'T12:00'), 'dd/MM/yyyy', { locale: ptBR }) : '—' },
                       { label: 'Extrato', value: form.extrato || '—' },
-                      { label: 'Meta de Concentração', value: form.metaConcentracao || '—' },
-                      { label: 'Meta de Volume', value: form.metaVolume ? `${form.metaVolume} ml` : '—' },
+                      { label: 'Meta de Concentração', value: form.metaConcentracao || '—', accent: true },
+                      { label: 'Meta de Volume', value: form.metaVolume || '—', accent: true },
                     ].map((item) => (
                       <div key={item.label} className="bg-white px-3.5 py-2.5">
                         <div className="text-[0.6rem] font-semibold uppercase tracking-wider text-(--text-muted) mb-0.5">{item.label}</div>
-                        <div className="text-xs font-medium text-(--text)">{item.value}</div>
+                        <div className={cn("text-xs font-medium", item.accent ? "text-teal-700" : "text-(--text)")}>{item.value}</div>
                       </div>
                     ))}
                   </div>
@@ -366,12 +186,12 @@ export function AddImmunotherapyPage() {
             </button>
           )}
           {step < 3 ? (
-            <button onClick={handleContinue} className="h-8 px-4 rounded-lg bg-linear-to-br from-brand to-teal-400 text-white text-xs font-semibold hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(20,184,166,0.3)] transition-all">
+            <button onClick={() => setStep((s) => (s + 1) as 1 | 2 | 3)} className="h-8 px-4 rounded-lg bg-linear-to-br from-brand to-teal-400 text-white text-xs font-semibold hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(20,184,166,0.3)] transition-all">
               Continuar
             </button>
           ) : (
-            <button onClick={() => navigate({ to: '/immunotherapies', search: { success: true, patientName: form.nome } })} className="h-8 px-4 rounded-lg bg-linear-to-br from-brand to-teal-400 text-white text-xs font-semibold hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(20,184,166,0.3)] transition-all">
-              Salvar Imunoterapia
+            <button onClick={() => { navigate({ to: '/immunotherapies' }) }} className="h-8 px-4 rounded-lg bg-linear-to-br from-brand to-teal-400 text-white text-xs font-semibold hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(20,184,166,0.3)] transition-all">
+              Salvar
             </button>
           )}
         </div>

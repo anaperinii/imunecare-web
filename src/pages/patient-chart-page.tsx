@@ -11,6 +11,8 @@ import {
   ChevronUp,
   ChevronDown,
   Pencil,
+  X,
+  Save,
 } from 'lucide-react'
 
 const INTERVAL_COLORS: Record<number, { bg: string; text: string; dot: string }> = {
@@ -30,6 +32,12 @@ export function PatientChartPage() {
   const [selectedApp, setSelectedApp] = useState<Application | null>(null)
   const [modalTab, setModalTab] = useState<'pre' | 'pos'>('pre')
   const [monthFilter, setMonthFilter] = useState('all')
+  const [showProgress, setShowProgress] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editForm, setEditForm] = useState({
+    nome: '', telefone: '', peso: '', medicoResponsavel: '',
+    tipoImunoterapia: '', viaAdministracao: '', extrato: '',
+  })
 
   // Load patient if navigated directly
   useEffect(() => {
@@ -203,17 +211,33 @@ export function PatientChartPage() {
             )}
             <div className="mt-3 flex gap-1.5">
               <button
-                disabled={selectedPatient.status === 'inativo'}
                 onClick={() => navigate({ to: '/patient-evolution', search: { patientId: selectedPatient.id } })}
-                className={cn("flex-1 h-8 rounded-lg text-xs font-semibold transition-all", selectedPatient.status === 'inativo' ? "bg-gray-200 text-gray-400 cursor-not-allowed" : "bg-linear-to-br from-brand to-teal-400 text-white hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(20,184,166,0.3)]")}
+                className="flex-1 h-8 rounded-lg bg-linear-to-br from-brand to-teal-400 text-white text-xs font-semibold hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(20,184,166,0.3)] transition-all cursor-pointer"
               >
                 Evoluir Paciente
               </button>
-              <button className="flex-1 h-8 rounded-lg border border-(--border-custom) text-xs font-medium text-(--text-muted) hover:border-teal-300 hover:text-teal-600 transition-all">
+              <button
+                onClick={() => navigate({ to: '/patient-report', search: { patientId: selectedPatient.id } })}
+                className="flex-1 h-8 rounded-lg border-[1.5px] border-brand text-xs font-semibold text-brand hover:bg-brand-50 hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(24,193,203,0.12)] transition-all cursor-pointer"
+              >
                 Emitir Relatório
               </button>
-              <button className="h-8 w-8 shrink-0 rounded-lg border border-(--border-custom) flex items-center justify-center text-(--text-muted) hover:border-teal-300 hover:text-teal-600 transition-all">
-                <Pencil size={13} />
+              <button
+                onClick={() => {
+                  setEditForm({
+                    nome: selectedPatient.nome,
+                    telefone: selectedPatient.telefone,
+                    peso: selectedPatient.peso,
+                    medicoResponsavel: selectedPatient.medicoResponsavel,
+                    tipoImunoterapia: selectedPatient.tipoImunoterapia,
+                    viaAdministracao: selectedPatient.viaAdministracao,
+                    extrato: selectedPatient.extrato,
+                  })
+                  setShowEditModal(true)
+                }}
+                className="h-8 w-8 shrink-0 rounded-lg border border-(--border-custom) flex items-center justify-center text-(--text-muted) hover:border-brand hover:text-brand transition-all cursor-pointer"
+              >
+                <Pencil size={11} />
               </button>
             </div>
           </div>
@@ -288,7 +312,7 @@ export function PatientChartPage() {
             {[
               { icon: Clock, label: 'Intervalo Atual', value: `${currentInterval} dias` },
               { icon: CalendarDays, label: 'Próxima Aplicação', value: nextDate },
-              { icon: Droplet, label: 'Última Concentração e Volume', value: currentDose },
+              { icon: Droplet, label: 'Última Concentração - Volume', value: currentDose },
             ].map((card) => {
               const Icon = card.icon
               return (
@@ -310,64 +334,125 @@ export function PatientChartPage() {
             })}
           </div>
 
-          {/* Progress bar */}
-          <div className="bg-white rounded-xl shadow-[0_2px_12px_rgba(0,0,0,0.04)] px-5 py-3.5">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-[0.65rem] font-bold uppercase tracking-wider text-(--text-muted)">Progressão da indução</span>
-              <span className="text-xs font-bold text-teal-700">{progressPct}%</span>
-            </div>
-            <div className="h-2 bg-gray-100 rounded-full overflow-hidden mb-2">
-              <div
-                className="h-full bg-linear-to-r from-teal-400 to-teal-700 rounded-full transition-all duration-1000 ease-out"
-                style={{ width: `${progressPct}%` }}
-              />
-            </div>
-            <div className="flex justify-between text-[0.6rem] text-(--text-muted) mb-2.5">
-              <span>Início · 1:10.000 – 0,1ml</span>
-              <span>Meta · 1:10 – 0,5ml (manutenção)</span>
-            </div>
-            <div className="flex gap-1 flex-wrap">
-              {allSteps.map((step, i) => {
-                const safeIdx = currentStepIndex >= 0 ? currentStepIndex : 0
-                const isCurrent = i === safeIdx
-                const isFuture = i > safeIdx
-                const isLast = i === allSteps.length - 1
-                const conc = step.split(' - ')[0].trim()
-                const concColors: Record<string, { bg: string; text: string; border: string }> = {
-                  '1:10.000': { bg: '#ccfbf5', text: '#0d9488', border: '#5eead6' },
-                  '1:1.000':  { bg: '#99f6ec', text: '#0f766e', border: '#2dd4bf' },
-                  '1:100':    { bg: '#5eead6', text: '#115e59', border: '#14b8a6' },
-                  '1:10':     { bg: '#2dd4bf', text: '#134e4a', border: '#0d9488' },
-                }
-                const cc = concColors[conc] || { bg: '#F3F4F6', text: '#374151', border: '#6B7280' }
-                const vol = step.split(' - ')[1].trim()
-                return (
-                  <span
-                    key={i}
-                    className={cn(
-                      "text-[0.55rem] px-1.5 py-px rounded-full font-semibold border transition-all",
-                      isCurrent && "ring-1 ring-offset-1",
-                      isFuture && "opacity-40",
-                    )}
-                    style={{
-                      backgroundColor: cc.bg,
-                      color: cc.text,
-                      borderColor: isCurrent ? cc.border : `${cc.border}40`,
-                      ...(isCurrent ? { ringColor: cc.border } : {}),
-                    }}
-                  >
-                    {vol}{isLast ? ' ★' : ''}
-                  </span>
-                )
-              })}
-            </div>
-          </div>
-
           {/* Applications card */}
           <div className="flex-1 flex flex-col rounded-xl bg-white shadow-[0_4px_24px_rgba(0,0,0,0.06)] overflow-hidden min-h-0">
             {/* Header + Filters */}
             <div className="px-5 py-3 border-b border-(--border-custom)">
-              <h2 className="text-sm font-bold text-(--text) mb-2.5">Aplicações</h2>
+              <div className="flex items-center justify-between mb-2.5">
+                <h2 className="text-sm font-bold text-(--text)">Aplicações</h2>
+                <button
+                  onClick={() => setShowProgress(!showProgress)}
+                  className="text-[0.6rem] font-semibold text-brand hover:underline cursor-pointer flex items-center gap-1"
+                >
+                  {showProgress ? 'Ocultar' : 'Ver'} progressão
+                  <ChevronDown size={10} className={cn("transition-transform", showProgress && "rotate-180")} />
+                </button>
+              </div>
+
+              {/* Collapsible progress */}
+              <div className={cn("overflow-hidden transition-all duration-300", showProgress ? "max-h-80 opacity-100 mb-3" : "max-h-0 opacity-0")}>
+                <div className="bg-gray-50 rounded-lg px-4 py-3">
+                  <div className="flex justify-between items-center mb-2.5">
+                    <span className="text-[0.6rem] font-bold uppercase tracking-wider text-(--text-muted)">Progressão da indução</span>
+                    <span className="text-[0.7rem] font-bold text-brand">{progressPct}%</span>
+                  </div>
+                  <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden mb-3">
+                    <div className="h-full bg-linear-to-r from-brand to-teal-400 rounded-full transition-all duration-1000 ease-out" style={{ width: `${progressPct}%` }} />
+                  </div>
+                  {/* 4 concentration blocks */}
+                  <div className="flex gap-0">
+                    {inductionSteps.map((group, gi) => {
+                      const startIdx = inductionSteps.slice(0, gi).reduce((acc, s) => acc + s.vols.length, 0)
+                      const safeIdx = currentStepIndex >= 0 ? currentStepIndex : 0
+                      const blockActive = safeIdx >= startIdx && safeIdx < startIdx + group.vols.length
+                      const blockFuture = safeIdx < startIdx
+                      return (
+                        <div key={group.conc} className="flex items-center flex-1 min-w-0">
+                          <div className={cn("flex-1 rounded-md px-2 py-1.5 transition-all", blockFuture && "opacity-30")}>
+                            <div className={cn("text-[0.5rem] font-bold mb-1 truncate", blockActive ? "text-brand" : "text-(--text-muted)")}>{group.conc}</div>
+                            <div className="flex gap-0.5 flex-wrap">
+                              {group.vols.map((vol, vi) => {
+                                const stepIdx = startIdx + vi
+                                const isCurrent = stepIdx === safeIdx
+                                const isDone = stepIdx < safeIdx
+                                const isLast = gi === inductionSteps.length - 1 && vi === group.vols.length - 1
+                                return (
+                                  <span
+                                    key={vi}
+                                    className={cn(
+                                      "text-[0.45rem] px-1 py-px rounded font-semibold",
+                                      stepIdx > safeIdx && "opacity-40",
+                                    )}
+                                    style={{
+                                      backgroundColor: isCurrent ? '#18C1CB' : isDone ? '#E2E8F0' : '#F1F5F9',
+                                      color: isCurrent ? 'white' : isDone ? '#64748B' : '#94A3B8',
+                                      outlineColor: isCurrent ? '#18C1CB' : undefined,
+                                      outlineWidth: isCurrent ? 1 : 0,
+                                      outlineOffset: 1,
+                                    }}
+                                  >
+                                    {vol}{isLast ? ' ★' : ''}
+                                  </span>
+                                )
+                              })}
+                            </div>
+                          </div>
+                          {gi < inductionSteps.length - 1 && <div className="w-px h-8 bg-gray-300 mx-1 shrink-0" />}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Manutenção progress — timeline */}
+                <div className="bg-gray-50 rounded-lg px-4 py-3 mt-2">
+                  <div className="flex justify-between items-center mb-3">
+                    <span className="text-[0.6rem] font-bold uppercase tracking-wider text-(--text-muted)">Progressão da manutenção</span>
+                    <span className="text-[0.55rem] text-(--text-muted)">Meta · 28 dias (estável)</span>
+                  </div>
+
+                  {/* Timeline horizontal */}
+                  <div className="flex items-start justify-between relative px-2">
+                    {/* Connecting line */}
+                    <div className="absolute top-2.25 left-6 right-6 h-px bg-gray-300" />
+                    <div className="absolute top-2.25 left-6 h-px bg-[#A78BFA] transition-all duration-700" style={{ width: isMaintenance ? (currentInterval >= 28 ? 'calc(100% - 48px)' : currentInterval >= 21 ? 'calc(50%)' : 'calc(0%)') : '0%' }} />
+
+                    {(() => {
+                      const maintenanceApps = patientApps.filter((a) => a.status === 'realizada' && a.ciclo.dias >= 14)
+                      const intervals = [
+                        { dias: 14, label: '14 dias' },
+                        { dias: 21, label: '21 dias' },
+                        { dias: 28, label: '28 dias ★' },
+                      ]
+                      return intervals.map((step) => {
+                        const isActive = isMaintenance && currentInterval >= step.dias
+                        const firstApp = maintenanceApps.find((a) => a.ciclo.dias === step.dias)
+                        return (
+                          <div key={step.dias} className="flex flex-col items-center z-10">
+                            <div className={cn(
+                              "w-4.5 h-4.5 rounded-full border-2 flex items-center justify-center transition-all",
+                              isActive
+                                ? "bg-[#A78BFA] border-[#A78BFA]"
+                                : "bg-white border-gray-300"
+                            )}>
+                              {isActive && <div className="w-2 h-2 rounded-full bg-white" />}
+                            </div>
+                            <div className="w-px h-3 bg-gray-300 mt-0.5" />
+                            <div className={cn("text-center mt-1", !isActive && "opacity-40")}>
+                              <div className={cn("text-[0.55rem] font-bold", isActive ? "text-[#7C3AED]" : "text-(--text-muted)")}>
+                                {step.label}
+                              </div>
+                              <div className="text-[0.45rem] text-(--text-muted)">
+                                {firstApp ? firstApp.data : '—'}
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })
+                    })()}
+                  </div>
+                </div>
+              </div>
               <div className="flex gap-1.5 overflow-x-auto pb-0.5" style={{ scrollbarWidth: 'none' }}>
                 <button
                   onClick={() => setMonthFilter('all')}
@@ -402,22 +487,21 @@ export function PatientChartPage() {
               {filteredApps.length === 0 ? (
                 <div className="text-center text-xs text-(--text-muted) py-10">Nenhuma aplicação encontrada neste período.</div>
               ) : (
-                <div className="relative pl-5">
-                  {/* Vertical line */}
-                  <div className="absolute left-1 top-0 bottom-0 w-[1.5px] bg-gray-200" />
-
+                <div className="relative pl-7">
                   {Object.entries(grouped).map(([monthYear, apps]) => {
-                    const hasPending = apps.some((a) => a.status === 'agendada')
                     return (
                       <div key={monthYear} className="mb-7 last:mb-0">
-                        {/* Month header */}
-                        <div className="relative flex items-center gap-2.5 mb-3.5 -ml-5">
-                          <div className={cn("w-2.5 h-2.5 rounded-full shrink-0", hasPending ? "bg-teal-500" : "bg-gray-300")} />
-                          <span className="text-[0.6rem] font-extrabold uppercase tracking-[0.8px] text-(--text-muted)">{monthYear}</span>
+                        {/* Month header — left aligned, timeline starts below */}
+                        <div className="flex items-center gap-1.5 mb-2 -ml-7">
+                          <span className="text-[0.65rem] font-extrabold uppercase tracking-[0.5px] text-(--text-muted)">{monthYear}</span>
                           <span className="text-[0.55rem] bg-gray-100 text-(--text-muted) border border-(--border-custom) px-1.5 py-px rounded-full">
                             {apps.length} aplicaç{apps.length === 1 ? 'ão' : 'ões'}
                           </span>
                         </div>
+
+                        <div className="relative">
+                        {/* Vertical line — only spans the applications area */}
+                        <div className="absolute -left-3.75 top-0 bottom-0 w-px bg-gray-200 rounded-full" />
 
                         {apps.map((app, idx) => {
                           const color = INTERVAL_COLORS[app.ciclo.dias] || DEFAULT_COLOR
@@ -431,17 +515,14 @@ export function PatientChartPage() {
                               style={{ animationDelay: `${idx * 0.06}s` }}
                             >
                               {/* Timeline node */}
-                              <div
-                                className={cn(
-                                  "absolute -left-5 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2 border-white z-10",
-                                  isNext && "animate-pulse"
-                                )}
-                                style={{
-                                  backgroundColor: isNext ? 'white' : nodeColor,
-                                  borderColor: isNext ? '#0d9488' : 'white',
-                                  boxShadow: isNext ? '0 0 0 3px rgba(13,148,136,0.2)' : `0 0 0 2px ${nodeColor}20`,
-                                }}
-                              />
+                              <div className="absolute -left-6.25 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center z-10">
+                                <div className="w-4 h-4 rounded-full bg-white flex items-center justify-center">
+                                  <div
+                                    className="w-2.5 h-2.5 rounded-full"
+                                    style={{ backgroundColor: nodeColor }}
+                                  />
+                                </div>
+                              </div>
 
                               {/* Card */}
                               <div
@@ -476,6 +557,7 @@ export function PatientChartPage() {
                             </div>
                           )
                         })}
+                        </div>
                       </div>
                     )
                   })}
@@ -485,6 +567,107 @@ export function PatientChartPage() {
           </div>
         </div>
       </div>
+
+      {/* Edit patient modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm" onClick={() => setShowEditModal(false)}>
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-(--border-custom)">
+              <h3 className="text-sm font-bold text-(--text)">Editar dados do paciente</h3>
+              <button onClick={() => setShowEditModal(false)} className="text-(--text-muted) hover:text-(--text) transition-colors cursor-pointer"><X size={16} /></button>
+            </div>
+            <div className="px-5 py-4 max-h-[60vh] overflow-y-auto">
+              {/* Dados Pessoais */}
+              <div className="mb-4">
+                <h4 className="text-xs font-bold text-(--text) mb-3 flex items-center gap-2">
+                  <div className="w-1 h-4 rounded-full bg-brand" />
+                  Dados Pessoais
+                </h4>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[0.65rem] font-semibold text-(--text-muted) mb-1 block">Nome completo</label>
+                    <input value={editForm.nome} onChange={(e) => setEditForm({ ...editForm, nome: e.target.value })} className="w-full h-9 rounded-lg border border-(--border-custom) bg-gray-50/60 px-3 text-xs focus:outline-none focus:ring-2 focus:ring-brand/40 focus:border-transparent transition-all" />
+                  </div>
+                  <div>
+                    <label className="text-[0.65rem] font-semibold text-(--text-muted) mb-1 block">Telefone</label>
+                    <input value={editForm.telefone} onChange={(e) => setEditForm({ ...editForm, telefone: e.target.value })} className="w-full h-9 rounded-lg border border-(--border-custom) bg-gray-50/60 px-3 text-xs focus:outline-none focus:ring-2 focus:ring-brand/40 focus:border-transparent transition-all" />
+                  </div>
+                  <div>
+                    <label className="text-[0.65rem] font-semibold text-(--text-muted) mb-1 block">Peso</label>
+                    <input value={editForm.peso} onChange={(e) => setEditForm({ ...editForm, peso: e.target.value })} className="w-full h-9 rounded-lg border border-(--border-custom) bg-gray-50/60 px-3 text-xs focus:outline-none focus:ring-2 focus:ring-brand/40 focus:border-transparent transition-all" />
+                  </div>
+                  <div>
+                    <label className="text-[0.65rem] font-semibold text-(--text-muted) mb-1 block">Médico responsável</label>
+                    <input value={editForm.medicoResponsavel} onChange={(e) => setEditForm({ ...editForm, medicoResponsavel: e.target.value })} className="w-full h-9 rounded-lg border border-(--border-custom) bg-gray-50/60 px-3 text-xs focus:outline-none focus:ring-2 focus:ring-brand/40 focus:border-transparent transition-all" />
+                  </div>
+                  <div>
+                    <label className="text-[0.65rem] font-semibold text-(--text-muted) mb-1 block">CPF</label>
+                    <input value={selectedPatient.cpf} disabled className="w-full h-9 rounded-lg border border-(--border-custom) bg-gray-100/80 px-3 text-xs text-(--text-muted) cursor-not-allowed" />
+                  </div>
+                  <div>
+                    <label className="text-[0.65rem] font-semibold text-(--text-muted) mb-1 block">Data de nascimento</label>
+                    <input value={selectedPatient.dataNascimento} disabled className="w-full h-9 rounded-lg border border-(--border-custom) bg-gray-100/80 px-3 text-xs text-(--text-muted) cursor-not-allowed" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Dados da Imunoterapia */}
+              <div>
+                <h4 className="text-xs font-bold text-(--text) mb-3 flex items-center gap-2">
+                  <div className="w-1 h-4 rounded-full bg-brand" />
+                  Dados da Imunoterapia
+                </h4>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[0.65rem] font-semibold text-(--text-muted) mb-1 block">Tipo</label>
+                    <input value={editForm.tipoImunoterapia} onChange={(e) => setEditForm({ ...editForm, tipoImunoterapia: e.target.value })} className="w-full h-9 rounded-lg border border-(--border-custom) bg-gray-50/60 px-3 text-xs focus:outline-none focus:ring-2 focus:ring-brand/40 focus:border-transparent transition-all" />
+                  </div>
+                  <div>
+                    <label className="text-[0.65rem] font-semibold text-(--text-muted) mb-1 block">Via de administração</label>
+                    <input value={editForm.viaAdministracao} onChange={(e) => setEditForm({ ...editForm, viaAdministracao: e.target.value })} className="w-full h-9 rounded-lg border border-(--border-custom) bg-gray-50/60 px-3 text-xs focus:outline-none focus:ring-2 focus:ring-brand/40 focus:border-transparent transition-all" />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="text-[0.65rem] font-semibold text-(--text-muted) mb-1 block">Extrato</label>
+                    <input value={editForm.extrato} onChange={(e) => setEditForm({ ...editForm, extrato: e.target.value })} className="w-full h-9 rounded-lg border border-(--border-custom) bg-gray-50/60 px-3 text-xs focus:outline-none focus:ring-2 focus:ring-brand/40 focus:border-transparent transition-all" />
+                  </div>
+                  <div>
+                    <label className="text-[0.65rem] font-semibold text-(--text-muted) mb-1 block">Início indução</label>
+                    <input value={selectedPatient.inicioInducao} disabled className="w-full h-9 rounded-lg border border-(--border-custom) bg-gray-100/80 px-3 text-xs text-(--text-muted) cursor-not-allowed" />
+                  </div>
+                  <div>
+                    <label className="text-[0.65rem] font-semibold text-(--text-muted) mb-1 block">Meta conc./volume</label>
+                    <input value={selectedPatient.concentracaoVolumeMeta} disabled className="w-full h-9 rounded-lg border border-(--border-custom) bg-gray-100/80 px-3 text-xs text-(--text-muted) cursor-not-allowed" />
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="border-t border-(--border-custom) px-5 py-3 flex justify-end gap-2">
+              <button onClick={() => setShowEditModal(false)} className="h-8 px-4 rounded-lg border border-(--border-custom) text-xs font-semibold text-(--text-muted) hover:bg-gray-50 transition-all cursor-pointer">
+                Cancelar
+              </button>
+              <button
+                onClick={() => {
+                  setSelectedPatient({
+                    ...selectedPatient,
+                    nome: editForm.nome,
+                    telefone: editForm.telefone,
+                    peso: editForm.peso,
+                    medicoResponsavel: editForm.medicoResponsavel,
+                    tipoImunoterapia: editForm.tipoImunoterapia,
+                    viaAdministracao: editForm.viaAdministracao,
+                    extrato: editForm.extrato,
+                  })
+                  setShowEditModal(false)
+                }}
+                className="h-8 px-4 rounded-lg bg-linear-to-br from-brand to-teal-400 text-white text-xs font-semibold hover:-translate-y-px transition-all cursor-pointer flex items-center gap-1.5"
+              >
+                <Save size={13} />
+                Salvar alterações
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Application details modal */}
       {selectedApp && (
