@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from 'react'
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { usePatientStore } from '@/store/patient-store'
 import { useImmunotherapiesStore } from '@/store/immunotherapies-store'
@@ -7,6 +7,7 @@ import { Search, ChevronDown, ArrowLeft, ClipboardList, Syringe, CalendarDays, I
 import { addDays, format, differenceInDays, parse } from 'date-fns'
 import { cn } from '@/lib/utils'
 import { validateVolume, validateConcentration } from '@/lib/validators'
+import { calculateNextDose, parseDose } from '@/lib/scit-protocol'
 
 const stepLabels = ['Paciente', 'Pré-Aplicação', 'Pós-Aplicação', 'Revisão dos Dados']
 
@@ -30,6 +31,8 @@ export function PatientEvolutionPage() {
   const [search, setSearch] = useState('')
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [selectedPatient, setSelected] = useState<typeof immunotherapies[0] | null>(null)
+  const [highlightedIndex, setHighlightedIndex] = useState(-1)
+  const suggestionsRef = useRef<HTMLDivElement>(null)
 
   // Auto-select patient if coming from patient chart
   useEffect(() => {
@@ -131,9 +134,35 @@ export function PatientEvolutionPage() {
   }, [form])
 
   const filtered = useMemo(() => {
-    if (!search) return []
+    if (!search) return immunotherapies.slice(0, 8)
     return immunotherapies.filter((i) => i.nome.toLowerCase().includes(search.toLowerCase()))
   }, [search, immunotherapies])
+
+  useEffect(() => { setHighlightedIndex(-1) }, [filtered.length, showSuggestions])
+
+  useEffect(() => {
+    if (highlightedIndex >= 0 && suggestionsRef.current) {
+      const items = suggestionsRef.current.querySelectorAll('[data-suggestion-item]')
+      items[highlightedIndex]?.scrollIntoView({ block: 'nearest' })
+    }
+  }, [highlightedIndex])
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!showSuggestions || filtered.length === 0) return
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setHighlightedIndex((prev) => (prev < filtered.length - 1 ? prev + 1 : 0))
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : filtered.length - 1))
+    } else if (e.key === 'Enter') {
+      e.preventDefault()
+      if (highlightedIndex >= 0 && filtered[highlightedIndex]) handleSelect(filtered[highlightedIndex])
+    } else if (e.key === 'Escape') {
+      setShowSuggestions(false)
+      setHighlightedIndex(-1)
+    }
+  }
 
   const handleSelect = (item: typeof immunotherapies[0]) => {
     setSelected(item)
@@ -168,17 +197,23 @@ export function PatientEvolutionPage() {
     return applications.filter((a) => a.status === 'realizada' && a.patientId === selectedPatient.id).length
   }, [selectedPatient, applications])
 
+  // RNE-010: cálculo automático da próxima dose a partir do protocolo SCIT
   const nextDose = useMemo(() => {
     if (!lastApp || !selectedPatient) return null
     const [d, m, y] = lastApp.data.split('/')
-    const nextDate = addDays(new Date(+y, +m - 1, +d), selectedPatient.cicloIntervalo.dias)
-    const parts = lastApp.dose.split(' - ')
-    const conc = parts[0]?.trim() || '1:10.000'
-    const vol = parts[1]?.trim() || '0,1ml'
-    // Simplificação: próximo volume dobra (protocolo SCIT)
-    const volNum = parseFloat(vol.replace(',', '.'))
-    const nextVol = volNum < 0.8 ? (volNum * 2).toFixed(1).replace('.', ',') + 'ml' : '0,1ml'
-    return { date: format(nextDate, 'dd/MM/yyyy'), conc, vol: nextVol, dose: doseNumber + 1 }
+    const currentDose = `${lastApp.concentracaoExtrato || lastApp.dose.split(' - ')[0]} - ${lastApp.volumeAplicado || lastApp.dose.split(' - ')[1]}`
+    const currentInterval = lastApp.ciclo.dias
+    const calc = calculateNextDose(currentDose, currentInterval)
+    const nextDate = addDays(new Date(+y, +m - 1, +d), calc.interval)
+    const next = parseDose(calc.dose)
+    return {
+      date: format(nextDate, 'dd/MM/yyyy'),
+      conc: next?.conc ?? calc.dose,
+      vol: next?.vol ?? '',
+      dose: doseNumber + 1,
+      interval: calc.interval,
+      phase: calc.phase,
+    }
   }, [lastApp, selectedPatient, doseNumber])
 
   const treatmentTime = useMemo(() => {
@@ -211,6 +246,16 @@ export function PatientEvolutionPage() {
     if (step === 0 && (!selectedPatient || selectedPatient.status === 'inativo')) return
     if (step === 1 && !validateStep1()) return
     if (step === 2 && !validateStep2()) return
+    // RNE-010: ao avançar para Pós-Aplicação, pré-preencher sugestão do protocolo
+    if (step === 1 && nextDose) {
+      setForm((p) => ({
+        ...p,
+        dataAplicacao: p.dataAplicacao || nextDose.date.split('/').reverse().join('-'),
+        volumeAplicado: p.volumeAplicado || nextDose.vol.replace('ml', '').replace(',', '.'),
+        concentracao: p.concentracao || nextDose.conc,
+        intervaloProxima: p.intervaloProxima || String(nextDose.interval),
+      }))
+    }
     setStep((s) => (s + 1) as 0 | 1 | 2 | 3)
   }
 
@@ -254,12 +299,19 @@ export function PatientEvolutionPage() {
                   onChange={(e) => { setSearch(e.target.value); setShowSuggestions(true) }}
                   onFocus={() => setShowSuggestions(true)}
                   onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                  onKeyDown={handleKeyDown}
                   className={cn(inputCls(), "pl-8", preselectedId && selectedPatient && "opacity-60 cursor-not-allowed")}
                 />
                 {showSuggestions && filtered.length > 0 && (
-                  <div className="absolute z-10 w-full mt-1 bg-white border border-(--border-custom) rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                    {filtered.map((p) => (
-                      <button key={p.id} onClick={() => handleSelect(p)} className="w-full text-left px-4 py-2.5 hover:bg-teal-50 transition-colors flex items-center justify-between">
+                  <div ref={suggestionsRef} className="absolute z-10 w-full mt-1 bg-white border border-(--border-custom) rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                    {filtered.map((p, idx) => (
+                      <button
+                        key={p.id}
+                        data-suggestion-item
+                        onClick={() => handleSelect(p)}
+                        onMouseEnter={() => setHighlightedIndex(idx)}
+                        className={cn("w-full text-left px-4 py-2.5 transition-colors flex items-center justify-between", highlightedIndex === idx ? "bg-teal-50" : "hover:bg-teal-50")}
+                      >
                         <span className="text-xs font-medium text-(--text)">{p.nome}</span>
                         <span className="text-[0.65rem] text-(--text-muted)">{p.tipo}</span>
                       </button>

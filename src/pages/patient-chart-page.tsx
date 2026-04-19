@@ -3,7 +3,7 @@ import { useNavigate, useParams } from '@tanstack/react-router'
 import { usePatientStore, seedInactivationsFor, type Application, type ProtocolAdjustmentType, type InactivationCategory } from '@/store/patient-store'
 import { useImmunotherapiesStore } from '@/store/immunotherapies-store'
 import { useCan, useDoctorFilter } from '@/store/user-store'
-import { META_DOSE } from '@/lib/scit-protocol'
+import { META_DOSE, calculateNextDose } from '@/lib/scit-protocol'
 import { addDays, format, differenceInDays, parse } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
@@ -178,13 +178,15 @@ export function PatientChartPage() {
     ? `${lastRealized.concentracaoExtrato || lastRealized.dose.split(' - ')[0]} - ${lastRealized.volumeAplicado || lastRealized.dose.split(' - ')[1]}`
     : selectedPatient?.concentracaoDoseAtuais ?? '-'
 
+  const nextCalc = useMemo(() => calculateNextDose(currentDose, currentInterval), [currentDose, currentInterval])
+
   const nextDate = useMemo(() => {
     if (!lastRealized) return selectedPatient?.dataProximaAplicacao ?? '-'
     try {
       const [d, m, y] = lastRealized.data.split('/')
-      return format(addDays(new Date(+y, +m - 1, +d), currentInterval), 'dd/MM/yyyy')
+      return format(addDays(new Date(+y, +m - 1, +d), nextCalc.interval), 'dd/MM/yyyy')
     } catch { return '-' }
-  }, [lastRealized, currentInterval, selectedPatient])
+  }, [lastRealized, nextCalc.interval, selectedPatient])
 
   const treatmentTime = useMemo(() => {
     const inicio = inicioInducaoCalc || selectedPatient?.inicioInducao
@@ -590,9 +592,9 @@ export function PatientChartPage() {
           {/* Summary cards */}
           <div className="grid grid-cols-3 gap-3">
             {[
-              { icon: Clock, label: 'Intervalo Atual', value: `${currentInterval} dias` },
-              { icon: CalendarDays, label: 'Próxima Aplicação', value: nextDate },
-              { icon: Droplet, label: 'Última Concentração - Volume', value: currentDose },
+              { icon: Clock, label: 'Intervalo Atual', value: `${currentInterval} dias`, sub: null as string | null },
+              { icon: CalendarDays, label: 'Próxima Aplicação', value: nextDate, sub: nextCalc.dose },
+              { icon: Droplet, label: 'Última Concentração - Volume', value: currentDose, sub: null },
             ].map((card) => {
               const Icon = card.icon
               return (
@@ -605,9 +607,10 @@ export function PatientChartPage() {
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl shrink-0 relative z-10 bg-[#B6F2EC]/70">
                     <Icon size={18} className="text-brand" />
                   </div>
-                  <div className="flex-1 relative z-10">
+                  <div className="flex-1 relative z-10 min-w-0">
                     <div className="text-xs font-medium text-(--text-muted)">{card.label}</div>
                     <div className="text-sm font-extrabold text-(--text) truncate">{card.value}</div>
+                    {card.sub && <div className="text-[0.65rem] font-semibold text-brand truncate mt-0.5">{card.sub}</div>}
                   </div>
                 </div>
               )
