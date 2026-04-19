@@ -142,10 +142,10 @@ export function ImmunotherapiesPage() {
             <button
               onClick={() => setShowInativas(!showInativas)}
               className={cn(
-                "h-8 w-8 flex items-center justify-center rounded-lg border transition-all duration-200",
+                "h-8 w-8 flex items-center justify-center rounded-lg border-[1.5px] transition-all",
                 showInativas
-                  ? "bg-gray-200 border-gray-300 text-gray-600"
-                  : "border-(--border-custom) text-(--text-muted) hover:border-teal-300 hover:text-teal-600"
+                  ? "border-brand bg-teal-50 text-brand"
+                  : "border-(--border-custom) text-(--text-muted) hover:border-brand hover:text-brand hover:bg-teal-50"
               )}
               title="Imunoterapias inativas"
             >

@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
-import { X, FileText, FileSpreadsheet, FileDown, ChevronDown, Check, Settings } from 'lucide-react'
+import { ArrowLeft, FileText, FileSpreadsheet, FileDown, ChevronDown, Check, Settings, ShieldCheck, EyeOff } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, LineChart, Line, ResponsiveContainer } from 'recharts'
 
 const formats = [
   { id: 'pdf', label: 'PDF', icon: FileText },
@@ -19,6 +20,42 @@ const chartOptions = [
   { id: 'volume', label: 'Volume vs Concentração' },
 ]
 
+// Mesmas cores e dados do dashboard
+const CONC_COLORS: Record<string, string> = { '1:10.000': '#B6F2EC', '1:1.000': '#2CD3C1', '1:100': '#18C1CB', '1:10': '#0E99A3' }
+const PHASE_COLORS = { 'Indução': '#18C1CB', 'Manutenção': '#A78BFA' }
+const STATUS_COLORS = { 'Ativas': '#2CD3C1', 'Interrompidas': '#F4845F', 'Concluídas': '#22DD44' }
+const TYPE_COLORS = ['#0E99A3', '#18C1CB', '#2CD3C1', '#B6F2EC', '#3F98AF']
+const VOL_LEGEND = [
+  { label: '0,1ml', color: '#B6F2EC' }, { label: '0,2ml', color: '#2CD3C1' },
+  { label: '0,4ml', color: '#18C1CB' }, { label: '0,8ml', color: '#0E99A3' }, { label: '0,5ml', color: '#A78BFA' },
+]
+
+const concData = [
+  { name: '1:10.000', value: 3 }, { name: '1:1.000', value: 2 },
+  { name: '1:100', value: 2 }, { name: '1:10', value: 5 },
+]
+const phaseData = [
+  { month: 'Jan', Indução: 5, Manutenção: 2 }, { month: 'Fev', Indução: 6, Manutenção: 2 },
+  { month: 'Mar', Indução: 7, Manutenção: 3 }, { month: 'Abr', Indução: 6, Manutenção: 3 },
+]
+const statusData = [
+  { month: 'Jan', Ativas: 6, Interrompidas: 1, Concluídas: 0 },
+  { month: 'Fev', Ativas: 7, Interrompidas: 1, Concluídas: 1 },
+  { month: 'Mar', Ativas: 8, Interrompidas: 0, Concluídas: 1 },
+  { month: 'Abr', Ativas: 9, Interrompidas: 0, Concluídas: 2 },
+]
+const typeData = [
+  { name: 'Gramíneas', value: 4, pct: 33 }, { name: 'Ácaros', value: 2, pct: 17 },
+  { name: 'Cão e Gato', value: 1, pct: 8 }, { name: 'Cândida', value: 2, pct: 17 },
+  { name: 'Herpes', value: 1, pct: 8 },
+]
+const volumeChartData = [
+  { conc: '1:10.000', '0,1ml': 2, '0,2ml': 1, '0,4ml': 1, '0,8ml': 0 },
+  { conc: '1:1.000', '0,1ml': 1, '0,2ml': 1, '0,4ml': 0, '0,8ml': 0 },
+  { conc: '1:100', '0,1ml': 0, '0,2ml': 1, '0,4ml': 1, '0,8ml': 0 },
+  { conc: '1:10', '0,1ml': 0, '0,2ml': 0, '0,4ml': 0, '0,8ml': 1, '0,5ml': 3 },
+]
+
 export function ExportReportPage() {
   const navigate = useNavigate()
   const [fileName, setFileName] = useState('relatorio-imunecare')
@@ -31,6 +68,10 @@ export function ExportReportPage() {
   const [dataFim, setDataFim] = useState('')
   const [selectedCharts, setSelectedCharts] = useState<string[]>(['cycles', 'phases', 'status'])
   const [showCancelModal, setShowCancelModal] = useState(false)
+  const [anonimizar, setAnonimizar] = useState(false)
+  const [justificativa, setJustificativa] = useState('')
+  const [consentimento, setConsentimento] = useState(false)
+  const [showExportModal, setShowExportModal] = useState(false)
 
   const toggleChart = (id: string) => {
     setSelectedCharts((prev) =>
@@ -44,11 +85,11 @@ export function ExportReportPage() {
     <div className="flex flex-1 flex-col bg-gray-50/80 min-h-0 overflow-hidden">
       <div className="flex flex-1 min-h-0 flex-col rounded-xl bg-white shadow-[0_4px_24px_rgba(0,0,0,0.06)] overflow-hidden m-4">
         {/* Header */}
-        <div className="border-b border-(--border-custom) px-5 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-(--text)">Exportar Relatório</h1>
+        <div className="border-b border-(--border-custom) px-5 py-4 flex items-center gap-3">
           <button onClick={() => setShowCancelModal(true)} className="h-8 w-8 flex items-center justify-center rounded-lg text-(--text-muted) hover:bg-red-50 hover:text-red-500 transition-all">
-            <X size={18} />
+            <ArrowLeft size={18} />
           </button>
+          <h1 className="text-2xl font-bold text-(--text)">Exportar Relatório</h1>
         </div>
 
         <div className="flex flex-1 min-h-0 overflow-hidden">
@@ -177,18 +218,93 @@ export function ExportReportPage() {
               </div>
             </div>
 
+            {/* LGPD & Privacy */}
+            <div>
+              <label className="text-xs font-semibold text-(--text-muted) mb-2 block">
+                Privacidade e LGPD
+              </label>
+              <div className="space-y-2">
+                <button
+                  onClick={() => setAnonimizar(!anonimizar)}
+                  className={cn(
+                    "flex w-full items-center gap-2.5 rounded-lg border p-2.5 text-left transition-all",
+                    anonimizar ? "border-brand bg-brand/5" : "border-(--border-custom) hover:border-brand/40"
+                  )}
+                >
+                  <div className={cn(
+                    "flex h-4.5 w-4.5 items-center justify-center rounded border transition-all",
+                    anonimizar ? "bg-brand border-brand" : "border-gray-300"
+                  )}>
+                    {anonimizar && <Check size={10} className="text-white" />}
+                  </div>
+                  <div>
+                    <span className="text-[0.7rem] font-medium text-(--text) block">Anonimizar dados pessoais</span>
+                    <span className="text-[0.55rem] text-(--text-muted)">Nomes, CPFs e telefones serão mascarados</span>
+                  </div>
+                </button>
+                <button
+                  onClick={() => setConsentimento(!consentimento)}
+                  className={cn(
+                    "flex w-full items-center gap-2.5 rounded-lg border p-2.5 text-left transition-all",
+                    consentimento ? "border-brand bg-brand/5" : "border-(--border-custom) hover:border-brand/40"
+                  )}
+                >
+                  <div className={cn(
+                    "flex h-4.5 w-4.5 items-center justify-center rounded border transition-all",
+                    consentimento ? "bg-brand border-brand" : "border-gray-300"
+                  )}>
+                    {consentimento && <Check size={10} className="text-white" />}
+                  </div>
+                  <div>
+                    <span className="text-[0.7rem] font-medium text-(--text) block">Declaro ciência da LGPD</span>
+                    <span className="text-[0.55rem] text-(--text-muted)">Responsabilizo-me pelo uso dos dados exportados</span>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            {/* Justification */}
+            <div>
+              <label className="text-xs font-semibold text-(--text-muted) mb-1.5 block">Justificativa da exportação <span className="text-red-400">*</span></label>
+              <textarea
+                rows={2}
+                placeholder="Ex: Relatório para acompanhamento clínico do paciente"
+                value={justificativa}
+                onChange={(e) => setJustificativa(e.target.value)}
+                className="w-full rounded-lg border border-(--border-custom) bg-gray-50/60 px-3 py-2 text-xs placeholder:text-(--text-muted)/60 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all resize-none"
+              />
+            </div>
+
             {/* Export button */}
-            <button className="w-full h-9 rounded-lg bg-linear-to-br from-brand to-teal-400 text-white text-xs font-semibold hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(24,193,203,0.3)] transition-all">
+            <button
+              disabled={!consentimento || !justificativa.trim()}
+              onClick={() => setShowExportModal(true)}
+              className={cn(
+                "w-full h-9 rounded-lg text-xs font-semibold transition-all",
+                consentimento && justificativa.trim()
+                  ? "bg-linear-to-br from-brand to-teal-400 text-white hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(24,193,203,0.3)] cursor-pointer"
+                  : "bg-gray-200 text-gray-400 cursor-not-allowed"
+              )}
+            >
               Exportar {format.toUpperCase()}
             </button>
+
+            {!consentimento && (
+              <p className="text-[0.55rem] text-amber-600 text-center">Aceite a declaração LGPD para habilitar a exportação</p>
+            )}
             </div>
           </div>
 
           {/* Right — Preview */}
           <div className="flex-1 overflow-y-auto p-5 bg-gray-50/50">
-            <div className="bg-white rounded-xl border border-(--border-custom) shadow-sm max-w-2xl mx-auto">
+            <div className="bg-white rounded-xl border border-(--border-custom) shadow-sm max-w-2xl mx-auto relative overflow-hidden">
+              {/* Watermark */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10 rotate-[-30deg]">
+                <span className="text-[3.5rem] font-extrabold text-gray-100 tracking-[0.3em] select-none uppercase">Confidencial</span>
+              </div>
+
               {/* Report header */}
-              <div className="px-6 py-5 border-b border-(--border-custom)">
+              <div className="px-6 py-5 border-b border-(--border-custom) relative z-20">
                 <div className="flex items-center justify-between">
                   <div>
                     <h2 className="text-sm font-bold text-(--text)">ImuneCare — Relatório Clínico</h2>
@@ -198,7 +314,12 @@ export function ExportReportPage() {
                   </div>
                   <div className="text-[0.6rem] text-(--text-muted) text-right">
                     <div>Modalidade: {modality === 'sub' ? 'Subcutânea' : 'Sublingual'}</div>
-                    <div>Formato: {format.toUpperCase()}</div>
+                    {anonimizar && (
+                      <div className="flex items-center gap-1 text-brand font-semibold mt-0.5 justify-end">
+                        <EyeOff size={10} />
+                        Dados anonimizados
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -212,17 +333,146 @@ export function ExportReportPage() {
                 ) : (
                   selectedCharts.map((chartId) => {
                     const chart = chartOptions.find((c) => c.id === chartId)
+                    const tooltipStyle = { fontSize: 11, borderRadius: 8, border: '1px solid #e2f0ef', background: 'rgba(255,255,255,0.95)' }
                     return (
-                      <div key={chartId} className="border border-(--border-custom) rounded-lg p-4 relative">
+                      <div key={chartId} className="border border-(--border-custom) rounded-lg p-4 relative z-20">
                         <h3 className="text-xs font-bold text-(--text) mb-3">{chart?.label}</h3>
-                        <div className="h-32 bg-gray-50 rounded-lg flex items-center justify-center">
-                          <div className="text-center">
-                            <div className="w-10 h-10 rounded-lg bg-brand-50 flex items-center justify-center mx-auto mb-2">
-                              <FileText size={18} className="text-brand" />
+
+                        {chartId === 'cycles' && (
+                          <>
+                            <div className="h-40">
+                              <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                  <Pie data={concData} cx="50%" cy="50%" innerRadius={35} outerRadius={60} paddingAngle={3} dataKey="value" stroke="none">
+                                    {concData.map((entry) => <Cell key={entry.name} fill={CONC_COLORS[entry.name] || '#94a3b8'} />)}
+                                  </Pie>
+                                  <Tooltip contentStyle={tooltipStyle} />
+                                </PieChart>
+                              </ResponsiveContainer>
                             </div>
-                            <span className="text-[0.65rem] text-(--text-muted)">Prévia do gráfico</span>
+                            <div className="flex justify-center gap-3 mt-2">
+                              {concData.map((d) => (
+                                <div key={d.name} className="flex items-center gap-1.5 text-[0.6rem] text-(--text-muted)">
+                                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: CONC_COLORS[d.name] }} />
+                                  {d.name} <span className="font-semibold text-(--text)">({d.value})</span>
+                                </div>
+                              ))}
+                            </div>
+                          </>
+                        )}
+
+                        {chartId === 'phases' && (
+                          <>
+                            <div className="h-40">
+                              <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={phaseData} barGap={2}>
+                                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                                  <XAxis dataKey="month" tick={{ fontSize: 10 }} />
+                                  <YAxis tick={{ fontSize: 10 }} />
+                                  <Tooltip contentStyle={tooltipStyle} />
+                                  <Bar dataKey="Indução" fill={PHASE_COLORS['Indução']} radius={[3, 3, 0, 0]} label={{ position: 'top', fontSize: 9, fill: '#6b7280' }} />
+                                  <Bar dataKey="Manutenção" fill={PHASE_COLORS['Manutenção']} radius={[3, 3, 0, 0]} label={{ position: 'top', fontSize: 9, fill: '#6b7280' }} />
+                                </BarChart>
+                              </ResponsiveContainer>
+                            </div>
+                            <div className="flex justify-center gap-4 mt-2">
+                              {Object.entries(PHASE_COLORS).map(([k, v]) => {
+                                const total = phaseData.reduce((sum, d) => sum + (d[k as keyof typeof d] as number || 0), 0)
+                                return (
+                                  <div key={k} className="flex items-center gap-1.5 text-[0.6rem] text-(--text-muted)">
+                                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: v }} />
+                                    {k} <span className="font-semibold text-(--text)">({total})</span>
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          </>
+                        )}
+
+                        {chartId === 'status' && (
+                          <>
+                            <div className="h-40">
+                              <ResponsiveContainer width="100%" height="100%">
+                                <LineChart data={statusData}>
+                                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                                  <XAxis dataKey="month" tick={{ fontSize: 10 }} />
+                                  <YAxis tick={{ fontSize: 10 }} />
+                                  <Tooltip contentStyle={tooltipStyle} />
+                                  <Line type="monotone" dataKey="Ativas" stroke={STATUS_COLORS['Ativas']} strokeWidth={2} dot={{ r: 3 }} />
+                                  <Line type="monotone" dataKey="Interrompidas" stroke={STATUS_COLORS['Interrompidas']} strokeWidth={2} dot={{ r: 3 }} />
+                                  <Line type="monotone" dataKey="Concluídas" stroke={STATUS_COLORS['Concluídas']} strokeWidth={2} dot={{ r: 3 }} />
+                                </LineChart>
+                              </ResponsiveContainer>
+                            </div>
+                            <div className="flex justify-center gap-4 mt-2">
+                              {Object.entries(STATUS_COLORS).map(([k, v]) => (
+                                <div key={k} className="flex items-center gap-1.5 text-[0.6rem] text-(--text-muted)">
+                                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: v }} />
+                                  {k}
+                                </div>
+                              ))}
+                            </div>
+                            <div className="grid grid-cols-4 gap-2 mt-3">
+                              {statusData.map((d) => (
+                                <div key={d.month} className="bg-gray-50 rounded-lg px-2.5 py-2 text-center">
+                                  <div className="text-[0.6rem] font-semibold text-(--text-muted) mb-1">{d.month}</div>
+                                  <div className="flex justify-center gap-2">
+                                    <span className="text-[0.55rem] font-bold" style={{ color: STATUS_COLORS['Ativas'] }}>{d.Ativas}</span>
+                                    <span className="text-[0.55rem] font-bold" style={{ color: STATUS_COLORS['Interrompidas'] }}>{d.Interrompidas}</span>
+                                    <span className="text-[0.55rem] font-bold" style={{ color: STATUS_COLORS['Concluídas'] }}>{d.Concluídas}</span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </>
+                        )}
+
+                        {chartId === 'types' && (
+                          <div className="space-y-3 mt-1">
+                            {typeData.map((t, i) => (
+                              <div key={t.name}>
+                                <div className="flex items-center justify-between mb-1">
+                                  <span className="text-xs font-medium text-(--text)">{t.name}</span>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-[0.6rem] text-(--text-muted)">{t.value} pacientes</span>
+                                    <span className="text-xs font-bold" style={{ color: TYPE_COLORS[i % TYPE_COLORS.length] }}>{t.pct}%</span>
+                                  </div>
+                                </div>
+                                <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                                  <div className="h-full rounded-full transition-all duration-700" style={{ width: `${t.pct}%`, backgroundColor: TYPE_COLORS[i % TYPE_COLORS.length] }} />
+                                </div>
+                              </div>
+                            ))}
                           </div>
-                        </div>
+                        )}
+
+                        {chartId === 'volume' && (
+                          <>
+                            <div className="h-44">
+                              <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={volumeChartData} layout="vertical">
+                                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                                  <XAxis type="number" tick={{ fontSize: 10 }} />
+                                  <YAxis type="category" dataKey="conc" tick={{ fontSize: 10 }} width={60} />
+                                  <Tooltip contentStyle={tooltipStyle} />
+                                  <Bar dataKey="0,1ml" stackId="a" fill="#B6F2EC" radius={0} label={{ position: 'center', fontSize: 9, fill: '#374151' }} />
+                                  <Bar dataKey="0,2ml" stackId="a" fill="#2CD3C1" radius={0} label={{ position: 'center', fontSize: 9, fill: '#374151' }} />
+                                  <Bar dataKey="0,4ml" stackId="a" fill="#18C1CB" radius={0} label={{ position: 'center', fontSize: 9, fill: '#fff' }} />
+                                  <Bar dataKey="0,8ml" stackId="a" fill="#0E99A3" radius={0} label={{ position: 'center', fontSize: 9, fill: '#fff' }} />
+                                  <Bar dataKey="0,5ml" stackId="a" fill="#A78BFA" radius={[0, 3, 3, 0]} label={{ position: 'center', fontSize: 9, fill: '#fff' }} />
+                                </BarChart>
+                              </ResponsiveContainer>
+                            </div>
+                            <div className="flex justify-center gap-3 mt-2">
+                              {VOL_LEGEND.map((d) => (
+                                <div key={d.label} className="flex items-center gap-1.5 text-[0.6rem] text-(--text-muted)">
+                                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: d.color }} />
+                                  {d.label}
+                                </div>
+                              ))}
+                            </div>
+                          </>
+                        )}
                       </div>
                     )
                   })
@@ -230,14 +480,63 @@ export function ExportReportPage() {
               </div>
 
               {/* Report footer */}
-              <div className="px-6 py-3 border-t border-(--border-custom) flex justify-between">
-                <span className="text-[0.6rem] text-(--text-muted)">ImuneCare © 2026</span>
-                <span className="text-[0.6rem] text-(--text-muted)">Página 1 de 1</span>
+              <div className="px-6 py-3 border-t border-(--border-custom) relative z-20">
+                <div className="flex justify-between mb-2">
+                  <span className="text-[0.6rem] text-(--text-muted)">ImuneCare © 2026</span>
+                  <span className="text-[0.6rem] text-(--text-muted)">Página 1 de 1</span>
+                </div>
+                <p className="text-[0.5rem] text-(--text-muted)/60 leading-relaxed">
+                  Este documento contém dados protegidos pela Lei Geral de Proteção de Dados (LGPD — Lei nº 13.709/2018). A reprodução, compartilhamento ou armazenamento não autorizado é estritamente proibido. O responsável pela exportação assume total responsabilidade pelo uso adequado das informações contidas neste relatório.
+                </p>
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Export confirmation modal */}
+      {showExportModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm" onClick={() => setShowExportModal(false)}>
+          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-sm mx-4 p-5" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-center mb-3">
+              <div className="h-11 w-11 rounded-full bg-brand/10 flex items-center justify-center">
+                <ShieldCheck size={20} className="text-brand" />
+              </div>
+            </div>
+            <h3 className="text-sm font-bold text-(--text) mb-1.5 text-center">Confirmar exportação</h3>
+            <p className="text-[0.7rem] text-(--text-muted) mb-4 text-center leading-relaxed">
+              Ao confirmar, um registro desta exportação será salvo no log de auditoria do sistema, incluindo data, hora, responsável e justificativa informada.
+            </p>
+
+            <div className="bg-gray-50 border border-(--border-custom) rounded-lg px-3.5 py-2.5 mb-4 space-y-1.5">
+              <div className="flex justify-between">
+                <span className="text-[0.6rem] text-(--text-muted)">Formato</span>
+                <span className="text-[0.6rem] font-semibold text-(--text)">{format.toUpperCase()}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[0.6rem] text-(--text-muted)">Dados anonimizados</span>
+                <span className={cn("text-[0.6rem] font-semibold", anonimizar ? "text-brand" : "text-amber-600")}>{anonimizar ? 'Sim' : 'Não'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[0.6rem] text-(--text-muted)">Justificativa</span>
+                <span className="text-[0.6rem] font-semibold text-(--text) text-right max-w-[60%] truncate">{justificativa}</span>
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <button onClick={() => setShowExportModal(false)} className="flex-1 h-8 rounded-lg border border-(--border-custom) text-xs font-semibold text-(--text-muted) hover:bg-gray-50 transition-all">
+                Cancelar
+              </button>
+              <button
+                onClick={() => { setShowExportModal(false); navigate({ to: '/dashboard' }) }}
+                className="flex-1 h-8 rounded-lg bg-linear-to-br from-brand to-teal-400 text-white text-xs font-semibold hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(20,184,166,0.3)] transition-all"
+              >
+                Confirmar e exportar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Cancel modal */}
       {showCancelModal && (
