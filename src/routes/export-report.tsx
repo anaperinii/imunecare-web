@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { ExportReportPage } from '@/pages/export-report-page'
+import { ExportReportPage } from '@/features/dashboard/export-report-page'
 
 export const Route = createFileRoute('/export-report')({
   component: ExportReportPage,

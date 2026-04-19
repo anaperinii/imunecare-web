@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { PatientEvolutionPage } from '@/pages/patient-evolution-page'
+import { PatientEvolutionPage } from '@/features/patient/patient-evolution-page'
 
 type SearchParams = {
   patientId?: string
