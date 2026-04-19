@@ -1,11 +1,26 @@
 import { createRootRoute, Outlet, useLocation } from '@tanstack/react-router'
 import { Header } from '@/components/header'
 import { Sidebar } from '@/components/sidebar'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 
 const publicRoutes = ['/', '/login', '/register']
 const authRoutes = ['/login', '/register']
+
+function PageTransition({ children }: { children: React.ReactNode }) {
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    const timer = setTimeout(() => setVisible(true), 10)
+    return () => clearTimeout(timer)
+  }, [])
+
+  return (
+    <div className={cn("transition-opacity duration-300 ease-out", visible ? "opacity-100" : "opacity-0")}>
+      {children}
+    </div>
+  )
+}
 
 function RootComponent() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
@@ -17,7 +32,9 @@ function RootComponent() {
     return (
       <div className="min-h-screen">
         <Header isAuthPage={isAuthRoute} />
-        <Outlet />
+        <PageTransition key={location.pathname}>
+          <Outlet />
+        </PageTransition>
       </div>
     )
   }
@@ -33,7 +50,9 @@ function RootComponent() {
           "flex-1 overflow-y-auto transition-all duration-300",
         )}
       >
-        <Outlet />
+        <PageTransition key={location.pathname}>
+          <Outlet />
+        </PageTransition>
       </main>
     </div>
   )

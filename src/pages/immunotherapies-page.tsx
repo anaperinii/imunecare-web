@@ -1,5 +1,7 @@
 import { useMemo, useState, useEffect } from 'react'
+import { useNavigate } from '@tanstack/react-router'
 import { useImmunotherapiesStore } from '@/store/immunotherapies-store'
+import { usePatientStore } from '@/store/patient-store'
 import {
   Search,
   Plus,
@@ -23,6 +25,8 @@ const INTERVAL_COLORS: Record<number, { bg: string; text: string; dot: string }>
 const DEFAULT_COLOR = { bg: '#F3F4F6', text: '#374151', dot: '#6B7280' }
 
 export function ImmunotherapiesPage() {
+  const navigate = useNavigate()
+  const { setSelectedPatient } = usePatientStore()
   const {
     immunotherapies,
     searchTerm,
@@ -79,7 +83,7 @@ export function ImmunotherapiesPage() {
 
           <div className="flex flex-wrap items-center gap-1.5">
             {/* Search */}
-            <div className="relative flex-1 min-w-[180px]">
+            <div className="relative flex-1 min-w-45">
               <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-(--text-muted)" />
               <input
                 placeholder="Pesquisar paciente"
@@ -172,6 +176,19 @@ export function ImmunotherapiesPage() {
                     <tr
                       key={item.id}
                       className="border-b border-(--border-custom) last:border-0 cursor-pointer hover:bg-teal-50/40 transition-colors duration-150"
+                      onClick={() => {
+                        setSelectedPatient({
+                          id: item.id, nome: item.nome, dataNascimento: '02/07/2000', idade: 25,
+                          telefone: '(62) 99557-1423', peso: '89.7 kg', cpf: '711.905.744-89',
+                          medicoResponsavel: 'Dra. Karina Martins', status: 'ativo',
+                          tipoImunoterapia: item.tipo, inicioInducao: '01/01/2020', inicioManutencao: null,
+                          viaAdministracao: 'Subcutânea', extrato: 'Der p 60 + der f 10% + blt 30%',
+                          concentracaoVolumeMeta: '1:10 - 0,5ml', metaAtingida: false,
+                          intervaloAtual: item.cicloIntervalo.dias, dataProximaAplicacao: '21/05/2025',
+                          concentracaoDoseAtuais: item.doseConcentracao,
+                        })
+                        navigate({ to: '/patient/$patientId', params: { patientId: item.id } })
+                      }}
                     >
                       <td className="px-4 py-3 text-xs font-medium text-(--text)">{item.nome}</td>
                       <td className="px-4 py-3">
