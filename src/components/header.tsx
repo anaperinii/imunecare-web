@@ -6,7 +6,7 @@ import { Menu, X } from 'lucide-react'
 const navLinks = [
   { label: 'Funcionalidades', href: '#features' },
   { label: 'Sobre', href: '#about' },
-  { label: 'IA Clínica', href: '#ai' },
+  { label: 'Automação Clínica', href: '#ai' },
   { label: 'Depoimentos', href: '#testimonials' },
 ]
 

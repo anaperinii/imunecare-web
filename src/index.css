@@ -53,6 +53,13 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+
+}
+
+*:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+  --tw-ring-shadow: none !important;
 }
 
 @layer utilities {
@@ -113,11 +120,11 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: var(--color-teal-200);
+    background: rgba(13, 148, 136, 0.25);
     border-radius: 3px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: var(--color-teal-300);
+    background: rgba(13, 148, 136, 0.4);
   }
 }
