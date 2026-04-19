@@ -373,8 +373,8 @@ export function PatientEvolutionPage() {
                       ...(form.necessidadeMedicacao === 'Sim' ? [{ label: 'Medicações', value: form.medicacoes }] : []),
                       ...(form.notasPre ? [{ label: 'Notas', value: form.notasPre, isNote: true }] : []),
                     ].map((field) => (
-                      <div key={field.label} className="flex items-center justify-between py-2.5 border-b border-(--border-custom) last:border-0">
-                        <span className="text-xs text-(--text-muted)">{field.label}</span>
+                      <div key={field.label} className="flex items-center gap-2 py-2.5 border-b border-(--border-custom) last:border-0">
+                        <span className="text-xs text-(--text-muted) shrink-0">{field.label}:</span>
                         {field.isChip ? (
                           <span className={cn("text-xs font-medium px-2.5 py-0.5 rounded-full", field.value === 'Sim' ? "bg-amber-100 text-amber-700" : "bg-teal-50 text-teal-700")}>
                             {field.value}
@@ -419,8 +419,8 @@ export function PatientEvolutionPage() {
                       { label: 'Necessidade de medicação', value: form.necessidadeMedicacaoPos, isChip: true },
                       { label: 'Notas', value: form.notasPos },
                     ].map((field) => (
-                      <div key={field.label} className="flex items-center justify-between py-2.5 border-b border-(--border-custom) last:border-0">
-                        <span className="text-xs text-(--text-muted)">{field.label}</span>
+                      <div key={field.label} className="flex items-center gap-2 py-2.5 border-b border-(--border-custom) last:border-0">
+                        <span className="text-xs text-(--text-muted) shrink-0">{field.label}:</span>
                         {field.isChip ? (
                           <span className={cn("text-xs font-medium px-2.5 py-0.5 rounded-full", field.value === 'Sim' ? "bg-amber-100 text-amber-700" : "bg-teal-50 text-teal-700")}>
                             {field.value}

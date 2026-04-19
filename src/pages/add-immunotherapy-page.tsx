@@ -131,8 +131,8 @@ export function AddImmunotherapyPage() {
                     ['Data de Nascimento', form.dataNascimento ? format(new Date(form.dataNascimento + 'T12:00'), 'dd/MM/yyyy', { locale: ptBR }) : '—'],
                     ['Peso', form.peso], ['Médico Responsável', form.medicoResponsavel],
                   ].map(([l, v]) => (
-                    <div key={l} className="flex items-center justify-between py-2.5 border-b border-(--border-custom) last:border-0">
-                      <span className="text-xs text-(--text-muted)">{l}</span>
+                    <div key={l} className="flex items-center gap-2 py-2.5 border-b border-(--border-custom) last:border-0">
+                      <span className="text-xs text-(--text-muted)">{l}:</span>
                       <span className="text-xs font-medium text-(--text)">{v || '—'}</span>
                     </div>
                   ))}
