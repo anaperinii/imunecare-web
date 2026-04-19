@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { usePatientStore } from '@/store/patient-store'
 import { useImmunotherapiesStore } from '@/store/immunotherapies-store'
-import { ArrowLeft, FileText, FileSpreadsheet, FileDown, Check, Download, Printer } from 'lucide-react'
+import { ArrowLeft, FileText, FileSpreadsheet, FileDown, Check, Download, Printer, ShieldCheck, EyeOff } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -28,6 +28,10 @@ export function PatientReportPage() {
   const { immunotherapies } = useImmunotherapiesStore()
   const [fileFormat, setFileFormat] = useState('pdf')
   const [selectedSections, setSelectedSections] = useState<string[]>(['personal', 'immunotherapy', 'applications', 'progress'])
+  const [anonimizar, setAnonimizar] = useState(false)
+  const [consentimento, setConsentimento] = useState(false)
+  const [justificativa, setJustificativa] = useState('')
+  const [showExportModal, setShowExportModal] = useState(false)
 
   const patient = selectedPatient || (() => {
     if (!patientId) return null
@@ -56,6 +60,14 @@ export function PatientReportPage() {
   const realizedApps = patientApps.filter((a) => a.status === 'realizada')
   const reactionsCount = realizedApps.filter((a) => a.efeitoColateral === 'Sim').length
 
+  const mask = (value: string) => {
+    if (!anonimizar) return value
+    if (value.length <= 3) return '***'
+    return value.slice(0, 3) + '*'.repeat(Math.max(value.length - 3, 3))
+  }
+  const maskCpf = (cpf: string) => anonimizar ? '***.***.***-**' : cpf
+  const maskPhone = (phone: string) => anonimizar ? '(**) *****-****' : phone
+
   const toggleSection = (id: string) => {
     setSelectedSections((prev) => prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id])
   }
@@ -83,11 +95,18 @@ export function PatientReportPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button className="h-8 px-3 flex items-center gap-1.5 rounded-lg border border-(--border-custom) text-xs font-semibold text-(--text-muted) hover:border-brand hover:text-brand transition-all cursor-pointer">
+            <button
+              disabled={!consentimento || !justificativa.trim()}
+              className={cn("h-8 px-3 flex items-center gap-1.5 rounded-lg border text-xs font-semibold transition-all", consentimento && justificativa.trim() ? "border-(--border-custom) text-(--text-muted) hover:border-brand hover:text-brand cursor-pointer" : "border-gray-200 text-gray-300 cursor-not-allowed")}
+            >
               <Printer size={13} />
               Imprimir
             </button>
-            <button className="h-8 px-3 flex items-center gap-1.5 rounded-lg bg-linear-to-br from-brand to-teal-400 text-white text-xs font-semibold hover:-translate-y-px transition-all cursor-pointer">
+            <button
+              disabled={!consentimento || !justificativa.trim()}
+              onClick={() => setShowExportModal(true)}
+              className={cn("h-8 px-3 flex items-center gap-1.5 rounded-lg text-xs font-semibold transition-all", consentimento && justificativa.trim() ? "bg-linear-to-br from-brand to-teal-400 text-white hover:-translate-y-px cursor-pointer" : "bg-gray-200 text-gray-400 cursor-not-allowed")}
+            >
               <Download size={13} />
               Exportar {fileFormat.toUpperCase()}
             </button>
@@ -161,21 +180,87 @@ export function PatientReportPage() {
                 <div className="flex justify-between"><span>Status</span><span className={cn("font-semibold", patient.status === 'ativo' ? "text-green-600" : "text-(--text-muted)")}>{patient.status === 'ativo' ? 'Ativo' : 'Inativo'}</span></div>
               </div>
             </div>
+
+            {/* LGPD & Privacy */}
+            <div>
+              <label className="text-xs font-semibold text-(--text-muted) mb-2 block">
+                Privacidade e LGPD
+              </label>
+              <div className="space-y-2">
+                <button
+                  onClick={() => setAnonimizar(!anonimizar)}
+                  className={cn(
+                    "flex w-full items-center gap-2.5 rounded-lg border p-2.5 text-left transition-all cursor-pointer",
+                    anonimizar ? "border-brand bg-brand/5" : "border-(--border-custom) hover:border-brand/40"
+                  )}
+                >
+                  <div className={cn("flex h-4 w-4 items-center justify-center rounded border transition-all shrink-0", anonimizar ? "bg-brand border-brand" : "border-gray-300")}>
+                    {anonimizar && <Check size={10} className="text-white" />}
+                  </div>
+                  <div>
+                    <span className="text-[0.7rem] font-medium text-(--text) block">Anonimizar dados pessoais</span>
+                    <span className="text-[0.55rem] text-(--text-muted)">Nome, CPF e telefone serão mascarados</span>
+                  </div>
+                </button>
+                <button
+                  onClick={() => setConsentimento(!consentimento)}
+                  className={cn(
+                    "flex w-full items-center gap-2.5 rounded-lg border p-2.5 text-left transition-all cursor-pointer",
+                    consentimento ? "border-brand bg-brand/5" : "border-(--border-custom) hover:border-brand/40"
+                  )}
+                >
+                  <div className={cn("flex h-4 w-4 items-center justify-center rounded border transition-all shrink-0", consentimento ? "bg-brand border-brand" : "border-gray-300")}>
+                    {consentimento && <Check size={10} className="text-white" />}
+                  </div>
+                  <div>
+                    <span className="text-[0.7rem] font-medium text-(--text) block">Declaro ciência da LGPD</span>
+                    <span className="text-[0.55rem] text-(--text-muted)">Responsabilizo-me pelo uso dos dados</span>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            {/* Justification */}
+            <div>
+              <label className="text-xs font-semibold text-(--text-muted) mb-1.5 block">Justificativa <span className="text-red-400">*</span></label>
+              <textarea
+                rows={2}
+                placeholder="Ex: Acompanhamento clínico do paciente"
+                value={justificativa}
+                onChange={(e) => setJustificativa(e.target.value)}
+                className="w-full rounded-lg border border-(--border-custom) bg-gray-50/60 px-3 py-2 text-xs placeholder:text-(--text-muted)/60 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all resize-none"
+              />
+            </div>
+
+            {!consentimento && (
+              <p className="text-[0.55rem] text-amber-600 text-center">Aceite a declaração LGPD para habilitar a exportação</p>
+            )}
           </div>
 
           {/* Right — Preview */}
           <div className="flex-1 overflow-y-auto p-5 bg-gray-50/50">
-            <div className="bg-white rounded-xl border border-(--border-custom) shadow-sm max-w-2xl mx-auto">
+            <div className="bg-white rounded-xl border border-(--border-custom) shadow-sm max-w-2xl mx-auto relative overflow-hidden">
+              {/* Watermark */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10 rotate-[-30deg]">
+                <span className="text-[3.5rem] font-extrabold text-gray-100 tracking-[0.3em] select-none uppercase">Confidencial</span>
+              </div>
+
               {/* Report header */}
-              <div className="px-6 py-5 border-b border-(--border-custom)">
+              <div className="px-6 py-5 border-b border-(--border-custom) relative z-20">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h2 className="text-sm font-bold text-(--text)">Relatório Clínico — {patient.nome}</h2>
+                    <h2 className="text-sm font-bold text-(--text)">Relatório Clínico — {anonimizar ? mask(patient.nome) : patient.nome}</h2>
                     <p className="text-[0.65rem] text-(--text-muted) mt-0.5">Gerado em {format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</p>
                   </div>
                   <div className="text-[0.6rem] text-(--text-muted) text-right">
                     <div>ImuneCare</div>
                     <div>Formato: {fileFormat.toUpperCase()}</div>
+                    {anonimizar && (
+                      <div className="flex items-center gap-1 text-brand font-semibold mt-0.5 justify-end">
+                        <EyeOff size={10} />
+                        Dados anonimizados
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -191,9 +276,12 @@ export function PatientReportPage() {
                         <h3 className="text-xs font-bold text-(--text) mb-3 pb-1.5 border-b border-(--border-custom)">Dados Pessoais</h3>
                         <div className="grid grid-cols-2 gap-x-6 gap-y-2">
                           {[
-                            ['Nome', patient.nome], ['CPF', patient.cpf],
-                            ['Data de Nascimento', patient.dataNascimento], ['Idade', `${patient.idade} anos`],
-                            ['Telefone', patient.telefone], ['Peso', patient.peso],
+                            ['Nome', anonimizar ? mask(patient.nome) : patient.nome],
+                            ['CPF', maskCpf(patient.cpf)],
+                            ['Data de Nascimento', patient.dataNascimento],
+                            ['Idade', `${patient.idade} anos`],
+                            ['Telefone', maskPhone(patient.telefone)],
+                            ['Peso', patient.peso],
                             ['Médico Responsável', patient.medicoResponsavel],
                           ].map(([l, v]) => (
                             <div key={l} className="flex items-center gap-2 text-[0.7rem]">
@@ -308,14 +396,67 @@ export function PatientReportPage() {
               </div>
 
               {/* Footer */}
-              <div className="px-6 py-3 border-t border-(--border-custom) flex justify-between">
-                <span className="text-[0.6rem] text-(--text-muted)">ImuneCare © 2026</span>
-                <span className="text-[0.6rem] text-(--text-muted)">Página 1 de 1</span>
+              <div className="px-6 py-3 border-t border-(--border-custom) relative z-20">
+                <div className="flex justify-between mb-2">
+                  <span className="text-[0.6rem] text-(--text-muted)">ImuneCare © 2026</span>
+                  <span className="text-[0.6rem] text-(--text-muted)">Página 1 de 1</span>
+                </div>
+                <p className="text-[0.5rem] text-(--text-muted)/60 leading-relaxed">
+                  Documento protegido pela Lei Geral de Proteção de Dados (LGPD — Lei nº 13.709/2018). A reprodução, compartilhamento ou armazenamento não autorizado é proibido. O responsável pela exportação assume total responsabilidade pelo uso das informações.
+                </p>
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Export confirmation modal */}
+      {showExportModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm" onClick={() => setShowExportModal(false)}>
+          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-sm mx-4 p-5" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-center mb-3">
+              <div className="h-11 w-11 rounded-full bg-brand/10 flex items-center justify-center">
+                <ShieldCheck size={20} className="text-brand" />
+              </div>
+            </div>
+            <h3 className="text-sm font-bold text-(--text) mb-1.5 text-center">Confirmar exportação</h3>
+            <p className="text-[0.7rem] text-(--text-muted) mb-4 text-center leading-relaxed">
+              Esta ação será registrada no log de auditoria do sistema conforme exigências da LGPD.
+            </p>
+
+            <div className="bg-gray-50 border border-(--border-custom) rounded-lg px-3.5 py-2.5 mb-4 space-y-1.5">
+              <div className="flex justify-between">
+                <span className="text-[0.6rem] text-(--text-muted)">Paciente</span>
+                <span className="text-[0.6rem] font-semibold text-(--text)">{anonimizar ? mask(patient.nome) : patient.nome}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[0.6rem] text-(--text-muted)">Formato</span>
+                <span className="text-[0.6rem] font-semibold text-(--text)">{fileFormat.toUpperCase()}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[0.6rem] text-(--text-muted)">Dados anonimizados</span>
+                <span className={cn("text-[0.6rem] font-semibold", anonimizar ? "text-brand" : "text-amber-600")}>{anonimizar ? 'Sim' : 'Não'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[0.6rem] text-(--text-muted)">Justificativa</span>
+                <span className="text-[0.6rem] font-semibold text-(--text) text-right max-w-[60%] truncate">{justificativa}</span>
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <button onClick={() => setShowExportModal(false)} className="flex-1 h-8 rounded-lg border border-(--border-custom) text-xs font-semibold text-(--text-muted) hover:bg-gray-50 transition-all cursor-pointer">
+                Cancelar
+              </button>
+              <button
+                onClick={() => { setShowExportModal(false); navigate({ to: '/patient/$patientId', params: { patientId: patient.id } }) }}
+                className="flex-1 h-8 rounded-lg bg-linear-to-br from-brand to-teal-400 text-white text-xs font-semibold hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(20,184,166,0.3)] transition-all cursor-pointer"
+              >
+                Confirmar e exportar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

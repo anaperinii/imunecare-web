@@ -34,6 +34,7 @@ export function PatientChartPage() {
   const [monthFilter, setMonthFilter] = useState('all')
   const [showProgress, setShowProgress] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
+  const [showEditConfirm, setShowEditConfirm] = useState(false)
   const [editForm, setEditForm] = useState({
     nome: '', telefone: '', peso: '', medicoResponsavel: '',
     tipoImunoterapia: '', viaAdministracao: '', extrato: '',
@@ -211,14 +212,15 @@ export function PatientChartPage() {
             )}
             <div className="mt-3 flex gap-1.5">
               <button
+                disabled={selectedPatient.status === 'inativo'}
                 onClick={() => navigate({ to: '/patient-evolution', search: { patientId: selectedPatient.id } })}
-                className="flex-1 h-8 rounded-lg bg-linear-to-br from-brand to-teal-400 text-white text-xs font-semibold hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(20,184,166,0.3)] transition-all cursor-pointer"
+                className={cn("flex-1 h-8 rounded-lg text-xs font-semibold transition-all", selectedPatient.status === 'inativo' ? "bg-gray-200 text-gray-400 cursor-not-allowed" : "bg-linear-to-br from-brand to-teal-400 text-white cursor-pointer hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(20,184,166,0.3)]")}
               >
                 Evoluir Paciente
               </button>
               <button
                 onClick={() => navigate({ to: '/patient-report', search: { patientId: selectedPatient.id } })}
-                className="flex-1 h-8 rounded-lg border-[1.5px] border-brand text-xs font-semibold text-brand hover:bg-brand-50 hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(24,193,203,0.12)] transition-all cursor-pointer"
+                className="flex-1 h-8 rounded-lg border-[1.5px] border-(--border-custom) text-xs font-semibold text-(--text-muted) cursor-pointer hover:border-brand hover:text-brand hover:bg-teal-50 hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(20,184,166,0.12)] transition-all"
               >
                 Emitir Relatório
               </button>
@@ -235,7 +237,7 @@ export function PatientChartPage() {
                   })
                   setShowEditModal(true)
                 }}
-                className="h-8 w-8 shrink-0 rounded-lg border border-(--border-custom) flex items-center justify-center text-(--text-muted) hover:border-brand hover:text-brand transition-all cursor-pointer"
+                className="h-8 w-8 shrink-0 rounded-lg border-[1.5px] border-(--border-custom) flex items-center justify-center text-(--text-muted) cursor-pointer hover:border-brand hover:text-brand hover:bg-teal-50 transition-all"
               >
                 <Pencil size={11} />
               </button>
@@ -646,6 +648,63 @@ export function PatientChartPage() {
                 Cancelar
               </button>
               <button
+                onClick={() => setShowEditConfirm(true)}
+                className="h-8 px-4 rounded-lg bg-linear-to-br from-brand to-teal-400 text-white text-xs font-semibold hover:-translate-y-px transition-all cursor-pointer flex items-center gap-1.5"
+              >
+                <Save size={13} />
+                Salvar alterações
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit confirmation modal */}
+      {showEditConfirm && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/30 backdrop-blur-sm" onClick={() => setShowEditConfirm(false)}>
+          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-sm mx-4 p-5" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-sm font-bold text-(--text) mb-1.5">Confirmar alterações?</h3>
+            <p className="text-xs text-(--text-muted) mb-4 leading-relaxed">
+              Os dados do paciente serão atualizados. Esta ação será registrada no histórico de alterações do prontuário.
+            </p>
+
+            <div className="bg-gray-50 border border-(--border-custom) rounded-lg px-3.5 py-2.5 mb-4 space-y-1.5">
+              {[
+                { label: 'Nome', prev: selectedPatient.nome, next: editForm.nome },
+                { label: 'Telefone', prev: selectedPatient.telefone, next: editForm.telefone },
+                { label: 'Peso', prev: selectedPatient.peso, next: editForm.peso },
+                { label: 'Médico', prev: selectedPatient.medicoResponsavel, next: editForm.medicoResponsavel },
+                { label: 'Tipo', prev: selectedPatient.tipoImunoterapia, next: editForm.tipoImunoterapia },
+                { label: 'Via', prev: selectedPatient.viaAdministracao, next: editForm.viaAdministracao },
+                { label: 'Extrato', prev: selectedPatient.extrato, next: editForm.extrato },
+              ].filter((f) => f.prev !== f.next).map((f) => (
+                <div key={f.label} className="flex items-center justify-between gap-2">
+                  <span className="text-[0.6rem] text-(--text-muted) shrink-0">{f.label}</span>
+                  <div className="flex items-center gap-1.5 text-[0.6rem] min-w-0">
+                    <span className="text-(--text-muted) line-through truncate max-w-24">{f.prev}</span>
+                    <span className="text-(--text-muted)">→</span>
+                    <span className="font-semibold text-brand truncate max-w-24">{f.next}</span>
+                  </div>
+                </div>
+              ))}
+              {[
+                { prev: selectedPatient.nome, next: editForm.nome },
+                { prev: selectedPatient.telefone, next: editForm.telefone },
+                { prev: selectedPatient.peso, next: editForm.peso },
+                { prev: selectedPatient.medicoResponsavel, next: editForm.medicoResponsavel },
+                { prev: selectedPatient.tipoImunoterapia, next: editForm.tipoImunoterapia },
+                { prev: selectedPatient.viaAdministracao, next: editForm.viaAdministracao },
+                { prev: selectedPatient.extrato, next: editForm.extrato },
+              ].every((f) => f.prev === f.next) && (
+                <span className="text-[0.6rem] text-(--text-muted)">Nenhuma alteração detectada.</span>
+              )}
+            </div>
+
+            <div className="flex gap-2">
+              <button onClick={() => setShowEditConfirm(false)} className="flex-1 h-8 rounded-lg border border-(--border-custom) text-xs font-semibold text-(--text-muted) hover:bg-gray-50 transition-all cursor-pointer">
+                Voltar
+              </button>
+              <button
                 onClick={() => {
                   setSelectedPatient({
                     ...selectedPatient,
@@ -657,12 +716,12 @@ export function PatientChartPage() {
                     viaAdministracao: editForm.viaAdministracao,
                     extrato: editForm.extrato,
                   })
+                  setShowEditConfirm(false)
                   setShowEditModal(false)
                 }}
-                className="h-8 px-4 rounded-lg bg-linear-to-br from-brand to-teal-400 text-white text-xs font-semibold hover:-translate-y-px transition-all cursor-pointer flex items-center gap-1.5"
+                className="flex-1 h-8 rounded-lg bg-linear-to-br from-brand to-teal-400 text-white text-xs font-semibold hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(20,184,166,0.3)] transition-all cursor-pointer"
               >
-                <Save size={13} />
-                Salvar alterações
+                Confirmar e salvar
               </button>
             </div>
           </div>

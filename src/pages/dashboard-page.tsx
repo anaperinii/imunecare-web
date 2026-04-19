@@ -305,10 +305,13 @@ export function DashboardPage() {
               </div>
               <div className="space-y-3 mt-4">
                 {typeData.map((t, i) => (
-                  <div key={t.name}>
+                  <div key={t.name} className="group">
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-xs font-medium text-(--text)">{t.name}</span>
-                      <span className="text-xs font-bold" style={{ color: TYPE_COLORS[i % TYPE_COLORS.length] }}>{t.pct}%</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[0.6rem] text-(--text-muted) opacity-0 group-hover:opacity-100 transition-opacity">{t.value} pacientes</span>
+                        <span className="text-xs font-bold" style={{ color: TYPE_COLORS[i % TYPE_COLORS.length] }}>{t.pct}%</span>
+                      </div>
                     </div>
                     <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                       <div
