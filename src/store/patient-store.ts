@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { INDUCTION_SEQUENCE, META_DOSE, META_STEP } from '@/lib/scit-protocol'
 
 export type ProtocolAdjustmentType = 'reducao_dose' | 'aumento_intervalo' | 'alteracao_concentracao' | 'suspensao' | 'outro'
 
@@ -83,7 +84,9 @@ export interface Application {
   volumeAplicado?: string
   concentracaoExtrato?: string
   efeitoColateral?: string
+  efeitosRelatados?: string
   necessidadeMedicacao?: string
+  medicacoes?: string
   responsavel?: string
   notaResponsavel?: string
   modalidade?: 'subcutânea' | 'sublingual'
@@ -110,123 +113,171 @@ export function seedInactivationsFor(patientId: string, snapshotConcentracao: st
   return [{ id: `inact-seed-${patientId}`, ...seed, snapshotConcentracao, snapshotIntervalo }]
 }
 
+// ════════════════════════════════════════════════════════════════════
+// Geração programática das aplicações seguindo protocolo SCIT (RNE-010)
+// ════════════════════════════════════════════════════════════════════
+
+const PT_MONTHS = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO']
+
+function fmtDate(d: Date) {
+  const day = String(d.getDate()).padStart(2, '0')
+  const mo = String(d.getMonth() + 1).padStart(2, '0')
+  return { data: `${day}/${mo}/${d.getFullYear()}`, mes: PT_MONTHS[d.getMonth()], ano: d.getFullYear() }
+}
+
+function daysOffset(base: Date, n: number): Date {
+  const r = new Date(base)
+  r.setDate(r.getDate() + n)
+  return r
+}
+
+function inductionFlow(patientId: string, prefix: string, stepIndex: number, lastRealizedDate: Date, nextScheduledDate: Date | null, horaInicio: string, horaFim: string, responsavel: string): Application[] {
+  const apps: Application[] = []
+  for (let i = 0; i <= stepIndex; i++) {
+    const date = daysOffset(lastRealizedDate, -7 * (stepIndex - i))
+    const step = INDUCTION_SEQUENCE[i]
+    const { data, mes, ano } = fmtDate(date)
+    apps.push({
+      id: `${prefix}${i + 1}`, patientId, data, mes, ano,
+      horaInicio, horaFim, status: 'realizada',
+      dose: `${step.conc} - ${step.vol}`,
+      ciclo: { numero: 1, dias: 7 },
+      volumeAplicado: step.vol, concentracaoExtrato: step.conc,
+      efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel,
+      notaResponsavel: i === 0 ? 'Primeira aplicação' : (i % 4 === 0 ? `Avançou para ${step.conc}` : '-'),
+    })
+  }
+  if (nextScheduledDate && stepIndex < INDUCTION_SEQUENCE.length - 1) {
+    const nextStep = INDUCTION_SEQUENCE[stepIndex + 1]
+    const { data, mes, ano } = fmtDate(nextScheduledDate)
+    apps.push({
+      id: `${prefix}next`, patientId, data, mes, ano,
+      horaInicio, horaFim, status: 'agendada',
+      dose: `${nextStep.conc} - ${nextStep.vol}`,
+      ciclo: { numero: 1, dias: 7 },
+    })
+  }
+  return apps
+}
+
+function maintenanceFlow(patientId: string, prefix: string, finalInterval: 14 | 21 | 28, lastRealizedDate: Date, nextScheduledDate: Date | null, horaInicio: string, horaFim: string, responsavel: string): Application[] {
+  type H = { dose: string; conc: string; vol: string; interval: number; ciclo: number; note?: string }
+  const hist: H[] = []
+  for (let i = 0; i < INDUCTION_SEQUENCE.length; i++) {
+    const s = INDUCTION_SEQUENCE[i]
+    hist.push({
+      dose: `${s.conc} - ${s.vol}`, conc: s.conc, vol: s.vol, interval: 7, ciclo: 1,
+      note: i === 0 ? 'Primeira aplicação' : i === INDUCTION_SEQUENCE.length - 1 ? 'Meta atingida! Transição para manutenção' : (i % 4 === 0 ? `Avançou para ${s.conc}` : '-'),
+    })
+  }
+  const pushMeta = (interval: 14 | 21 | 28, ciclo: number, note?: string) =>
+    hist.push({ dose: META_DOSE, conc: META_STEP.conc, vol: META_STEP.vol, interval, ciclo, note: note || '-' })
+
+  if (finalInterval >= 14) {
+    pushMeta(14, 1, 'Início manutenção 14 dias')
+    pushMeta(14, 1)
+  }
+  if (finalInterval >= 21) {
+    pushMeta(21, 2, 'Progrediu para 21 dias')
+    pushMeta(21, 2)
+  }
+  if (finalInterval >= 28) {
+    pushMeta(28, 3, 'Progrediu para 28 dias')
+    pushMeta(28, 3)
+  }
+
+  const dates: Date[] = new Array(hist.length)
+  dates[hist.length - 1] = lastRealizedDate
+  for (let i = hist.length - 2; i >= 0; i--) {
+    dates[i] = daysOffset(dates[i + 1], -hist[i + 1].interval)
+  }
+
+  const apps: Application[] = []
+  for (let i = 0; i < hist.length; i++) {
+    const h = hist[i]
+    const { data, mes, ano } = fmtDate(dates[i])
+    apps.push({
+      id: `${prefix}${i + 1}`, patientId, data, mes, ano,
+      horaInicio, horaFim, status: 'realizada',
+      dose: h.dose, ciclo: { numero: h.ciclo, dias: h.interval },
+      volumeAplicado: h.vol, concentracaoExtrato: h.conc,
+      efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel,
+      notaResponsavel: h.note,
+    })
+  }
+  if (nextScheduledDate) {
+    const ciclo = finalInterval === 14 ? 1 : finalInterval === 21 ? 2 : 3
+    const { data, mes, ano } = fmtDate(nextScheduledDate)
+    apps.push({
+      id: `${prefix}next`, patientId, data, mes, ano,
+      horaInicio, horaFim, status: 'agendada',
+      dose: META_DOSE, ciclo: { numero: ciclo, dias: finalInterval },
+    })
+  }
+  return apps
+}
+
+const REACTION_SEEDS: Record<string, { efeitosRelatados: string; medicacoes: string; nota: string }> = {
+  'a4': {
+    efeitosRelatados: 'Prurido local leve e eritema no ponto da aplicação',
+    medicacoes: 'Anti-histamínico tópico (Polaramine creme)',
+    nota: 'Reação local leve. Conduta: manter protocolo com monitoramento.',
+  },
+  'pt4': {
+    efeitosRelatados: 'Eritema leve no local da aplicação (< 2cm)',
+    medicacoes: 'Compressas frias locais',
+    nota: 'Paciente tolerou; segue protocolo.',
+  },
+  'l11': {
+    efeitosRelatados: 'Placa urticariforme peri-aplicação (~5cm) com prurido intenso',
+    medicacoes: 'Loratadina 10mg VO + Dexclorfeniramina creme',
+    nota: 'Reação moderada motivou solicitação de interrupção pelo paciente.',
+  },
+  'r6': {
+    efeitosRelatados: 'Urticária generalizada + prurido difuso 20min pós-aplicação',
+    medicacoes: 'Anti-histamínico VO + corticoide (Prednisona 20mg)',
+    nota: 'Reação moderada. Tratamento suspenso a pedido médico.',
+  },
+}
+
+function applyReactions(apps: Application[]): Application[] {
+  return apps.map((a) => {
+    const seed = REACTION_SEEDS[a.id]
+    if (!seed) return a
+    return {
+      ...a,
+      efeitoColateral: 'Sim',
+      efeitosRelatados: seed.efeitosRelatados,
+      necessidadeMedicacao: 'Sim',
+      medicacoes: seed.medicacoes,
+      notaResponsavel: seed.nota,
+    }
+  })
+}
+
+function buildSeedApplications(): Application[] {
+  const r = 'Jaqueline'
+  const out: Application[] = []
+  out.push(...inductionFlow('1', 'b', 0, new Date(2026, 3, 11), new Date(2026, 3, 18), '09:00', '09:30', r))
+  out.push(...inductionFlow('2', 'c', 5, new Date(2026, 3, 11), new Date(2026, 3, 18), '10:00', '10:30', r))
+  out.push(...inductionFlow('3', 'a', 10, new Date(2026, 3, 11), new Date(2026, 3, 18), '10:30', '11:00', r))
+  out.push(...inductionFlow('4', 'v', 14, new Date(2026, 3, 11), new Date(2026, 3, 18), '11:00', '11:30', r))
+  out.push(...maintenanceFlow('5', 'h', 14, new Date(2026, 3, 4), new Date(2026, 3, 18), '14:00', '14:30', r))
+  out.push(...maintenanceFlow('6', 'cr', 21, new Date(2026, 2, 28), new Date(2026, 3, 18), '15:30', '16:00', r))
+  out.push(...maintenanceFlow('7', 'm', 28, new Date(2026, 2, 21), new Date(2026, 3, 18), '08:00', '08:30', r))
+  out.push(...inductionFlow('8', 'pt', 4, new Date(2026, 3, 11), new Date(2026, 3, 18), '09:00', '09:30', r))
+  out.push(...inductionFlow('9', 'pe', 9, new Date(2026, 3, 11), new Date(2026, 3, 18), '10:30', '11:00', r))
+
+  out.push(...inductionFlow('10', 'l', 10, new Date(2026, 1, 15), null, '09:00', '09:30', r))
+  out.push(...maintenanceFlow('11', 'j', 14, new Date(2026, 0, 20), null, '11:00', '11:30', r))
+  out.push(...inductionFlow('12', 'r', 5, new Date(2026, 0, 10), null, '15:00', '15:30', r))
+
+  return applyReactions(out)
+}
+
 export const usePatientStore = create<PatientState>((set) => ({
   selectedPatient: null,
-  applications: [
-    // ══════ Bárbara (id:1) — Indução 1:10.000, dose atual 0,1ml → próxima 0,2ml ══════
-    { id: 'b1', patientId: '1', data: '13/04/2026', horaInicio: '09:00', horaFim: '09:30', status: 'agendada', dose: '1:10.000 - 0,2ml', ciclo: { numero: 1, dias: 7 }, mes: 'ABRIL', ano: 2026 },
-    { id: 'b2', patientId: '1', data: '06/04/2026', horaInicio: '09:00', horaFim: '09:30', status: 'realizada', dose: '1:10.000 - 0,1ml', ciclo: { numero: 1, dias: 7 }, mes: 'ABRIL', ano: 2026, volumeAplicado: '0,1ml', concentracaoExtrato: '1:10.000', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: 'Primeira aplicação' },
-
-    // ══════ Camilla (id:2) — Indução 1:1.000, dose atual 0,2ml ══════
-    { id: 'c1', patientId: '2', data: '14/04/2026', horaInicio: '10:00', horaFim: '10:30', status: 'agendada', dose: '1:1.000 - 0,4ml', ciclo: { numero: 1, dias: 7 }, mes: 'ABRIL', ano: 2026 },
-    { id: 'c2', patientId: '2', data: '07/04/2026', horaInicio: '10:00', horaFim: '10:30', status: 'realizada', dose: '1:1.000 - 0,2ml', ciclo: { numero: 1, dias: 7 }, mes: 'ABRIL', ano: 2026, volumeAplicado: '0,2ml', concentracaoExtrato: '1:1.000', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: '-' },
-    { id: 'c3', patientId: '2', data: '31/03/2026', horaInicio: '10:00', horaFim: '10:30', status: 'realizada', dose: '1:1.000 - 0,1ml', ciclo: { numero: 1, dias: 7 }, mes: 'MARÇO', ano: 2026, volumeAplicado: '0,1ml', concentracaoExtrato: '1:1.000', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: '-' },
-    { id: 'c4', patientId: '2', data: '24/03/2026', horaInicio: '10:00', horaFim: '10:30', status: 'realizada', dose: '1:10.000 - 0,8ml', ciclo: { numero: 1, dias: 7 }, mes: 'MARÇO', ano: 2026, volumeAplicado: '0,8ml', concentracaoExtrato: '1:10.000', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: 'Última dose 1:10.000, avança para 1:1.000' },
-    { id: 'c5', patientId: '2', data: '17/03/2026', horaInicio: '10:00', horaFim: '10:30', status: 'realizada', dose: '1:10.000 - 0,4ml', ciclo: { numero: 1, dias: 7 }, mes: 'MARÇO', ano: 2026, volumeAplicado: '0,4ml', concentracaoExtrato: '1:10.000', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: '-' },
-    { id: 'c6', patientId: '2', data: '10/03/2026', horaInicio: '10:00', horaFim: '10:30', status: 'realizada', dose: '1:10.000 - 0,2ml', ciclo: { numero: 1, dias: 7 }, mes: 'MARÇO', ano: 2026, volumeAplicado: '0,2ml', concentracaoExtrato: '1:10.000', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: '-' },
-    { id: 'c7', patientId: '2', data: '03/03/2026', horaInicio: '10:00', horaFim: '10:30', status: 'realizada', dose: '1:10.000 - 0,1ml', ciclo: { numero: 1, dias: 7 }, mes: 'MARÇO', ano: 2026, volumeAplicado: '0,1ml', concentracaoExtrato: '1:10.000', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: '-' },
-
-    // ══════ Ana Clara (id:3) — Indução 1:100, dose atual 0,4ml ══════
-    { id: 'a1', patientId: '3', data: '13/04/2026', horaInicio: '10:30', horaFim: '11:00', status: 'agendada', dose: '1:100 - 0,8ml', ciclo: { numero: 1, dias: 7 }, mes: 'ABRIL', ano: 2026 },
-    { id: 'a2', patientId: '3', data: '06/04/2026', horaInicio: '10:30', horaFim: '11:00', status: 'realizada', dose: '1:100 - 0,4ml', ciclo: { numero: 1, dias: 7 }, mes: 'ABRIL', ano: 2026, volumeAplicado: '0,4ml', concentracaoExtrato: '1:100', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: '-' },
-    { id: 'a3', patientId: '3', data: '30/03/2026', horaInicio: '10:30', horaFim: '11:00', status: 'realizada', dose: '1:100 - 0,2ml', ciclo: { numero: 1, dias: 7 }, mes: 'MARÇO', ano: 2026, volumeAplicado: '0,2ml', concentracaoExtrato: '1:100', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: '-' },
-    { id: 'a4', patientId: '3', data: '23/03/2026', horaInicio: '10:30', horaFim: '11:00', status: 'realizada', dose: '1:100 - 0,1ml', ciclo: { numero: 1, dias: 7 }, mes: 'MARÇO', ano: 2026, volumeAplicado: '0,1ml', concentracaoExtrato: '1:100', efeitoColateral: 'Sim', necessidadeMedicacao: 'Sim', responsavel: 'Jaqueline', notaResponsavel: 'Prurido local leve, aplicado anti-histamínico' },
-    // 1:1.000 completa (0,1→0,2→0,4→0,8)
-    { id: 'a5', patientId: '3', data: '16/03/2026', horaInicio: '10:30', horaFim: '11:00', status: 'realizada', dose: '1:1.000 - 0,8ml', ciclo: { numero: 1, dias: 7 }, mes: 'MARÇO', ano: 2026, volumeAplicado: '0,8ml', concentracaoExtrato: '1:1.000', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: 'Avançou para 1:100' },
-    { id: 'a6', patientId: '3', data: '09/03/2026', horaInicio: '10:30', horaFim: '11:00', status: 'realizada', dose: '1:1.000 - 0,4ml', ciclo: { numero: 1, dias: 7 }, mes: 'MARÇO', ano: 2026, volumeAplicado: '0,4ml', concentracaoExtrato: '1:1.000', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: '-' },
-    { id: 'a7', patientId: '3', data: '02/03/2026', horaInicio: '10:30', horaFim: '11:00', status: 'realizada', dose: '1:1.000 - 0,2ml', ciclo: { numero: 1, dias: 7 }, mes: 'MARÇO', ano: 2026, volumeAplicado: '0,2ml', concentracaoExtrato: '1:1.000', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: '-' },
-    { id: 'a8', patientId: '3', data: '23/02/2026', horaInicio: '10:30', horaFim: '11:00', status: 'realizada', dose: '1:1.000 - 0,1ml', ciclo: { numero: 1, dias: 7 }, mes: 'FEVEREIRO', ano: 2026, volumeAplicado: '0,1ml', concentracaoExtrato: '1:1.000', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: 'Avançou para 1:1.000' },
-    // 1:10.000 completa (0,1→0,2→0,4→0,8)
-    { id: 'a9', patientId: '3', data: '16/02/2026', horaInicio: '10:30', horaFim: '11:00', status: 'realizada', dose: '1:10.000 - 0,8ml', ciclo: { numero: 1, dias: 7 }, mes: 'FEVEREIRO', ano: 2026, volumeAplicado: '0,8ml', concentracaoExtrato: '1:10.000', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: 'Última dose 1:10.000' },
-    { id: 'a10', patientId: '3', data: '09/02/2026', horaInicio: '10:30', horaFim: '11:00', status: 'realizada', dose: '1:10.000 - 0,4ml', ciclo: { numero: 1, dias: 7 }, mes: 'FEVEREIRO', ano: 2026, volumeAplicado: '0,4ml', concentracaoExtrato: '1:10.000', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: '-' },
-    { id: 'a11', patientId: '3', data: '02/02/2026', horaInicio: '10:30', horaFim: '11:00', status: 'realizada', dose: '1:10.000 - 0,2ml', ciclo: { numero: 1, dias: 7 }, mes: 'FEVEREIRO', ano: 2026, volumeAplicado: '0,2ml', concentracaoExtrato: '1:10.000', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: '-' },
-    { id: 'a12', patientId: '3', data: '26/01/2026', horaInicio: '10:30', horaFim: '11:00', status: 'realizada', dose: '1:10.000 - 0,1ml', ciclo: { numero: 1, dias: 7 }, mes: 'JANEIRO', ano: 2026, volumeAplicado: '0,1ml', concentracaoExtrato: '1:10.000', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: 'Primeira aplicação' },
-
-    // ══════ Valentina (id:4) — Indução 1:10, dose atual 0,8ml (quase manutenção) ══════
-    { id: 'v1', patientId: '4', data: '14/04/2026', horaInicio: '11:00', horaFim: '11:30', status: 'agendada', dose: '1:10 - 0,5ml', ciclo: { numero: 1, dias: 7 }, mes: 'ABRIL', ano: 2026 },
-    { id: 'v2', patientId: '4', data: '07/04/2026', horaInicio: '11:00', horaFim: '11:30', status: 'realizada', dose: '1:10 - 0,8ml', ciclo: { numero: 1, dias: 7 }, mes: 'ABRIL', ano: 2026, volumeAplicado: '0,8ml', concentracaoExtrato: '1:10', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: 'Próxima: 0,5ml manutenção se tolerado' },
-    { id: 'v3', patientId: '4', data: '31/03/2026', horaInicio: '11:00', horaFim: '11:30', status: 'realizada', dose: '1:10 - 0,4ml', ciclo: { numero: 1, dias: 7 }, mes: 'MARÇO', ano: 2026, volumeAplicado: '0,4ml', concentracaoExtrato: '1:10', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: '-' },
-    { id: 'v4', patientId: '4', data: '24/03/2026', horaInicio: '11:00', horaFim: '11:30', status: 'realizada', dose: '1:10 - 0,2ml', ciclo: { numero: 1, dias: 7 }, mes: 'MARÇO', ano: 2026, volumeAplicado: '0,2ml', concentracaoExtrato: '1:10', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: '-' },
-    { id: 'v5', patientId: '4', data: '17/03/2026', horaInicio: '11:00', horaFim: '11:30', status: 'realizada', dose: '1:10 - 0,1ml', ciclo: { numero: 1, dias: 7 }, mes: 'MARÇO', ano: 2026, volumeAplicado: '0,1ml', concentracaoExtrato: '1:10', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: 'Início concentração 1:10' },
-    { id: 'v6', patientId: '4', data: '10/03/2026', horaInicio: '11:00', horaFim: '11:30', status: 'realizada', dose: '1:100 - 0,8ml', ciclo: { numero: 1, dias: 7 }, mes: 'MARÇO', ano: 2026, volumeAplicado: '0,8ml', concentracaoExtrato: '1:100', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: 'Avançou para 1:10' },
-    { id: 'v7', patientId: '4', data: '03/03/2026', horaInicio: '11:00', horaFim: '11:30', status: 'realizada', dose: '1:100 - 0,4ml', ciclo: { numero: 1, dias: 7 }, mes: 'MARÇO', ano: 2026, volumeAplicado: '0,4ml', concentracaoExtrato: '1:100', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: '-' },
-    { id: 'v8', patientId: '4', data: '24/02/2026', horaInicio: '11:00', horaFim: '11:30', status: 'realizada', dose: '1:100 - 0,2ml', ciclo: { numero: 1, dias: 7 }, mes: 'FEVEREIRO', ano: 2026, volumeAplicado: '0,2ml', concentracaoExtrato: '1:100', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: '-' },
-    { id: 'v9', patientId: '4', data: '17/02/2026', horaInicio: '11:00', horaFim: '11:30', status: 'realizada', dose: '1:100 - 0,1ml', ciclo: { numero: 1, dias: 7 }, mes: 'FEVEREIRO', ano: 2026, volumeAplicado: '0,1ml', concentracaoExtrato: '1:100', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: '-' },
-    { id: 'v10', patientId: '4', data: '10/02/2026', horaInicio: '11:00', horaFim: '11:30', status: 'realizada', dose: '1:1.000 - 0,8ml', ciclo: { numero: 1, dias: 7 }, mes: 'FEVEREIRO', ano: 2026, volumeAplicado: '0,8ml', concentracaoExtrato: '1:1.000', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: 'Avançou para 1:100' },
-    { id: 'v11', patientId: '4', data: '03/02/2026', horaInicio: '11:00', horaFim: '11:30', status: 'realizada', dose: '1:1.000 - 0,4ml', ciclo: { numero: 1, dias: 7 }, mes: 'FEVEREIRO', ano: 2026, volumeAplicado: '0,4ml', concentracaoExtrato: '1:1.000', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: '-' },
-    { id: 'v12', patientId: '4', data: '27/01/2026', horaInicio: '11:00', horaFim: '11:30', status: 'realizada', dose: '1:1.000 - 0,2ml', ciclo: { numero: 1, dias: 7 }, mes: 'JANEIRO', ano: 2026, volumeAplicado: '0,2ml', concentracaoExtrato: '1:1.000', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: '-' },
-    { id: 'v13', patientId: '4', data: '20/01/2026', horaInicio: '11:00', horaFim: '11:30', status: 'realizada', dose: '1:1.000 - 0,1ml', ciclo: { numero: 1, dias: 7 }, mes: 'JANEIRO', ano: 2026, volumeAplicado: '0,1ml', concentracaoExtrato: '1:1.000', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: '-' },
-    { id: 'v14', patientId: '4', data: '13/01/2026', horaInicio: '11:00', horaFim: '11:30', status: 'realizada', dose: '1:10.000 - 0,8ml', ciclo: { numero: 1, dias: 7 }, mes: 'JANEIRO', ano: 2026, volumeAplicado: '0,8ml', concentracaoExtrato: '1:10.000', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: 'Avançou para 1:1.000' },
-    { id: 'v15', patientId: '4', data: '06/01/2026', horaInicio: '11:00', horaFim: '11:30', status: 'realizada', dose: '1:10.000 - 0,4ml', ciclo: { numero: 1, dias: 7 }, mes: 'JANEIRO', ano: 2026, volumeAplicado: '0,4ml', concentracaoExtrato: '1:10.000', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: '-' },
-    { id: 'v16', patientId: '4', data: '30/12/2025', horaInicio: '11:00', horaFim: '11:30', status: 'realizada', dose: '1:10.000 - 0,2ml', ciclo: { numero: 1, dias: 7 }, mes: 'DEZEMBRO', ano: 2025, volumeAplicado: '0,2ml', concentracaoExtrato: '1:10.000', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: '-' },
-    { id: 'v17', patientId: '4', data: '23/12/2025', horaInicio: '11:00', horaFim: '11:30', status: 'realizada', dose: '1:10.000 - 0,1ml', ciclo: { numero: 1, dias: 7 }, mes: 'DEZEMBRO', ano: 2025, volumeAplicado: '0,1ml', concentracaoExtrato: '1:10.000', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: 'Primeira aplicação' },
-
-    // ══════ Heitor (id:5) — Manutenção 1:10-0,5ml, intervalo 14 dias ══════
-    { id: 'h1', patientId: '5', data: '22/04/2026', horaInicio: '14:00', horaFim: '14:30', status: 'agendada', dose: '1:10 - 0,5ml', ciclo: { numero: 1, dias: 14 }, mes: 'ABRIL', ano: 2026 },
-    { id: 'h2', patientId: '5', data: '08/04/2026', horaInicio: '14:00', horaFim: '14:30', status: 'realizada', dose: '1:10 - 0,5ml', ciclo: { numero: 1, dias: 14 }, mes: 'ABRIL', ano: 2026, volumeAplicado: '0,5ml', concentracaoExtrato: '1:10', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: '-' },
-    { id: 'h3', patientId: '5', data: '25/03/2026', horaInicio: '14:00', horaFim: '14:30', status: 'realizada', dose: '1:10 - 0,5ml', ciclo: { numero: 1, dias: 14 }, mes: 'MARÇO', ano: 2026, volumeAplicado: '0,5ml', concentracaoExtrato: '1:10', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: 'Início manutenção 14 dias' },
-    { id: 'h4', patientId: '5', data: '18/03/2026', horaInicio: '14:00', horaFim: '14:30', status: 'realizada', dose: '1:10 - 0,5ml', ciclo: { numero: 1, dias: 7 }, mes: 'MARÇO', ano: 2026, volumeAplicado: '0,5ml', concentracaoExtrato: '1:10', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: 'Meta atingida! Transição para manutenção' },
-    { id: 'h5', patientId: '5', data: '11/03/2026', horaInicio: '14:00', horaFim: '14:30', status: 'realizada', dose: '1:10 - 0,4ml', ciclo: { numero: 1, dias: 7 }, mes: 'MARÇO', ano: 2026, volumeAplicado: '0,4ml', concentracaoExtrato: '1:10', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: '-' },
-    { id: 'h6', patientId: '5', data: '04/03/2026', horaInicio: '14:00', horaFim: '14:30', status: 'realizada', dose: '1:10 - 0,2ml', ciclo: { numero: 1, dias: 7 }, mes: 'MARÇO', ano: 2026, volumeAplicado: '0,2ml', concentracaoExtrato: '1:10', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: '-' },
-    { id: 'h7', patientId: '5', data: '25/02/2026', horaInicio: '14:00', horaFim: '14:30', status: 'realizada', dose: '1:10 - 0,1ml', ciclo: { numero: 1, dias: 7 }, mes: 'FEVEREIRO', ano: 2026, volumeAplicado: '0,1ml', concentracaoExtrato: '1:10', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: 'Início 1:10' },
-    { id: 'h8', patientId: '5', data: '18/02/2026', horaInicio: '14:00', horaFim: '14:30', status: 'realizada', dose: '1:100 - 0,8ml', ciclo: { numero: 1, dias: 7 }, mes: 'FEVEREIRO', ano: 2026, volumeAplicado: '0,8ml', concentracaoExtrato: '1:100', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: 'Avançou para 1:10' },
-    { id: 'h9', patientId: '5', data: '11/02/2026', horaInicio: '14:00', horaFim: '14:30', status: 'realizada', dose: '1:100 - 0,1ml', ciclo: { numero: 1, dias: 7 }, mes: 'FEVEREIRO', ano: 2026, volumeAplicado: '0,1ml', concentracaoExtrato: '1:100', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: '-' },
-    { id: 'h10', patientId: '5', data: '04/02/2026', horaInicio: '14:00', horaFim: '14:30', status: 'realizada', dose: '1:1.000 - 0,8ml', ciclo: { numero: 1, dias: 7 }, mes: 'FEVEREIRO', ano: 2026, volumeAplicado: '0,8ml', concentracaoExtrato: '1:1.000', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: 'Avançou para 1:100' },
-    { id: 'h11', patientId: '5', data: '28/01/2026', horaInicio: '14:00', horaFim: '14:30', status: 'realizada', dose: '1:1.000 - 0,1ml', ciclo: { numero: 1, dias: 7 }, mes: 'JANEIRO', ano: 2026, volumeAplicado: '0,1ml', concentracaoExtrato: '1:1.000', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: '-' },
-    { id: 'h12', patientId: '5', data: '21/01/2026', horaInicio: '14:00', horaFim: '14:30', status: 'realizada', dose: '1:10.000 - 0,8ml', ciclo: { numero: 1, dias: 7 }, mes: 'JANEIRO', ano: 2026, volumeAplicado: '0,8ml', concentracaoExtrato: '1:10.000', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: 'Avançou para 1:1.000' },
-    { id: 'h13', patientId: '5', data: '14/01/2026', horaInicio: '14:00', horaFim: '14:30', status: 'realizada', dose: '1:10.000 - 0,1ml', ciclo: { numero: 1, dias: 7 }, mes: 'JANEIRO', ano: 2026, volumeAplicado: '0,1ml', concentracaoExtrato: '1:10.000', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: 'Primeira aplicação' },
-
-    // ══════ Caroline (id:6) — Manutenção 1:10-0,5ml, intervalo 21 dias ══════
-    { id: 'cr1', patientId: '6', data: '29/04/2026', horaInicio: '15:30', horaFim: '16:00', status: 'agendada', dose: '1:10 - 0,5ml', ciclo: { numero: 2, dias: 21 }, mes: 'ABRIL', ano: 2026 },
-    { id: 'cr2', patientId: '6', data: '08/04/2026', horaInicio: '15:30', horaFim: '16:00', status: 'realizada', dose: '1:10 - 0,5ml', ciclo: { numero: 2, dias: 21 }, mes: 'ABRIL', ano: 2026, volumeAplicado: '0,5ml', concentracaoExtrato: '1:10', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: '-' },
-    { id: 'cr3', patientId: '6', data: '18/03/2026', horaInicio: '15:30', horaFim: '16:00', status: 'realizada', dose: '1:10 - 0,5ml', ciclo: { numero: 2, dias: 21 }, mes: 'MARÇO', ano: 2026, volumeAplicado: '0,5ml', concentracaoExtrato: '1:10', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: 'Progrediu para 21 dias' },
-    { id: 'cr4', patientId: '6', data: '04/03/2026', horaInicio: '15:30', horaFim: '16:00', status: 'realizada', dose: '1:10 - 0,5ml', ciclo: { numero: 1, dias: 14 }, mes: 'MARÇO', ano: 2026, volumeAplicado: '0,5ml', concentracaoExtrato: '1:10', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: '-' },
-    { id: 'cr5', patientId: '6', data: '18/02/2026', horaInicio: '15:30', horaFim: '16:00', status: 'realizada', dose: '1:10 - 0,5ml', ciclo: { numero: 1, dias: 14 }, mes: 'FEVEREIRO', ano: 2026, volumeAplicado: '0,5ml', concentracaoExtrato: '1:10', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: '-' },
-
-    // ══════ Marta (id:7) — Manutenção 1:10-0,5ml, intervalo 28 dias ══════
-    { id: 'm1', patientId: '7', data: '08/05/2026', horaInicio: '08:00', horaFim: '08:30', status: 'agendada', dose: '1:10 - 0,5ml', ciclo: { numero: 3, dias: 28 }, mes: 'MAIO', ano: 2026 },
-    { id: 'm2', patientId: '7', data: '10/04/2026', horaInicio: '08:00', horaFim: '08:30', status: 'realizada', dose: '1:10 - 0,5ml', ciclo: { numero: 3, dias: 28 }, mes: 'ABRIL', ano: 2026, volumeAplicado: '0,5ml', concentracaoExtrato: '1:10', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: '-' },
-    { id: 'm3', patientId: '7', data: '13/03/2026', horaInicio: '08:00', horaFim: '08:30', status: 'realizada', dose: '1:10 - 0,5ml', ciclo: { numero: 3, dias: 28 }, mes: 'MARÇO', ano: 2026, volumeAplicado: '0,5ml', concentracaoExtrato: '1:10', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: 'Progrediu para 28 dias' },
-    { id: 'm4', patientId: '7', data: '20/02/2026', horaInicio: '08:00', horaFim: '08:30', status: 'realizada', dose: '1:10 - 0,5ml', ciclo: { numero: 2, dias: 21 }, mes: 'FEVEREIRO', ano: 2026, volumeAplicado: '0,5ml', concentracaoExtrato: '1:10', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: '-' },
-    { id: 'm5', patientId: '7', data: '30/01/2026', horaInicio: '08:00', horaFim: '08:30', status: 'realizada', dose: '1:10 - 0,5ml', ciclo: { numero: 2, dias: 21 }, mes: 'JANEIRO', ano: 2026, volumeAplicado: '0,5ml', concentracaoExtrato: '1:10', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: '-' },
-
-    // ══════ Patrício (id:8) — Indução 1:1.000, dose atual 0,1ml ══════
-    { id: 'pt1', patientId: '8', data: '16/04/2026', horaInicio: '09:00', horaFim: '09:30', status: 'agendada', dose: '1:1.000 - 0,2ml', ciclo: { numero: 1, dias: 7 }, mes: 'ABRIL', ano: 2026 },
-    { id: 'pt2', patientId: '8', data: '09/04/2026', horaInicio: '09:00', horaFim: '09:30', status: 'realizada', dose: '1:1.000 - 0,1ml', ciclo: { numero: 1, dias: 7 }, mes: 'ABRIL', ano: 2026, volumeAplicado: '0,1ml', concentracaoExtrato: '1:1.000', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: '-' },
-    { id: 'pt3', patientId: '8', data: '02/04/2026', horaInicio: '09:00', horaFim: '09:30', status: 'realizada', dose: '1:10.000 - 0,8ml', ciclo: { numero: 1, dias: 7 }, mes: 'ABRIL', ano: 2026, volumeAplicado: '0,8ml', concentracaoExtrato: '1:10.000', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: 'Avançou para 1:1.000' },
-    { id: 'pt4', patientId: '8', data: '26/03/2026', horaInicio: '09:00', horaFim: '09:30', status: 'realizada', dose: '1:10.000 - 0,4ml', ciclo: { numero: 1, dias: 7 }, mes: 'MARÇO', ano: 2026, volumeAplicado: '0,4ml', concentracaoExtrato: '1:10.000', efeitoColateral: 'Sim', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: 'Eritema leve' },
-    { id: 'pt5', patientId: '8', data: '19/03/2026', horaInicio: '09:00', horaFim: '09:30', status: 'realizada', dose: '1:10.000 - 0,2ml', ciclo: { numero: 1, dias: 7 }, mes: 'MARÇO', ano: 2026, volumeAplicado: '0,2ml', concentracaoExtrato: '1:10.000', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: '-' },
-    { id: 'pt6', patientId: '8', data: '12/03/2026', horaInicio: '09:00', horaFim: '09:30', status: 'realizada', dose: '1:10.000 - 0,1ml', ciclo: { numero: 1, dias: 7 }, mes: 'MARÇO', ano: 2026, volumeAplicado: '0,1ml', concentracaoExtrato: '1:10.000', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: 'Primeira aplicação' },
-
-    // ══════ Pedro (id:9) — Indução 1:100, dose atual 0,2ml ══════
-    { id: 'pe1', patientId: '9', data: '16/04/2026', horaInicio: '10:30', horaFim: '11:00', status: 'agendada', dose: '1:100 - 0,4ml', ciclo: { numero: 1, dias: 7 }, mes: 'ABRIL', ano: 2026 },
-    { id: 'pe2', patientId: '9', data: '09/04/2026', horaInicio: '10:30', horaFim: '11:00', status: 'realizada', dose: '1:100 - 0,2ml', ciclo: { numero: 1, dias: 7 }, mes: 'ABRIL', ano: 2026, volumeAplicado: '0,2ml', concentracaoExtrato: '1:100', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: '-' },
-    { id: 'pe3', patientId: '9', data: '02/04/2026', horaInicio: '10:30', horaFim: '11:00', status: 'realizada', dose: '1:100 - 0,1ml', ciclo: { numero: 1, dias: 7 }, mes: 'ABRIL', ano: 2026, volumeAplicado: '0,1ml', concentracaoExtrato: '1:100', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: '-' },
-    { id: 'pe4', patientId: '9', data: '26/03/2026', horaInicio: '10:30', horaFim: '11:00', status: 'realizada', dose: '1:1.000 - 0,8ml', ciclo: { numero: 1, dias: 7 }, mes: 'MARÇO', ano: 2026, volumeAplicado: '0,8ml', concentracaoExtrato: '1:1.000', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: 'Avançou para 1:100' },
-    { id: 'pe5', patientId: '9', data: '19/03/2026', horaInicio: '10:30', horaFim: '11:00', status: 'realizada', dose: '1:1.000 - 0,4ml', ciclo: { numero: 1, dias: 7 }, mes: 'MARÇO', ano: 2026, volumeAplicado: '0,4ml', concentracaoExtrato: '1:1.000', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: '-' },
-    { id: 'pe6', patientId: '9', data: '12/03/2026', horaInicio: '10:30', horaFim: '11:00', status: 'realizada', dose: '1:1.000 - 0,2ml', ciclo: { numero: 1, dias: 7 }, mes: 'MARÇO', ano: 2026, volumeAplicado: '0,2ml', concentracaoExtrato: '1:1.000', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: '-' },
-    { id: 'pe7', patientId: '9', data: '05/03/2026', horaInicio: '10:30', horaFim: '11:00', status: 'realizada', dose: '1:1.000 - 0,1ml', ciclo: { numero: 1, dias: 7 }, mes: 'MARÇO', ano: 2026, volumeAplicado: '0,1ml', concentracaoExtrato: '1:1.000', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: '-' },
-    { id: 'pe8', patientId: '9', data: '26/02/2026', horaInicio: '10:30', horaFim: '11:00', status: 'realizada', dose: '1:10.000 - 0,8ml', ciclo: { numero: 1, dias: 7 }, mes: 'FEVEREIRO', ano: 2026, volumeAplicado: '0,8ml', concentracaoExtrato: '1:10.000', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: 'Avançou para 1:1.000' },
-    { id: 'pe9', patientId: '9', data: '19/02/2026', horaInicio: '10:30', horaFim: '11:00', status: 'realizada', dose: '1:10.000 - 0,4ml', ciclo: { numero: 1, dias: 7 }, mes: 'FEVEREIRO', ano: 2026, volumeAplicado: '0,4ml', concentracaoExtrato: '1:10.000', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: '-' },
-    { id: 'pe10', patientId: '9', data: '12/02/2026', horaInicio: '10:30', horaFim: '11:00', status: 'realizada', dose: '1:10.000 - 0,2ml', ciclo: { numero: 1, dias: 7 }, mes: 'FEVEREIRO', ano: 2026, volumeAplicado: '0,2ml', concentracaoExtrato: '1:10.000', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: '-' },
-    { id: 'pe11', patientId: '9', data: '05/02/2026', horaInicio: '10:30', horaFim: '11:00', status: 'realizada', dose: '1:10.000 - 0,1ml', ciclo: { numero: 1, dias: 7 }, mes: 'FEVEREIRO', ano: 2026, volumeAplicado: '0,1ml', concentracaoExtrato: '1:10.000', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: 'Primeira aplicação' },
-
-    // ══════ Lucas (id:10) — INATIVO — última dose 1:100 - 0,4ml ══════
-    { id: 'l1', patientId: '10', data: '15/02/2026', horaInicio: '09:00', horaFim: '09:30', status: 'realizada', dose: '1:100 - 0,4ml', ciclo: { numero: 1, dias: 7 }, mes: 'FEVEREIRO', ano: 2026, volumeAplicado: '0,4ml', concentracaoExtrato: '1:100', efeitoColateral: 'Sim', necessidadeMedicacao: 'Sim', responsavel: 'Jaqueline', notaResponsavel: 'Paciente solicitou interrupção' },
-    { id: 'l2', patientId: '10', data: '08/02/2026', horaInicio: '09:00', horaFim: '09:30', status: 'realizada', dose: '1:100 - 0,2ml', ciclo: { numero: 1, dias: 7 }, mes: 'FEVEREIRO', ano: 2026, volumeAplicado: '0,2ml', concentracaoExtrato: '1:100', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: '-' },
-    { id: 'l3', patientId: '10', data: '01/02/2026', horaInicio: '09:00', horaFim: '09:30', status: 'realizada', dose: '1:100 - 0,1ml', ciclo: { numero: 1, dias: 7 }, mes: 'FEVEREIRO', ano: 2026, volumeAplicado: '0,1ml', concentracaoExtrato: '1:100', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: '-' },
-
-    // ══════ Juliana (id:11) — INATIVA — manutenção 14 dias ══════
-    { id: 'j1', patientId: '11', data: '20/01/2026', horaInicio: '11:00', horaFim: '11:30', status: 'realizada', dose: '1:10 - 0,5ml', ciclo: { numero: 2, dias: 14 }, mes: 'JANEIRO', ano: 2026, volumeAplicado: '0,5ml', concentracaoExtrato: '1:10', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: 'Última aplicação antes da inativação' },
-    { id: 'j2', patientId: '11', data: '06/01/2026', horaInicio: '11:00', horaFim: '11:30', status: 'realizada', dose: '1:10 - 0,5ml', ciclo: { numero: 1, dias: 14 }, mes: 'JANEIRO', ano: 2026, volumeAplicado: '0,5ml', concentracaoExtrato: '1:10', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: '-' },
-    { id: 'j3', patientId: '11', data: '23/12/2025', horaInicio: '11:00', horaFim: '11:30', status: 'realizada', dose: '1:10 - 0,5ml', ciclo: { numero: 1, dias: 14 }, mes: 'DEZEMBRO', ano: 2025, volumeAplicado: '0,5ml', concentracaoExtrato: '1:10', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: '-' },
-
-    // ══════ Roberto (id:12) — INATIVO — indução 1:1.000 ══════
-    { id: 'r1', patientId: '12', data: '10/01/2026', horaInicio: '15:00', horaFim: '15:30', status: 'realizada', dose: '1:1.000 - 0,2ml', ciclo: { numero: 1, dias: 7 }, mes: 'JANEIRO', ano: 2026, volumeAplicado: '0,2ml', concentracaoExtrato: '1:1.000', efeitoColateral: 'Sim', necessidadeMedicacao: 'Sim', responsavel: 'Jaqueline', notaResponsavel: 'Reação moderada, tratamento suspenso a pedido médico' },
-    { id: 'r2', patientId: '12', data: '03/01/2026', horaInicio: '15:00', horaFim: '15:30', status: 'realizada', dose: '1:1.000 - 0,1ml', ciclo: { numero: 1, dias: 7 }, mes: 'JANEIRO', ano: 2026, volumeAplicado: '0,1ml', concentracaoExtrato: '1:1.000', efeitoColateral: 'Não', necessidadeMedicacao: 'Não', responsavel: 'Jaqueline', notaResponsavel: '-' },
-
-    // ══════ Agendamentos extras para calendário (sem duplicatas) ══════
-  ],
+  applications: buildSeedApplications(),
   setSelectedPatient: (patient) => set({ selectedPatient: patient }),
   addProtocolAdjustment: (adjustment) => set((s) => {
     if (!s.selectedPatient) return s
