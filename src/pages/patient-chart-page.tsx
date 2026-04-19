@@ -342,7 +342,7 @@ export function PatientChartPage() {
 
   return (
     <div className="flex flex-1 flex-col bg-gray-50/80 min-h-0 overflow-hidden">
-      <div className="mx-4 my-4 flex flex-1 gap-4 min-h-0">
+      <div className="mx-4 my-4 flex flex-1 gap-4 min-h-0 min-w-0">
         {/* Left — Patient info */}
         <div className="flex w-[320px] shrink-0 flex-col rounded-xl bg-white shadow-[0_4px_24px_rgba(0,0,0,0.06)] overflow-hidden">
           {/* Header */}
@@ -618,9 +618,9 @@ export function PatientChartPage() {
           </div>
 
           {/* Applications card */}
-          <div className="flex-1 flex flex-col rounded-xl bg-white shadow-[0_4px_24px_rgba(0,0,0,0.06)] overflow-hidden min-h-0">
+          <div className="flex-1 flex flex-col rounded-xl bg-white shadow-[0_4px_24px_rgba(0,0,0,0.06)] overflow-hidden min-h-0 min-w-0">
             {/* Header + Filters */}
-            <div className="px-5 py-3 border-b border-(--border-custom)">
+            <div className="px-5 py-3 border-b border-(--border-custom) min-w-0">
               <div className="flex items-center justify-between mb-2.5">
                 <h2 className="text-sm font-bold text-(--text)">Aplicações</h2>
                 <button
@@ -737,35 +737,19 @@ export function PatientChartPage() {
                 </div>
               </div>
               {(viewMode === 'timeline' || viewMode === 'calendar') && (
-                <div className="flex items-center gap-2">
-                <div className="relative flex-1 min-w-0">
+                <div className="flex items-center gap-2 min-w-0">
+                <div className="flex items-center gap-1 flex-1 min-w-0">
                   {monthsCanScrollLeft && (
-                    <>
-                      <button
-                        type="button"
-                        aria-label="Rolar meses para a esquerda"
-                        onClick={() => scrollMonths('left')}
-                        className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-6 w-6 flex items-center justify-center rounded-full bg-white border border-(--border-custom) text-(--text-muted) hover:border-brand hover:text-brand shadow-sm cursor-pointer transition-all"
-                      >
-                        <ChevronLeft size={12} />
-                      </button>
-                      <div className="absolute left-0 top-0 bottom-0 w-6 bg-linear-to-r from-white to-transparent pointer-events-none z-5" />
-                    </>
+                    <button
+                      type="button"
+                      aria-label="Rolar meses para a esquerda"
+                      onClick={() => scrollMonths('left')}
+                      className="shrink-0 h-6 w-6 flex items-center justify-center rounded-full bg-white border border-(--border-custom) text-(--text-muted) hover:border-brand hover:text-brand shadow-sm cursor-pointer transition-all"
+                    >
+                      <ChevronLeft size={12} />
+                    </button>
                   )}
-                  {monthsCanScrollRight && (
-                    <>
-                      <button
-                        type="button"
-                        aria-label="Rolar meses para a direita"
-                        onClick={() => scrollMonths('right')}
-                        className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-6 w-6 flex items-center justify-center rounded-full bg-white border border-(--border-custom) text-(--text-muted) hover:border-brand hover:text-brand shadow-sm cursor-pointer transition-all"
-                      >
-                        <ChevronRight size={12} />
-                      </button>
-                      <div className="absolute right-0 top-0 bottom-0 w-6 bg-linear-to-l from-white to-transparent pointer-events-none z-5" />
-                    </>
-                  )}
-                  <div ref={monthsScrollRef} className="flex gap-1.5 overflow-x-auto pb-0.5 scroll-smooth" style={{ scrollbarWidth: 'none' }}>
+                  <div ref={monthsScrollRef} className="flex gap-1.5 overflow-x-auto pb-0.5 scroll-smooth flex-1 min-w-0" style={{ scrollbarWidth: 'none' }}>
                     <button
                       onClick={() => setMonthFilter('all')}
                       className={cn(
@@ -798,6 +782,16 @@ export function PatientChartPage() {
                       </button>
                     ))}
                   </div>
+                  {monthsCanScrollRight && (
+                    <button
+                      type="button"
+                      aria-label="Rolar meses para a direita"
+                      onClick={() => scrollMonths('right')}
+                      className="shrink-0 h-6 w-6 flex items-center justify-center rounded-full bg-white border border-(--border-custom) text-(--text-muted) hover:border-brand hover:text-brand shadow-sm cursor-pointer transition-all"
+                    >
+                      <ChevronRight size={12} />
+                    </button>
+                  )}
                 </div>
                 <div className="flex h-6.5 rounded-lg border border-(--border-custom) overflow-hidden shrink-0">
                   <button onClick={() => setViewMode('timeline')} className={cn("px-2 flex items-center gap-1 text-[0.55rem] font-semibold transition-all", viewMode === 'timeline' ? "bg-brand text-white" : "text-(--text-muted) hover:bg-gray-50")}>
