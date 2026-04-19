@@ -203,8 +203,9 @@ export function PatientChartPage() {
             )}
             <div className="mt-3 flex gap-1.5">
               <button
+                disabled={selectedPatient.status === 'inativo'}
                 onClick={() => navigate({ to: '/patient-evolution', search: { patientId: selectedPatient.id } })}
-                className="flex-1 h-8 rounded-lg bg-linear-to-br from-brand to-teal-400 text-white text-xs font-semibold hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(20,184,166,0.3)] transition-all"
+                className={cn("flex-1 h-8 rounded-lg text-xs font-semibold transition-all", selectedPatient.status === 'inativo' ? "bg-gray-200 text-gray-400 cursor-not-allowed" : "bg-linear-to-br from-brand to-teal-400 text-white hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(20,184,166,0.3)]")}
               >
                 Evoluir Paciente
               </button>

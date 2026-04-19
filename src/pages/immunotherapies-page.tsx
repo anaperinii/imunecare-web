@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react'
-import { useNavigate } from '@tanstack/react-router'
+import { useNavigate, useSearch, Link } from '@tanstack/react-router'
 import { useImmunotherapiesStore } from '@/store/immunotherapies-store'
 import { usePatientStore } from '@/store/patient-store'
 import {
@@ -12,6 +12,8 @@ import {
   ChevronsLeft,
   ChevronsRight,
   ChevronDown,
+  CheckCircle,
+  X,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -26,6 +28,18 @@ const DEFAULT_COLOR = { bg: '#F3F4F6', text: '#374151', dot: '#6B7280' }
 
 export function ImmunotherapiesPage() {
   const navigate = useNavigate()
+  const { success, patientName } = useSearch({ from: '/immunotherapies' })
+  const [showToast, setShowToast] = useState(false)
+
+  useEffect(() => {
+    if (success) {
+      setShowToast(true)
+      navigate({ to: '/immunotherapies', search: {}, replace: true })
+      const timer = setTimeout(() => setShowToast(false), 8000)
+      return () => clearTimeout(timer)
+    }
+  }, [success])
+
   const { setSelectedPatient } = usePatientStore()
   const {
     immunotherapies,
@@ -269,6 +283,31 @@ export function ImmunotherapiesPage() {
           </div>
         </div>
       </div>
+
+      {/* Success toast */}
+      {showToast && (
+        <div className="fixed top-6 right-6 z-50" style={{ animation: 'slide-up-fade 0.3s ease-out' }}>
+          <div className="flex items-start gap-3 bg-white border border-emerald-200 rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] p-4 w-95">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 shrink-0 mt-0.5">
+              <CheckCircle size={16} className="text-emerald-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-(--text)">Registro salvo com sucesso!</p>
+              <p className="text-xs text-(--text-muted) mt-1">Os dados de {patientName || 'paciente'} foram registrados e a próxima dose já está agendada.</p>
+              <Link
+                to="/patient/$patientId"
+                params={{ patientId: '1' }}
+                className="inline-flex items-center gap-1 text-xs font-semibold text-teal-600 hover:text-teal-700 mt-2 transition-colors"
+              >
+                Acessar prontuário do paciente &rarr;
+              </Link>
+            </div>
+            <button onClick={() => setShowToast(false)} className="h-6 w-6 flex items-center justify-center rounded-md text-(--text-muted) hover:bg-gray-100 transition-all shrink-0">
+              <X size={14} />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
