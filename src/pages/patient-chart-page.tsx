@@ -2,7 +2,8 @@ import { useMemo, useState, useEffect, useRef } from 'react'
 import { useNavigate, useParams } from '@tanstack/react-router'
 import { usePatientStore, seedInactivationsFor, type Application, type ProtocolAdjustmentType, type InactivationCategory } from '@/store/patient-store'
 import { useImmunotherapiesStore } from '@/store/immunotherapies-store'
-import { useCan, useDoctorFilter } from '@/store/user-store'
+import { useCan, useDoctorFilter, useUserStore } from '@/store/user-store'
+import { useAuditStore } from '@/store/audit-store'
 import { META_DOSE, calculateNextDose } from '@/lib/scit-protocol'
 import { addDays, format, differenceInDays, parse } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -137,6 +138,26 @@ export function PatientChartPage() {
     }
   }, [patientId, selectedPatient, navigate, setSelectedPatient])
 
+  const currentUser = useUserStore((s) => s.current)
+  const logAccess = useAuditStore((s) => s.logAccess)
+  const loggedAccessRef = useRef<string | null>(null)
+  useEffect(() => {
+    if (!selectedPatient) return
+    const key = `${currentUser.id}::${selectedPatient.id}`
+    if (loggedAccessRef.current === key) return
+    loggedAccessRef.current = key
+    logAccess({
+      userId: currentUser.id,
+      userName: currentUser.name,
+      userRole: currentUser.role,
+      userRegistration: currentUser.registration,
+      patientId: selectedPatient.id,
+      patientName: selectedPatient.nome,
+      action: 'view_chart',
+      description: 'Consultou o prontuário',
+    })
+  }, [selectedPatient, currentUser, logAccess])
+
   const patientApps = useMemo(() => {
     if (!selectedPatient) return []
     return applications.filter((a) => a.patientId === selectedPatient.id)
@@ -178,6 +199,7 @@ export function PatientChartPage() {
     ? `${lastRealized.concentracaoExtrato || lastRealized.dose.split(' - ')[0]} - ${lastRealized.volumeAplicado || lastRealized.dose.split(' - ')[1]}`
     : selectedPatient?.concentracaoDoseAtuais ?? '-'
 
+  // RNE-010: cálculo automático da próxima dose e intervalo
   const nextCalc = useMemo(() => calculateNextDose(currentDose, currentInterval), [currentDose, currentInterval])
 
   const nextDate = useMemo(() => {

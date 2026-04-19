@@ -3,6 +3,7 @@ import { useNavigate, useSearch } from '@tanstack/react-router'
 import { usePatientStore } from '@/store/patient-store'
 import { useImmunotherapiesStore } from '@/store/immunotherapies-store'
 import { useCan, useDoctorFilter } from '@/store/user-store'
+import { useAuditStore, ACTION_LABELS } from '@/store/audit-store'
 import { ArrowLeft, FileText, FileSpreadsheet, FileDown, Check, Download, Printer, ShieldCheck, EyeOff, FileJson, Info, CheckSquare } from 'lucide-react'
 import { jsPDF } from 'jspdf'
 import { cn } from '@/lib/utils'
@@ -80,6 +81,14 @@ export function PatientReportPage() {
       return new Date(+db[2], +db[1] - 1, +db[0]).getTime() - new Date(+da[2], +da[1] - 1, +da[0]).getTime()
     })
   }, [patient, applications])
+
+  const auditLogs = useAuditStore((s) => s.logs)
+  const patientAccessLog = useMemo(() => {
+    if (!patient) return []
+    return auditLogs.filter((l) => l.patientId === patient.id).sort((a, b) =>
+      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    )
+  }, [auditLogs, patient])
 
   const realizedApps = patientApps.filter((a) => a.status === 'realizada')
   const reactionsCount = realizedApps.filter((a) => a.efeitoColateral === 'Sim').length
@@ -442,13 +451,11 @@ export function PatientReportPage() {
           <div className="w-72 shrink-0 border-r border-(--border-custom) p-5 overflow-y-auto space-y-5">
             {/* Mode tabs */}
             {canLgpdPortability && (
-              <div className="flex h-9 rounded-lg border border-(--border-custom) overflow-hidden">
-                <button onClick={() => setReportMode('clinico')} className={cn("flex-1 text-[0.65rem] font-semibold transition-all flex items-center justify-center gap-1", reportMode === 'clinico' ? "bg-linear-to-br from-brand to-teal-400 text-white" : "text-(--text-muted) hover:bg-gray-50")}>
-                  <FileText size={11} />
+              <div className="flex h-8 rounded-lg border border-(--border-custom) overflow-hidden">
+                <button onClick={() => setReportMode('clinico')} className={cn("flex-1 px-3 text-xs font-semibold transition-all", reportMode === 'clinico' ? "bg-linear-to-br from-brand to-teal-400 text-white" : "text-(--text-muted) hover:bg-gray-50")}>
                   Clínico
                 </button>
-                <button onClick={() => setReportMode('lgpd')} className={cn("flex-1 text-[0.65rem] font-semibold transition-all flex items-center justify-center gap-1", reportMode === 'lgpd' ? "bg-linear-to-br from-brand to-teal-400 text-white" : "text-(--text-muted) hover:bg-gray-50")}>
-                  <ShieldCheck size={11} />
+                <button onClick={() => setReportMode('lgpd')} className={cn("flex-1 px-3 text-xs font-semibold transition-all", reportMode === 'lgpd' ? "bg-linear-to-br from-brand to-teal-400 text-white" : "text-(--text-muted) hover:bg-gray-50")}>
                   Portabilidade
                 </button>
               </div>
@@ -478,7 +485,7 @@ export function PatientReportPage() {
                 <div>
                   <label className="text-xs font-semibold text-(--text-muted) mb-2 block">Dados incluídos</label>
                   <div className="space-y-1.5">
-                    {['Dados cadastrais', 'Dados da imunoterapia', 'Histórico de aplicações', 'Reações adversas', 'Histórico de ajustes', 'Metadados de auditoria'].map((d) => (
+                    {['Dados cadastrais', 'Dados da imunoterapia', 'Histórico de aplicações', 'Reações adversas', 'Histórico de ajustes', `Histórico de acessos ao prontuário (${patientAccessLog.length})`].map((d) => (
                       <div key={d} className="flex items-center gap-1.5 text-[0.6rem] text-(--text) bg-teal-50/50 border border-teal-100 rounded px-2 py-1">
                         <CheckSquare size={10} className="text-brand shrink-0" />
                         {d}
@@ -515,7 +522,7 @@ export function PatientReportPage() {
                       exportedAt: new Date().toISOString(),
                       exportedBy: 'Sistema ImuneCare',
                       justification: justificativa.trim(),
-                      lgpdCompliance: { legalBasis: 'LGPD Art. 18, V — Direito à portabilidade' },
+                      lgpdCompliance: { legalBasis: 'LGPD Art. 18, V — Direito à portabilidade / Art. 19 — Direito de acesso' },
                       patient: {
                         id: patient.id, nome: patient.nome, cpf: patient.cpf, dataNascimento: patient.dataNascimento,
                         idade: patient.idade, telefone: patient.telefone, peso: patient.peso,
@@ -529,6 +536,14 @@ export function PatientReportPage() {
                         metaAtingida: patient.metaAtingida, dataProximaAplicacao: patient.dataProximaAplicacao,
                       },
                       aplicacoes: patientApps,
+                      historicoDeAcessos: patientAccessLog.map((l) => ({
+                        data: l.timestamp,
+                        profissional: l.userName,
+                        perfil: l.userRole,
+                        registro: l.userRegistration,
+                        acao: ACTION_LABELS[l.action],
+                        descricao: l.description,
+                      })),
                     }
                     const filename = `imunecare_lgpd_${patient.nome.replace(/\s+/g, '_').toLowerCase()}_${format(new Date(), 'yyyyMMdd_HHmm')}.${lgpdFormat}`
                     let content: string, mime: string
@@ -538,6 +553,7 @@ export function PatientReportPage() {
                       Object.entries(data.patient).forEach(([k, v]) => lines.push(`"Paciente","${k}","${String(v).replace(/"/g, '""')}"`))
                       Object.entries(data.imunoterapia).forEach(([k, v]) => lines.push(`"Imunoterapia","${k}","${String(v ?? '').replace(/"/g, '""')}"`))
                       data.aplicacoes.forEach((a, i) => Object.entries(a).forEach(([k, v]) => lines.push(`"Aplicacao ${i + 1}","${k}","${typeof v === 'object' ? JSON.stringify(v).replace(/"/g, '""') : String(v ?? '').replace(/"/g, '""')}"`)))
+                      data.historicoDeAcessos.forEach((l, i) => Object.entries(l).forEach(([k, v]) => lines.push(`"Acesso ${i + 1}","${k}","${String(v ?? '').replace(/"/g, '""')}"`)))
                       content = lines.join('\n'); mime = 'text/csv;charset=utf-8'
                     }
                     const blob = new Blob([content], { type: mime })
@@ -680,6 +696,39 @@ export function PatientReportPage() {
 
           {/* Right — Preview */}
           <div className="flex-1 overflow-y-auto p-5 bg-gray-50/50">
+            {reportMode === 'lgpd' ? (
+              <div className="bg-white rounded-xl border border-(--border-custom) shadow-sm max-w-2xl mx-auto p-6 space-y-4">
+                <div className="pb-3 border-b border-(--border-custom)">
+                  <h2 className="text-sm font-bold text-(--text)">Pacote de Portabilidade LGPD</h2>
+                  <p className="text-[0.65rem] text-(--text-muted) mt-0.5">{anonimizar ? mask(patient.nome) : patient.nome} · {lgpdFormat.toUpperCase()}</p>
+                </div>
+                <div className="flex items-start gap-2 bg-brand/5 border border-brand/20 rounded-lg px-3 py-2.5">
+                  <Info size={13} className="text-brand shrink-0 mt-0.5" />
+                  <p className="text-[0.65rem] text-(--text) leading-relaxed">
+                    Pacote estruturado conforme <span className="font-bold">Art. 18, V</span> (portabilidade) e <span className="font-bold">Art. 19</span> (direito de acesso) da LGPD. Contém os dados do titular e o histórico de quem acessou o prontuário.
+                  </p>
+                </div>
+                <div>
+                  <div className="text-[0.6rem] font-bold text-(--text-muted) uppercase tracking-wider mb-2">Conteúdo do pacote</div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { label: 'Dados cadastrais', value: '1 registro' },
+                      { label: 'Dados da imunoterapia', value: '1 registro' },
+                      { label: 'Histórico de aplicações', value: `${patientApps.length} ${patientApps.length === 1 ? 'registro' : 'registros'}` },
+                      { label: 'Histórico de acessos', value: `${patientAccessLog.length} ${patientAccessLog.length === 1 ? 'registro' : 'registros'}` },
+                    ].map((item) => (
+                      <div key={item.label} className="border border-(--border-custom) rounded-lg px-3 py-2">
+                        <div className="text-[0.55rem] text-(--text-muted) uppercase tracking-wider">{item.label}</div>
+                        <div className="text-xs font-bold text-(--text) mt-0.5">{item.value}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="text-[0.55rem] text-(--text-muted) leading-relaxed pt-2 border-t border-(--border-custom)">
+                  Ao confirmar a exportação, o pacote completo será gerado no formato selecionado. Assegure-se de que há justificativa formal do titular (Art. 18, § 3º da LGPD) antes de liberar o arquivo.
+                </div>
+              </div>
+            ) : (
             <div className="bg-white rounded-xl border border-(--border-custom) shadow-sm max-w-2xl mx-auto">
               {/* Report header */}
               <div className="px-6 py-5 border-b border-(--border-custom)">
@@ -845,6 +894,7 @@ export function PatientReportPage() {
                 </div>
               </div>
             </div>
+            )}
           </div>
         </div>
       </div>
