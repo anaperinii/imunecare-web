@@ -3,6 +3,7 @@ import { useNavigate, useSearch } from '@tanstack/react-router'
 import { usePatientStore } from '@/store/patient-store'
 import { useImmunotherapiesStore } from '@/store/immunotherapies-store'
 import { useCan, useDoctorFilter } from '@/store/user-store'
+import { useAuditStore, ACTION_LABELS } from '@/store/audit-store'
 import { ArrowLeft, FileText, FileSpreadsheet, FileDown, Check, Download, Printer, ShieldCheck, EyeOff, FileJson, Info, CheckSquare } from 'lucide-react'
 import { jsPDF } from 'jspdf'
 import { cn } from '@/lib/utils'
@@ -80,6 +81,14 @@ export function PatientReportPage() {
       return new Date(+db[2], +db[1] - 1, +db[0]).getTime() - new Date(+da[2], +da[1] - 1, +da[0]).getTime()
     })
   }, [patient, applications])
+
+  const auditLogs = useAuditStore((s) => s.logs)
+  const patientAccessLog = useMemo(() => {
+    if (!patient) return []
+    return auditLogs.filter((l) => l.patientId === patient.id).sort((a, b) =>
+      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    )
+  }, [auditLogs, patient])
 
   const realizedApps = patientApps.filter((a) => a.status === 'realizada')
   const reactionsCount = realizedApps.filter((a) => a.efeitoColateral === 'Sim').length
@@ -478,7 +487,7 @@ export function PatientReportPage() {
                 <div>
                   <label className="text-xs font-semibold text-(--text-muted) mb-2 block">Dados incluídos</label>
                   <div className="space-y-1.5">
-                    {['Dados cadastrais', 'Dados da imunoterapia', 'Histórico de aplicações', 'Reações adversas', 'Histórico de ajustes', 'Metadados de auditoria'].map((d) => (
+                    {['Dados cadastrais', 'Dados da imunoterapia', 'Histórico de aplicações', 'Reações adversas', 'Histórico de ajustes', `Histórico de acessos ao prontuário (${patientAccessLog.length})`].map((d) => (
                       <div key={d} className="flex items-center gap-1.5 text-[0.6rem] text-(--text) bg-teal-50/50 border border-teal-100 rounded px-2 py-1">
                         <CheckSquare size={10} className="text-brand shrink-0" />
                         {d}
@@ -515,7 +524,7 @@ export function PatientReportPage() {
                       exportedAt: new Date().toISOString(),
                       exportedBy: 'Sistema ImuneCare',
                       justification: justificativa.trim(),
-                      lgpdCompliance: { legalBasis: 'LGPD Art. 18, V — Direito à portabilidade' },
+                      lgpdCompliance: { legalBasis: 'LGPD Art. 18, V — Direito à portabilidade / Art. 19 — Direito de acesso' },
                       patient: {
                         id: patient.id, nome: patient.nome, cpf: patient.cpf, dataNascimento: patient.dataNascimento,
                         idade: patient.idade, telefone: patient.telefone, peso: patient.peso,
@@ -529,6 +538,13 @@ export function PatientReportPage() {
                         metaAtingida: patient.metaAtingida, dataProximaAplicacao: patient.dataProximaAplicacao,
                       },
                       aplicacoes: patientApps,
+                      historicoDeAcessos: patientAccessLog.map((l) => ({
+                        data: l.timestamp,
+                        profissional: l.userName,
+                        perfil: l.userRole,
+                        registro: l.userRegistration,
+                        acao: ACTION_LABELS[l.action],
+                      })),
                     }
                     const filename = `imunecare_lgpd_${patient.nome.replace(/\s+/g, '_').toLowerCase()}_${format(new Date(), 'yyyyMMdd_HHmm')}.${lgpdFormat}`
                     let content: string, mime: string
@@ -538,6 +554,7 @@ export function PatientReportPage() {
                       Object.entries(data.patient).forEach(([k, v]) => lines.push(`"Paciente","${k}","${String(v).replace(/"/g, '""')}"`))
                       Object.entries(data.imunoterapia).forEach(([k, v]) => lines.push(`"Imunoterapia","${k}","${String(v ?? '').replace(/"/g, '""')}"`))
                       data.aplicacoes.forEach((a, i) => Object.entries(a).forEach(([k, v]) => lines.push(`"Aplicacao ${i + 1}","${k}","${typeof v === 'object' ? JSON.stringify(v).replace(/"/g, '""') : String(v ?? '').replace(/"/g, '""')}"`)))
+                      data.historicoDeAcessos.forEach((l, i) => Object.entries(l).forEach(([k, v]) => lines.push(`"Acesso ${i + 1}","${k}","${String(v ?? '').replace(/"/g, '""')}"`)))
                       content = lines.join('\n'); mime = 'text/csv;charset=utf-8'
                     }
                     const blob = new Blob([content], { type: mime })
