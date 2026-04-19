@@ -38,7 +38,7 @@ export function AddImmunotherapyPage() {
             return (
               <div key={s} className="flex items-center gap-4">
                 <div className="flex items-center gap-2.5">
-                  <div className={cn("flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold transition-all", step === s ? "bg-linear-to-br from-teal-500 to-cyan-500 text-white" : step > s ? "bg-teal-100 text-teal-600 opacity-50" : "bg-gray-200 text-gray-500")}>
+                  <div className={cn("flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold transition-all", step === s ? "bg-linear-to-br from-brand to-teal-400 text-white" : step > s ? "bg-teal-100 text-teal-600 opacity-50" : "bg-gray-200 text-gray-500")}>
                     {s}
                   </div>
                   <span className={cn("text-sm font-medium", step === s ? "text-teal-600" : step > s ? "text-teal-600 opacity-50" : "text-gray-400")}>{label}</span>
@@ -186,11 +186,11 @@ export function AddImmunotherapyPage() {
             </button>
           )}
           {step < 3 ? (
-            <button onClick={() => setStep((s) => (s + 1) as 1 | 2 | 3)} className="h-8 px-4 rounded-lg bg-linear-to-br from-teal-500 to-cyan-500 text-white text-xs font-semibold hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(20,184,166,0.3)] transition-all">
+            <button onClick={() => setStep((s) => (s + 1) as 1 | 2 | 3)} className="h-8 px-4 rounded-lg bg-linear-to-br from-brand to-teal-400 text-white text-xs font-semibold hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(20,184,166,0.3)] transition-all">
               Continuar
             </button>
           ) : (
-            <button onClick={() => { navigate({ to: '/immunotherapies' }) }} className="h-8 px-4 rounded-lg bg-linear-to-br from-teal-500 to-cyan-500 text-white text-xs font-semibold hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(20,184,166,0.3)] transition-all">
+            <button onClick={() => { navigate({ to: '/immunotherapies' }) }} className="h-8 px-4 rounded-lg bg-linear-to-br from-brand to-teal-400 text-white text-xs font-semibold hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(20,184,166,0.3)] transition-all">
               Salvar
             </button>
           )}

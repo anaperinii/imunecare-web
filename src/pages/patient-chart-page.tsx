@@ -159,7 +159,7 @@ export function PatientChartPage() {
           {/* Header */}
           <div className="border-b border-(--border-custom) px-5 py-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-linear-to-br from-teal-500 to-cyan-500 text-base font-bold text-white shrink-0">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-linear-to-br from-brand to-teal-400 text-base font-bold text-white shrink-0">
                 {getInitials(selectedPatient.nome)}
               </div>
               <div className="min-w-0">
@@ -179,7 +179,7 @@ export function PatientChartPage() {
             <div className="mt-3 flex gap-1.5">
               <button
                 onClick={() => navigate({ to: '/patient-evolution', search: { patientId: selectedPatient.id } })}
-                className="flex-1 h-8 rounded-lg bg-linear-to-br from-teal-500 to-cyan-500 text-white text-xs font-semibold hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(20,184,166,0.3)] transition-all"
+                className="flex-1 h-8 rounded-lg bg-linear-to-br from-brand to-teal-400 text-white text-xs font-semibold hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(20,184,166,0.3)] transition-all"
               >
                 Evoluir Paciente
               </button>
@@ -260,26 +260,24 @@ export function PatientChartPage() {
           {/* Summary cards */}
           <div className="grid grid-cols-3 gap-3">
             {[
-              { icon: Clock, label: 'Intervalo Atual', value: `${currentInterval} dias`, wave: 'M0 30 Q50 10 100 28 T200 15 L200 40 L0 40 Z', wave2: 'M0 36 Q70 24 130 34 T200 26 L200 40 L0 40 Z', c1: '#14b8a6', c2: '#06b6d4' },
-              { icon: CalendarDays, label: 'Próxima Aplicação', value: nextDate, wave: 'M0 18 Q40 30 80 14 T140 28 T200 20 L200 40 L0 40 Z', wave2: 'M0 24 Q60 36 110 22 T170 32 T200 28 L200 40 L0 40 Z', c1: '#06b6d4', c2: '#2dd4bf' },
-              { icon: Droplet, label: 'Última Concentração e Volume', value: currentDose, wave: 'M0 25 Q30 8 70 22 Q110 36 150 18 Q180 10 200 24 L200 40 L0 40 Z', wave2: 'M0 32 Q45 18 90 30 Q130 38 170 26 T200 32 L200 40 L0 40 Z', c1: '#06b6d4', c2: '#14b8a6' },
+              { icon: Clock, label: 'Intervalo Atual', value: `${currentInterval} dias` },
+              { icon: CalendarDays, label: 'Próxima Aplicação', value: nextDate },
+              { icon: Droplet, label: 'Última Concentração e Volume', value: currentDose },
             ].map((card) => {
               const Icon = card.icon
               return (
                 <div
                   key={card.label}
-                  className="rounded-xl p-3.5 flex items-center gap-3 backdrop-blur-xl border border-white/60 shadow-[inset_0_1px_2px_rgba(255,255,255,0.7),inset_0_-1px_1px_rgba(0,0,0,0.03),0_4px_16px_rgba(0,0,0,0.05)] relative overflow-hidden"
-                  style={{ backgroundColor: 'white' }}
+                  className="border border-(--border-custom) rounded-xl p-4 flex items-center gap-3.5 relative overflow-hidden bg-white"
                 >
-                  <svg className="absolute bottom-0 left-0 w-full h-full opacity-95" viewBox="0 0 200 40" preserveAspectRatio="none">
-                    <path d={card.wave} fill={card.c1} />
-                    <path d={card.wave2} fill={card.c2} />
-                  </svg>
-                  <div className="absolute inset-0 bg-white/80 backdrop-blur-[3px]" />
-                  <Icon size={24} strokeWidth={2} className="text-teal-600 shrink-0 relative z-10" />
-                  <div className="min-w-0 relative z-10">
+                  <div className="absolute top-0 left-0 right-0 h-1" style={{ background: 'linear-gradient(to right, #18C1CB, #18C1CB40)' }} />
+                  <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, #18C1CB18, transparent 50%)' }} />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl shrink-0 relative z-10 bg-[#B6F2EC]/70">
+                    <Icon size={18} className="text-brand" />
+                  </div>
+                  <div className="flex-1 relative z-10">
                     <div className="text-xs font-medium text-(--text-muted)">{card.label}</div>
-                    <div className="text-base font-extrabold text-teal-800 truncate">{card.value}</div>
+                    <div className="text-sm font-extrabold text-(--text) truncate">{card.value}</div>
                   </div>
                 </div>
               )
@@ -350,7 +348,7 @@ export function PatientChartPage() {
                   className={cn(
                     "shrink-0 px-3 py-1 rounded-full text-[0.65rem] font-semibold border transition-all",
                     monthFilter === 'all'
-                      ? "bg-linear-to-br from-teal-500 to-cyan-500 text-white border-transparent"
+                      ? "bg-linear-to-br from-brand to-teal-400 text-white border-transparent"
                       : "bg-white text-(--text-muted) border-(--border-custom) hover:border-teal-300 hover:text-teal-600"
                   )}
                 >
@@ -363,7 +361,7 @@ export function PatientChartPage() {
                     className={cn(
                       "shrink-0 px-3 py-1 rounded-full text-[0.65rem] font-semibold border transition-all",
                       monthFilter === m.key
-                        ? "bg-linear-to-br from-teal-500 to-cyan-500 text-white border-transparent"
+                        ? "bg-linear-to-br from-brand to-teal-400 text-white border-transparent"
                         : "bg-white text-(--text-muted) border-(--border-custom) hover:border-teal-300 hover:text-teal-600"
                     )}
                   >
@@ -480,7 +478,7 @@ export function PatientChartPage() {
                   className={cn(
                     "px-4 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200",
                     modalTab === 'pre'
-                      ? "bg-linear-to-br from-teal-500 to-cyan-500 text-white shadow-sm"
+                      ? "bg-linear-to-br from-brand to-teal-400 text-white shadow-sm"
                       : "bg-teal-50 text-teal-600 hover:bg-teal-100"
                   )}
                 >
@@ -491,7 +489,7 @@ export function PatientChartPage() {
                   className={cn(
                     "px-4 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200",
                     modalTab === 'pos'
-                      ? "bg-linear-to-br from-teal-500 to-cyan-500 text-white shadow-sm"
+                      ? "bg-linear-to-br from-brand to-teal-400 text-white shadow-sm"
                       : "bg-teal-50 text-teal-600 hover:bg-teal-100"
                   )}
                 >

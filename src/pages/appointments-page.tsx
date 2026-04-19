@@ -86,7 +86,7 @@ export function AppointmentsPage() {
         <div className="border-b border-(--border-custom) px-5 py-4 flex items-center justify-between">
           <h1 className="text-2xl font-bold text-(--text)">Agendamentos</h1>
           <div className="flex items-center gap-2">
-            <button onClick={() => setShowAddModal(true)} className="h-8 px-3 flex items-center gap-1.5 rounded-lg bg-linear-to-br from-teal-500 to-cyan-500 text-white text-xs font-semibold shadow-[0_2px_12px_rgba(20,184,166,0.3)] hover:-translate-y-px hover:shadow-[0_4px_20px_rgba(20,184,166,0.4)] transition-all">
+            <button onClick={() => setShowAddModal(true)} className="h-8 px-3 flex items-center gap-1.5 rounded-lg bg-linear-to-br from-brand to-teal-400 text-white text-xs font-semibold shadow-[0_2px_12px_rgba(20,184,166,0.3)] hover:-translate-y-px hover:shadow-[0_4px_20px_rgba(20,184,166,0.4)] transition-all">
               <Plus size={14} />
               Adicionar Agendamento
             </button>
@@ -115,7 +115,7 @@ export function AppointmentsPage() {
                 className={cn(
                   "h-7 px-3 rounded-md text-xs font-semibold transition-all",
                   viewMode === mode
-                    ? "bg-linear-to-br from-teal-500 to-cyan-500 text-white"
+                    ? "bg-linear-to-br from-brand to-teal-400 text-white"
                     : "border border-(--border-custom) text-(--text-muted) hover:border-teal-300 hover:text-teal-600"
                 )}
               >
@@ -339,7 +339,7 @@ export function AppointmentsPage() {
               <button onClick={() => setShowAddModal(false)} className="h-8 px-4 rounded-lg border border-(--border-custom) text-xs font-semibold text-(--text-muted) hover:bg-gray-50 transition-all">
                 Cancelar
               </button>
-              <button onClick={() => setShowAddModal(false)} className="h-8 px-4 rounded-lg bg-linear-to-br from-teal-500 to-cyan-500 text-white text-xs font-semibold hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(20,184,166,0.3)] transition-all">
+              <button onClick={() => setShowAddModal(false)} className="h-8 px-4 rounded-lg bg-linear-to-br from-brand to-teal-400 text-white text-xs font-semibold hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(20,184,166,0.3)] transition-all">
                 Salvar
               </button>
             </div>
