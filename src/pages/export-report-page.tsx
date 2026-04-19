@@ -1,8 +1,10 @@
-import { useState } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { ArrowLeft, FileText, FileSpreadsheet, FileDown, ChevronDown, Check, Settings, ShieldCheck, EyeOff } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, LineChart, Line, ResponsiveContainer } from 'recharts'
+import { useImmunotherapiesStore } from '@/store/immunotherapies-store'
+import { useCan, useDoctorFilter } from '@/store/user-store'
 
 const formats = [
   { id: 'pdf', label: 'PDF', icon: FileText },
@@ -30,34 +32,17 @@ const VOL_LEGEND = [
   { label: '0,4ml', color: '#18C1CB' }, { label: '0,8ml', color: '#0E99A3' }, { label: '0,5ml', color: '#A78BFA' },
 ]
 
-const concData = [
-  { name: '1:10.000', value: 3 }, { name: '1:1.000', value: 2 },
-  { name: '1:100', value: 2 }, { name: '1:10', value: 5 },
-]
-const phaseData = [
-  { month: 'Jan', Indução: 5, Manutenção: 2 }, { month: 'Fev', Indução: 6, Manutenção: 2 },
-  { month: 'Mar', Indução: 7, Manutenção: 3 }, { month: 'Abr', Indução: 6, Manutenção: 3 },
-]
-const statusData = [
-  { month: 'Jan', Ativas: 6, Interrompidas: 1, Concluídas: 0 },
-  { month: 'Fev', Ativas: 7, Interrompidas: 1, Concluídas: 1 },
-  { month: 'Mar', Ativas: 8, Interrompidas: 0, Concluídas: 1 },
-  { month: 'Abr', Ativas: 9, Interrompidas: 0, Concluídas: 2 },
-]
-const typeData = [
-  { name: 'Gramíneas', value: 4, pct: 33 }, { name: 'Ácaros', value: 2, pct: 17 },
-  { name: 'Cão e Gato', value: 1, pct: 8 }, { name: 'Cândida', value: 2, pct: 17 },
-  { name: 'Herpes', value: 1, pct: 8 },
-]
-const volumeChartData = [
-  { conc: '1:10.000', '0,1ml': 2, '0,2ml': 1, '0,4ml': 1, '0,8ml': 0 },
-  { conc: '1:1.000', '0,1ml': 1, '0,2ml': 1, '0,4ml': 0, '0,8ml': 0 },
-  { conc: '1:100', '0,1ml': 0, '0,2ml': 1, '0,4ml': 1, '0,8ml': 0 },
-  { conc: '1:10', '0,1ml': 0, '0,2ml': 0, '0,4ml': 0, '0,8ml': 1, '0,5ml': 3 },
-]
+const VOLUME_KEYS = ['0,1ml', '0,2ml', '0,4ml', '0,5ml', '0,8ml'] as const
+const ALL_TYPES = ['Gramíneas', 'Ácaros', 'Cão e Gato', 'Cândida', 'Herpes']
 
 export function ExportReportPage() {
   const navigate = useNavigate()
+  const { immunotherapies: allImmunotherapies } = useImmunotherapiesStore()
+  const canViewDashboard = useCan('view_dashboard')
+  const doctorFilter = useDoctorFilter()
+
+  useEffect(() => { if (!canViewDashboard) navigate({ to: '/immunotherapies' }) }, [canViewDashboard, navigate])
+
   const [fileName, setFileName] = useState('relatorio-imunecare')
   const [format, setFormat] = useState('pdf')
   const [interval, setInterval] = useState('Este Mês')
@@ -72,6 +57,68 @@ export function ExportReportPage() {
   const [justificativa, setJustificativa] = useState('')
   const [consentimento, setConsentimento] = useState(false)
   const [showExportModal, setShowExportModal] = useState(false)
+
+  // Escopo: aplica modalidade + filtro de médico (mesma regra do dashboard)
+  const filtered = useMemo(() => {
+    const mod = modality === 'sub' ? 'subcutânea' : 'sublingual'
+    return allImmunotherapies.filter((i) => {
+      const matchDoctor = !doctorFilter || i.medicoResponsavel === doctorFilter
+      return matchDoctor && i.modalidade === mod
+    })
+  }, [allImmunotherapies, modality, doctorFilter])
+
+  const activeFiltered = useMemo(() => filtered.filter((i) => i.status === 'ativo'), [filtered])
+  const inactiveFiltered = useMemo(() => filtered.filter((i) => i.status === 'inativo'), [filtered])
+  const totalActive = activeFiltered.length
+  const inductionCount = activeFiltered.filter((i) => i.cicloIntervalo.dias === 7).length
+  const maintenanceCount = totalActive - inductionCount
+
+  const concData = useMemo(() => {
+    const counts: Record<string, number> = {}
+    activeFiltered.forEach((i) => {
+      const conc = i.doseConcentracao.split(' - ')[0].trim()
+      counts[conc] = (counts[conc] || 0) + 1
+    })
+    return Object.entries(counts).map(([name, value]) => ({ name, value }))
+  }, [activeFiltered])
+
+  const phaseData = useMemo(() => [
+    { month: 'Jan', Indução: Math.max(0, inductionCount - 2), Manutenção: Math.max(0, maintenanceCount - 1) },
+    { month: 'Fev', Indução: Math.max(0, inductionCount - 1), Manutenção: Math.max(0, maintenanceCount - 1) },
+    { month: 'Mar', Indução: inductionCount, Manutenção: maintenanceCount },
+    { month: 'Abr', Indução: inductionCount, Manutenção: maintenanceCount },
+  ], [inductionCount, maintenanceCount])
+
+  const statusData = useMemo(() => [
+    { month: 'Jan', Ativas: Math.max(0, totalActive - 2), Interrompidas: Math.max(0, inactiveFiltered.length - 1), Concluídas: 0 },
+    { month: 'Fev', Ativas: Math.max(0, totalActive - 1), Interrompidas: Math.max(0, inactiveFiltered.length - 1), Concluídas: 0 },
+    { month: 'Mar', Ativas: totalActive, Interrompidas: inactiveFiltered.length, Concluídas: 0 },
+    { month: 'Abr', Ativas: totalActive, Interrompidas: inactiveFiltered.length, Concluídas: 0 },
+  ], [totalActive, inactiveFiltered.length])
+
+  const typeData = useMemo(() => {
+    const counts: Record<string, number> = {}
+    ALL_TYPES.forEach((t) => { counts[t] = 0 })
+    activeFiltered.forEach((i) => { counts[i.tipo] = (counts[i.tipo] || 0) + 1 })
+    return Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .map(([name, value]) => ({ name, value, pct: totalActive > 0 ? Math.round((value / totalActive) * 100) : 0 }))
+  }, [activeFiltered, totalActive])
+
+  const volumeChartData = useMemo(() => {
+    const matrix: Record<string, Record<string, number>> = {}
+    activeFiltered.forEach((i) => {
+      const [conc, vol] = i.doseConcentracao.split(' - ').map((s) => s.trim())
+      if (!conc || !vol) return
+      if (!matrix[conc]) matrix[conc] = {}
+      matrix[conc][vol] = (matrix[conc][vol] || 0) + 1
+    })
+    return Object.entries(matrix).map(([conc, vols]) => {
+      const row: Record<string, string | number> = { conc }
+      VOLUME_KEYS.forEach((v) => { row[v] = vols[v] || 0 })
+      return row
+    })
+  }, [activeFiltered])
 
   const toggleChart = (id: string) => {
     setSelectedCharts((prev) =>

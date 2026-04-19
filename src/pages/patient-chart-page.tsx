@@ -2,6 +2,7 @@ import { useMemo, useState, useEffect, useRef } from 'react'
 import { useNavigate, useParams } from '@tanstack/react-router'
 import { usePatientStore, seedInactivationsFor, type Application, type ProtocolAdjustmentType, type InactivationCategory } from '@/store/patient-store'
 import { useImmunotherapiesStore } from '@/store/immunotherapies-store'
+import { useCan, useDoctorFilter } from '@/store/user-store'
 import { addDays, format, differenceInDays, parse } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
@@ -37,6 +38,19 @@ export function PatientChartPage() {
   const navigate = useNavigate()
   const { patientId } = useParams({ from: '/patient/$patientId' })
   const { selectedPatient, applications, setSelectedPatient, inactivateImunoterapia, reactivateImunoterapia } = usePatientStore()
+  const canAdjustProtocol = useCan('adjust_protocol')
+  const canInactivate = useCan('inactivate_immunotherapy')
+  const canReactivate = useCan('reactivate_patient')
+  const canEditPatient = useCan('edit_patient_data')
+  const canEvolve = useCan('evolve_patient')
+  const canEmitReport = useCan('emit_report')
+  const doctorFilter = useDoctorFilter()
+
+  useEffect(() => {
+    if (doctorFilter && selectedPatient && selectedPatient.medicoResponsavel !== doctorFilter) {
+      navigate({ to: '/immunotherapies' })
+    }
+  }, [doctorFilter, selectedPatient, navigate])
   const [showPersonal, setShowPersonal] = useState(true)
   const [showImmuno, setShowImmuno] = useState(true)
   const [selectedApp, setSelectedApp] = useState<Application | null>(null)
@@ -108,7 +122,7 @@ export function PatientChartPage() {
         setSelectedPatient({
           id: imm.id, nome: imm.nome, dataNascimento: '02/07/2000', idade: 25,
           telefone: '(62) 99557-1423', peso: '89.7 kg', cpf: '711.905.744-89',
-          medicoResponsavel: 'Dra. Karina Martins', status: imm.status === 'ativo' ? 'ativo' as const : 'inativo' as const,
+          medicoResponsavel: imm.medicoResponsavel, status: imm.status === 'ativo' ? 'ativo' as const : 'inativo' as const,
           tipoImunoterapia: imm.tipo, inicioInducao: '01/01/2020', inicioManutencao: null,
           viaAdministracao: 'Subcutânea', extrato: 'Der p 60 + der f 10% + blt 30%',
           concentracaoVolumeMeta: '1:10 - 0,5ml', metaAtingida: false,
@@ -352,36 +366,42 @@ export function PatientChartPage() {
             )}
             <div className="mt-3 flex gap-1.5">
               {selectedPatient.status === 'inativo' ? (
-                <button
-                  onClick={() => {
-                    const snapshotInterval = activeInactivation?.snapshotIntervalo ?? selectedPatient.intervaloAtual
-                    setReactivateForm({
-                      concentracao: suggestedNextDose,
-                      intervalo: String(snapshotInterval),
-                      justificativa: '',
-                      note: '',
-                    })
-                    setReactivateErrors({})
-                    setShowReactivateModal(true)
-                  }}
-                  className="flex-1 h-8 rounded-lg text-xs font-semibold transition-all bg-linear-to-br from-emerald-400 to-emerald-500 text-white cursor-pointer hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(52,211,153,0.3)]"
-                >
-                  Reativar paciente
-                </button>
+                canReactivate && (
+                  <button
+                    onClick={() => {
+                      const snapshotInterval = activeInactivation?.snapshotIntervalo ?? selectedPatient.intervaloAtual
+                      setReactivateForm({
+                        concentracao: suggestedNextDose,
+                        intervalo: String(snapshotInterval),
+                        justificativa: '',
+                        note: '',
+                      })
+                      setReactivateErrors({})
+                      setShowReactivateModal(true)
+                    }}
+                    className="flex-1 h-8 rounded-lg text-xs font-semibold transition-all bg-linear-to-br from-emerald-400 to-emerald-500 text-white cursor-pointer hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(52,211,153,0.3)]"
+                  >
+                    Reativar paciente
+                  </button>
+                )
               ) : (
+                canEvolve && (
+                  <button
+                    onClick={() => navigate({ to: '/patient-evolution', search: { patientId: selectedPatient.id } })}
+                    className="flex-1 h-8 rounded-lg text-xs font-semibold transition-all bg-linear-to-br from-brand to-teal-400 text-white cursor-pointer hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(20,184,166,0.3)]"
+                  >
+                    Evoluir Paciente
+                  </button>
+                )
+              )}
+              {canEmitReport && (
                 <button
-                  onClick={() => navigate({ to: '/patient-evolution', search: { patientId: selectedPatient.id } })}
-                  className="flex-1 h-8 rounded-lg text-xs font-semibold transition-all bg-linear-to-br from-brand to-teal-400 text-white cursor-pointer hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(20,184,166,0.3)]"
+                  onClick={() => navigate({ to: '/patient-report', search: { patientId: selectedPatient.id } })}
+                  className="flex-1 h-8 rounded-lg border-[1.5px] border-(--border-custom) text-xs font-semibold text-(--text-muted) cursor-pointer hover:border-brand hover:text-brand hover:bg-teal-50 hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(20,184,166,0.12)] transition-all"
                 >
-                  Evoluir Paciente
+                  Emitir Relatório
                 </button>
               )}
-              <button
-                onClick={() => navigate({ to: '/patient-report', search: { patientId: selectedPatient.id } })}
-                className="flex-1 h-8 rounded-lg border-[1.5px] border-(--border-custom) text-xs font-semibold text-(--text-muted) cursor-pointer hover:border-brand hover:text-brand hover:bg-teal-50 hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(20,184,166,0.12)] transition-all"
-              >
-                Emitir Relatório
-              </button>
             </div>
           </div>
 
@@ -411,24 +431,25 @@ export function PatientChartPage() {
                       <span className="font-medium text-(--text)">{value}</span>
                     </div>
                   ))}
-                  {/* Edit button */}
-                  <div className="pt-2 mt-1 border-t border-(--border-custom)">
-                    <button
-                      onClick={() => {
-                        setEditForm({
-                          nome: selectedPatient.nome,
-                          telefone: selectedPatient.telefone,
-                          peso: selectedPatient.peso,
-                          medicoResponsavel: selectedPatient.medicoResponsavel,
-                        })
-                        setShowEditModal(true)
-                      }}
-                      className="w-full h-7 rounded-lg text-[0.65rem] font-semibold transition-all flex items-center justify-center gap-1.5 border-[1.5px] border-brand text-brand hover:bg-teal-50 cursor-pointer"
-                    >
-                      <Pencil size={11} />
-                      Editar dados pessoais
-                    </button>
-                  </div>
+                  {canEditPatient && (
+                    <div className="pt-2 mt-1 border-t border-(--border-custom)">
+                      <button
+                        onClick={() => {
+                          setEditForm({
+                            nome: selectedPatient.nome,
+                            telefone: selectedPatient.telefone,
+                            peso: selectedPatient.peso,
+                            medicoResponsavel: selectedPatient.medicoResponsavel,
+                          })
+                          setShowEditModal(true)
+                        }}
+                        className="w-full h-7 rounded-lg text-[0.65rem] font-semibold transition-all flex items-center justify-center gap-1.5 border-[1.5px] border-brand text-brand hover:bg-teal-50 cursor-pointer"
+                      >
+                        <Pencil size={11} />
+                        Editar dados pessoais
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -472,40 +493,45 @@ export function PatientChartPage() {
                     <span className="font-medium text-(--text) text-right max-w-[55%] wrap-break-word leading-relaxed">{selectedPatient.extrato}</span>
                   </div>
                   {/* Action buttons */}
+                  {(canAdjustProtocol || canInactivate || (selectedPatient.protocolAdjustments && selectedPatient.protocolAdjustments.length > 0) || (inactivationCount > 0)) && (
                   <div className="pt-2 mt-1 border-t border-(--border-custom) space-y-1.5">
+                    {(canAdjustProtocol || (selectedPatient.protocolAdjustments && selectedPatient.protocolAdjustments.length > 0)) && (
                     <div className="flex gap-2">
-                      <button
-                        onClick={() => {
-                          setAdjustForm({
-                            type: '',
-                            outroMotivo: '',
-                            newConcentracao: selectedPatient.concentracaoDoseAtuais,
-                            newIntervalo: String(selectedPatient.intervaloAtual),
-                            newTipo: selectedPatient.tipoImunoterapia,
-                            newVia: selectedPatient.viaAdministracao,
-                            newExtrato: selectedPatient.extrato,
-                            justificativa: '',
-                          })
-                          setAdjustErrors({})
-                          setShowAdjustModal(true)
-                        }}
-                        disabled={selectedPatient.status === 'inativo'}
-                        className={cn("flex-1 h-7 rounded-lg text-[0.65rem] font-semibold transition-all flex items-center justify-center gap-1.5 border-[1.5px]", selectedPatient.status === 'inativo' ? "border-gray-200 text-gray-300 cursor-not-allowed" : "border-brand text-brand hover:bg-teal-50 cursor-pointer")}
-                      >
-                        <SlidersHorizontal size={11} />
-                        Ajustar protocolo
-                      </button>
+                      {canAdjustProtocol && (
+                        <button
+                          onClick={() => {
+                            setAdjustForm({
+                              type: '',
+                              outroMotivo: '',
+                              newConcentracao: selectedPatient.concentracaoDoseAtuais,
+                              newIntervalo: String(selectedPatient.intervaloAtual),
+                              newTipo: selectedPatient.tipoImunoterapia,
+                              newVia: selectedPatient.viaAdministracao,
+                              newExtrato: selectedPatient.extrato,
+                              justificativa: '',
+                            })
+                            setAdjustErrors({})
+                            setShowAdjustModal(true)
+                          }}
+                          disabled={selectedPatient.status === 'inativo'}
+                          className={cn("flex-1 h-7 rounded-lg text-[0.65rem] font-semibold transition-all flex items-center justify-center gap-1.5 border-[1.5px]", selectedPatient.status === 'inativo' ? "border-gray-200 text-gray-300 cursor-not-allowed" : "border-brand text-brand hover:bg-teal-50 cursor-pointer")}
+                        >
+                          <SlidersHorizontal size={11} />
+                          Ajustar protocolo
+                        </button>
+                      )}
                       {selectedPatient.protocolAdjustments && selectedPatient.protocolAdjustments.length > 0 && (
                         <button
                           onClick={() => setShowAdjustHistory(true)}
-                          className="h-7 px-2.5 rounded-lg text-[0.65rem] font-semibold transition-all flex items-center gap-1.5 border border-(--border-custom) text-(--text-muted) hover:border-brand hover:text-brand cursor-pointer"
+                          className={cn("h-7 px-2.5 rounded-lg text-[0.65rem] font-semibold transition-all flex items-center gap-1.5 border border-(--border-custom) text-(--text-muted) hover:border-brand hover:text-brand cursor-pointer", !canAdjustProtocol && "flex-1 justify-center")}
                         >
                           <History size={11} />
-                          {selectedPatient.protocolAdjustments.length}
+                          {canAdjustProtocol ? selectedPatient.protocolAdjustments.length : `Histórico de ajustes (${selectedPatient.protocolAdjustments.length})`}
                         </button>
                       )}
                     </div>
-                    {selectedPatient.status === 'ativo' && (
+                    )}
+                    {canInactivate && selectedPatient.status === 'ativo' && (
                       <button
                         onClick={() => {
                           setInactivateForm({ category: '', outroMotivo: '', detail: '', expectedReturnDate: '' })
@@ -528,6 +554,7 @@ export function PatientChartPage() {
                       </button>
                     )}
                   </div>
+                  )}
                 </div>
               </div>
             </div>

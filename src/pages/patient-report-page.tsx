@@ -1,7 +1,8 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { usePatientStore } from '@/store/patient-store'
 import { useImmunotherapiesStore } from '@/store/immunotherapies-store'
+import { useCan, useDoctorFilter } from '@/store/user-store'
 import { ArrowLeft, FileText, FileSpreadsheet, FileDown, Check, Download, Printer, ShieldCheck, EyeOff, FileJson, Info, CheckSquare } from 'lucide-react'
 import { jsPDF } from 'jspdf'
 import { cn } from '@/lib/utils'
@@ -35,6 +36,26 @@ export function PatientReportPage() {
   const [showExportModal, setShowExportModal] = useState(false)
   const [reportMode, setReportMode] = useState<'clinico' | 'lgpd'>('clinico')
   const [lgpdFormat, setLgpdFormat] = useState<'json' | 'csv'>('json')
+  const canLgpdPortability = useCan('lgpd_portability')
+  const canEmitReport = useCan('emit_report')
+  const doctorFilter = useDoctorFilter()
+
+  useEffect(() => {
+    if (!canEmitReport) navigate({ to: '/immunotherapies' })
+  }, [canEmitReport, navigate])
+
+  useEffect(() => {
+    if (!canLgpdPortability && reportMode === 'lgpd') setReportMode('clinico')
+  }, [canLgpdPortability, reportMode])
+
+  useEffect(() => {
+    if (!doctorFilter) return
+    const targetId = selectedPatient?.id ?? patientId
+    if (!targetId) return
+    const patientDoctor = selectedPatient?.medicoResponsavel
+      ?? immunotherapies.find((i) => i.id === targetId)?.medicoResponsavel
+    if (patientDoctor && patientDoctor !== doctorFilter) navigate({ to: '/immunotherapies' })
+  }, [doctorFilter, selectedPatient, patientId, immunotherapies, navigate])
 
   const patient = selectedPatient || (() => {
     if (!patientId) return null
@@ -43,7 +64,7 @@ export function PatientReportPage() {
     return {
       id: imm.id, nome: imm.nome, dataNascimento: '02/07/2000', idade: 25,
       telefone: '(62) 99557-1423', peso: '89.7 kg', cpf: '711.905.744-89',
-      medicoResponsavel: 'Dra. Karina Martins', status: imm.status === 'ativo' ? 'ativo' as const : 'inativo' as const,
+      medicoResponsavel: imm.medicoResponsavel, status: imm.status === 'ativo' ? 'ativo' as const : 'inativo' as const,
       tipoImunoterapia: imm.tipo, inicioInducao: '01/01/2020', inicioManutencao: null,
       viaAdministracao: 'Subcutânea', extrato: 'Der p 60 + der f 10% + blt 30%',
       concentracaoVolumeMeta: '1:10 - 0,5ml', metaAtingida: false,
@@ -420,16 +441,18 @@ export function PatientReportPage() {
           {/* Left — Config */}
           <div className="w-72 shrink-0 border-r border-(--border-custom) p-5 overflow-y-auto space-y-5">
             {/* Mode tabs */}
-            <div className="flex h-9 rounded-lg border border-(--border-custom) overflow-hidden">
-              <button onClick={() => setReportMode('clinico')} className={cn("flex-1 text-[0.65rem] font-semibold transition-all flex items-center justify-center gap-1", reportMode === 'clinico' ? "bg-linear-to-br from-brand to-teal-400 text-white" : "text-(--text-muted) hover:bg-gray-50")}>
-                <FileText size={11} />
-                Clínico
-              </button>
-              <button onClick={() => setReportMode('lgpd')} className={cn("flex-1 text-[0.65rem] font-semibold transition-all flex items-center justify-center gap-1", reportMode === 'lgpd' ? "bg-linear-to-br from-brand to-teal-400 text-white" : "text-(--text-muted) hover:bg-gray-50")}>
-                <ShieldCheck size={11} />
-                Portabilidade
-              </button>
-            </div>
+            {canLgpdPortability && (
+              <div className="flex h-9 rounded-lg border border-(--border-custom) overflow-hidden">
+                <button onClick={() => setReportMode('clinico')} className={cn("flex-1 text-[0.65rem] font-semibold transition-all flex items-center justify-center gap-1", reportMode === 'clinico' ? "bg-linear-to-br from-brand to-teal-400 text-white" : "text-(--text-muted) hover:bg-gray-50")}>
+                  <FileText size={11} />
+                  Clínico
+                </button>
+                <button onClick={() => setReportMode('lgpd')} className={cn("flex-1 text-[0.65rem] font-semibold transition-all flex items-center justify-center gap-1", reportMode === 'lgpd' ? "bg-linear-to-br from-brand to-teal-400 text-white" : "text-(--text-muted) hover:bg-gray-50")}>
+                  <ShieldCheck size={11} />
+                  Portabilidade
+                </button>
+              </div>
+            )}
 
             {reportMode === 'lgpd' && (
               <>

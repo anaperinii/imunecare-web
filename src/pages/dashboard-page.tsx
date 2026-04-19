@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useImmunotherapiesStore } from '@/store/immunotherapies-store'
+import { useCan, useDoctorFilter } from '@/store/user-store'
 import { Users, Syringe, Activity, TrendingUp, TrendingDown, Download, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
@@ -28,7 +29,17 @@ const TYPE_COLORS = ['#0E99A3', '#18C1CB', '#2CD3C1', '#B6F2EC', '#3F98AF']
 
 export function DashboardPage() {
   const navigate = useNavigate()
-  const { immunotherapies } = useImmunotherapiesStore()
+  const { immunotherapies: allImmunotherapies } = useImmunotherapiesStore()
+  const canViewDashboard = useCan('view_dashboard')
+  const doctorFilter = useDoctorFilter()
+
+  useEffect(() => { if (!canViewDashboard) navigate({ to: '/immunotherapies' }) }, [canViewDashboard, navigate])
+
+  const immunotherapies = useMemo(
+    () => doctorFilter ? allImmunotherapies.filter((i) => i.medicoResponsavel === doctorFilter) : allImmunotherapies,
+    [allImmunotherapies, doctorFilter]
+  )
+
   const [modality, setModality] = useState<'sub' | 'sbl'>('sub')
   const [tipoFilter, setTipoFilter] = useState('Todos')
   const [mesFilter, setMesFilter] = useState('Todos')
@@ -54,20 +65,22 @@ export function DashboardPage() {
     })
   }, [immunotherapies, modality, tipoFilter])
 
-  // Stats
-  const totalPatients = filtered.length
-  const induction = filtered.filter((i) => i.cicloIntervalo.dias === 7).length
+  // Stats — apenas pacientes ativos (inativos não entram nas métricas clínicas ativas)
+  const activeFiltered = useMemo(() => filtered.filter((i) => i.status === 'ativo'), [filtered])
+  const inactiveFiltered = useMemo(() => filtered.filter((i) => i.status === 'inativo'), [filtered])
+  const totalPatients = activeFiltered.length
+  const induction = activeFiltered.filter((i) => i.cicloIntervalo.dias === 7).length
   const maintenance = totalPatients - induction
 
   // Pie: concentrations
   const concData = useMemo(() => {
     const counts: Record<string, number> = {}
-    filtered.forEach((i) => {
+    activeFiltered.forEach((i) => {
       const conc = i.doseConcentracao.split(' - ')[0].trim()
       counts[conc] = (counts[conc] || 0) + 1
     })
     return Object.entries(counts).map(([name, value]) => ({ name, value }))
-  }, [filtered])
+  }, [activeFiltered])
 
   // Bar: phases by month
   const phaseData = [
@@ -82,7 +95,7 @@ export function DashboardPage() {
     { month: 'Jan', Ativas: 6, Interrompidas: 1, Concluídas: 0 },
     { month: 'Fev', Ativas: 7, Interrompidas: 1, Concluídas: 1 },
     { month: 'Mar', Ativas: 8, Interrompidas: 0, Concluídas: 1 },
-    { month: 'Abr', Ativas: totalPatients, Interrompidas: 0, Concluídas: 2 },
+    { month: 'Abr', Ativas: totalPatients, Interrompidas: inactiveFiltered.length, Concluídas: 0 },
   ]
 
   // Top types
@@ -90,11 +103,11 @@ export function DashboardPage() {
   const typeData = useMemo(() => {
     const counts: Record<string, number> = {}
     allTypes.forEach((t) => { counts[t] = 0 })
-    filtered.forEach((i) => { counts[i.tipo] = (counts[i.tipo] || 0) + 1 })
+    activeFiltered.forEach((i) => { counts[i.tipo] = (counts[i.tipo] || 0) + 1 })
     return Object.entries(counts)
       .sort((a, b) => b[1] - a[1])
       .map(([name, value]) => ({ name, value, pct: totalPatients > 0 ? Math.round((value / totalPatients) * 100) : 0 }))
-  }, [filtered, totalPatients])
+  }, [activeFiltered, totalPatients])
 
   return (
     <div className="flex flex-1 flex-col bg-gray-50/80 min-h-0 overflow-hidden">

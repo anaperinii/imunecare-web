@@ -2,6 +2,7 @@ import { Link, useLocation, useNavigate } from '@tanstack/react-router'
 import { cn } from '@/lib/utils'
 import { useState, useRef, useEffect } from 'react'
 import { usePatientStore } from '@/store/patient-store'
+import { useUserStore, useCan, PROFILES, ROLE_LABELS } from '@/store/user-store'
 import { useNotificationsStore, type Notification } from '@/store/notifications-store'
 import { formatDistanceToNow } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -14,9 +15,10 @@ import {
   BarChart3,
   Settings,
   Bell,
-  User,
   LogOut,
   X as XIcon,
+  Check,
+  UserCog,
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -24,11 +26,11 @@ interface SidebarProps {
   onToggle: () => void
 }
 
-const menuItems = [
-  { title: 'Imunoterapias', icon: Syringe, path: '/immunotherapies' },
-  { title: 'Agendamentos', icon: CalendarDays, path: '/appointments' },
-  { title: 'Dashboard', icon: BarChart3, path: '/dashboard' },
-  { title: 'Configurações', icon: Settings, path: '/settings' },
+const allMenuItems = [
+  { title: 'Imunoterapias', icon: Syringe, path: '/immunotherapies', gate: null as null | 'view_dashboard' },
+  { title: 'Agendamentos', icon: CalendarDays, path: '/appointments', gate: null as null | 'view_dashboard' },
+  { title: 'Dashboard', icon: BarChart3, path: '/dashboard', gate: 'view_dashboard' as const },
+  { title: 'Configurações', icon: Settings, path: '/settings', gate: null as null | 'view_dashboard' },
 ]
 
 const typeConfig: Record<Notification['type'], { color: string; bg: string; label: string }> = {
@@ -51,6 +53,8 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   const location = useLocation()
   const navigate = useNavigate()
   const { selectedPatient, setSelectedPatient } = usePatientStore()
+  const { current: currentUser, setProfile } = useUserStore()
+  const canViewDashboard = useCan('view_dashboard')
 
   useEffect(() => {
     if (selectedPatient && !location.pathname.startsWith('/patient/')) {
@@ -117,7 +121,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
 
       {/* Navigation */}
       <nav className="flex-1 p-2 space-y-0.5 overflow-y-auto overflow-x-hidden">
-        {menuItems.map((item) => {
+        {allMenuItems.filter((item) => !item.gate || (item.gate === 'view_dashboard' && canViewDashboard)).map((item) => {
           const isActive = location.pathname === item.path
           const Icon = item.icon
           return (
@@ -288,24 +292,55 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
           )}
         >
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-linear-to-br from-brand to-teal-400 text-white text-[0.65rem] font-bold shadow-[0_2px_6px_rgba(20,184,166,0.3)]">
-            <User size={14} />
+            {getInitials(currentUser.name)}
           </div>
           {!isCollapsed && (
-            <div className="flex flex-col text-left">
-              <span className="text-xs font-semibold text-(--text) whitespace-nowrap">Dr. Usuário</span>
-              <span className="text-[0.65rem] text-(--text-muted) whitespace-nowrap">Administrador</span>
+            <div className="flex flex-col text-left min-w-0">
+              <span className="text-xs font-semibold text-(--text) whitespace-nowrap truncate">{currentUser.name}</span>
+              <span className="text-[0.65rem] text-(--text-muted) whitespace-nowrap">{currentUser.title}</span>
             </div>
           )}
           {isCollapsed && (
             <div className="absolute left-full ml-2 px-2 py-1 rounded-md bg-brand text-white text-[0.7rem] font-medium whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 shadow-md z-50">
-              Dr. Usuário
+              {currentUser.name}
             </div>
           )}
         </button>
 
         {showUserMenu && (
-          <div ref={userMenuRef} className={cn("absolute z-50 animate-in fade-in-0 slide-in-from-bottom-2 duration-200", isCollapsed ? "left-full ml-2 bottom-2 w-36" : "left-0 right-0 bottom-full mb-1.5")}>
+          <div ref={userMenuRef} className={cn("absolute z-50 animate-in fade-in-0 slide-in-from-bottom-2 duration-200", isCollapsed ? "left-full ml-2 bottom-2 w-64" : "left-0 right-0 bottom-full mb-1.5")}>
             <div className="bg-white border border-(--border-custom) rounded-lg shadow-[0_8px_24px_rgba(0,0,0,0.1)] overflow-hidden">
+              <div className="px-3.5 py-2.5 border-b border-(--border-custom)">
+                <div className="text-xs font-semibold text-(--text) truncate">{currentUser.name}</div>
+                <div className="text-[0.65rem] text-(--text-muted)">{currentUser.title} · {currentUser.registration}</div>
+              </div>
+              <div className="px-3.5 py-2 border-b border-(--border-custom)">
+                <div className="flex items-center gap-1.5 text-[0.6rem] font-bold text-(--text-muted) uppercase tracking-wider mb-1.5">
+                  <UserCog size={10} />
+                  Trocar perfil (teste)
+                </div>
+                <div className="space-y-0.5">
+                  {PROFILES.map((p) => {
+                    const isCurrent = currentUser.id === p.id
+                    return (
+                      <button
+                        key={p.id}
+                        onClick={() => { setProfile(p.id); setShowUserMenu(false) }}
+                        className={cn(
+                          "w-full flex items-center justify-between gap-2 px-2 py-1.5 rounded text-[0.7rem] transition-colors",
+                          isCurrent ? "bg-teal-50 text-brand" : "text-(--text) hover:bg-gray-50"
+                        )}
+                      >
+                        <div className="flex flex-col text-left min-w-0">
+                          <span className="font-semibold truncate">{ROLE_LABELS[p.role]}</span>
+                          <span className="text-[0.6rem] text-(--text-muted) truncate">{p.name}</span>
+                        </div>
+                        {isCurrent && <Check size={12} className="text-brand shrink-0" />}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
               <button
                 onClick={() => { setShowUserMenu(false); navigate({ to: '/login' }) }}
                 className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-xs font-medium text-(--text-muted) hover:bg-red-50 hover:text-red-500 transition-colors"
