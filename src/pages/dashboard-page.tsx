@@ -21,7 +21,7 @@ const CONC_COLORS: Record<string, string> = {
 const PHASE_COLORS = { 'Indução': '#18C1CB', 'Manutenção': '#A78BFA' }
 
 // Status: verde-água, salmão alaranjado, rosa
-const STATUS_COLORS = { 'Ativas': '#2CD3C1', 'Interrompidas': '#F4845F', 'Concluídas': '#E8768E' }
+const STATUS_COLORS = { 'Ativas': '#2CD3C1', 'Interrompidas': '#F4845F', 'Concluídas': '#22DD44' }
 
 // Tipos por imunoterapia: paleta fria
 const TYPE_COLORS = ['#0E99A3', '#18C1CB', '#2CD3C1', '#B6F2EC', '#3F98AF']
@@ -152,17 +152,22 @@ export function DashboardPage() {
           {/* Stat cards */}
           <div className="grid grid-cols-3 gap-3">
             {[
-              { icon: Users, label: 'Pacientes Ativos', value: totalPatients, trend: '+3', up: true, color: 'text-[#0E99A3]', iconBg: 'bg-[#B6F2EC]/60', cardBg: 'bg-[#B6F2EC]/20' },
-              { icon: Syringe, label: 'Em Indução', value: induction, trend: '+2', up: true, color: 'text-[#18C1CB]', iconBg: 'bg-[#B6F2EC]/70', cardBg: 'bg-[#E0F9F7]/40' },
-              { icon: Activity, label: 'Em Manutenção', value: maintenance, trend: '+1', up: true, color: 'text-[#A78BFA]', iconBg: 'bg-[#E8DFFE]/80', cardBg: 'bg-[#F0ECFE]/40' },
+              { icon: Users, label: 'Pacientes Ativos', value: totalPatients, trend: '+3', up: true, color: 'text-[#E8768E]', iconBg: 'bg-[#FDECF0]/80', accentColor: '#E8768E' },
+              { icon: Syringe, label: 'Em Indução', value: induction, trend: '+2', up: true, color: 'text-[#18C1CB]', iconBg: 'bg-[#B6F2EC]/70', accentColor: '#18C1CB' },
+              { icon: Activity, label: 'Em Manutenção', value: maintenance, trend: '+1', up: true, color: 'text-[#A78BFA]', iconBg: 'bg-[#E8DFFE]/80', accentColor: '#A78BFA' },
             ].map((stat) => {
               const Icon = stat.icon
               return (
-                <div key={stat.label} className={cn("border border-(--border-custom) rounded-xl p-4 flex items-center gap-3.5", stat.cardBg)}>
-                  <div className={cn("flex h-10 w-10 items-center justify-center rounded-xl shrink-0", stat.iconBg)}>
+                <div
+                  key={stat.label}
+                  className="border border-(--border-custom) rounded-xl p-4 flex items-center gap-3.5 relative overflow-hidden bg-white"
+                >
+                  <div className="absolute top-0 left-0 right-0 h-1" style={{ background: `linear-gradient(to right, ${stat.accentColor}, ${stat.accentColor}40)` }} />
+                  <div className="absolute inset-0" style={{ background: `linear-gradient(to right, ${stat.accentColor}18, transparent 50%)` }} />
+                  <div className={cn("flex h-10 w-10 items-center justify-center rounded-xl shrink-0 relative z-10", stat.iconBg)}>
                     <Icon size={18} className={stat.color} />
                   </div>
-                  <div className="flex-1">
+                  <div className="flex-1 relative z-10">
                     <div className="text-[0.65rem] text-(--text-muted) font-medium">{stat.label}</div>
                     <div className="flex items-center gap-2">
                       <span className="text-xl font-extrabold text-(--text)">{stat.value}</span>
