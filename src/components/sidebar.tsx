@@ -2,6 +2,7 @@ import { Link, useLocation, useNavigate } from '@tanstack/react-router'
 import { cn } from '@/lib/utils'
 import { useState, useRef, useEffect } from 'react'
 import { usePatientStore } from '@/store/patient-store'
+import { useNotificationsStore, type Notification } from '@/store/notifications-store'
 import imunecareLogo from '@/assets/imunecare-logo.png'
 import {
   ChevronLeft,
@@ -28,12 +29,15 @@ const menuItems = [
   { title: 'Configurações', icon: Settings, path: '/settings' },
 ]
 
-const notifications = [
-  { id: 1, title: 'Nova aplicação agendada', message: 'Bárbara Sofia Diniz tem uma aplicação agendada para amanhã', time: 'há 2 horas' },
-  { id: 2, title: 'Lembrete de ciclo', message: 'Camilla Martins está no ciclo 2, próximo intervalo em 3 dias', time: 'há 5 horas' },
-]
+const typeConfig: Record<Notification['type'], { color: string; bg: string; label: string }> = {
+  appointment: { color: 'text-teal-600', bg: 'bg-teal-50', label: 'Agendamento' },
+  alert: { color: 'text-amber-600', bg: 'bg-amber-50', label: 'Alerta' },
+  protocol: { color: 'text-violet-600', bg: 'bg-violet-50', label: 'Protocolo' },
+  system: { color: 'text-gray-500', bg: 'bg-gray-100', label: 'Sistema' },
+}
 
 export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
+  const { notifications, markAsRead, markAllAsRead, unreadCount } = useNotificationsStore()
   const [showNotifications, setShowNotifications] = useState(false)
   const [showUserMenu, setShowUserMenu] = useState(false)
   const notificationsRef = useRef<HTMLDivElement>(null)
@@ -150,7 +154,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
           >
             <div className="relative shrink-0">
               <Bell size={18} className="group-hover:text-teal-500 transition-colors" />
-              <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-linear-to-br from-red-500 to-red-600 text-[8px] font-bold text-white">2</span>
+              {unreadCount() > 0 && <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-linear-to-br from-red-500 to-red-600 text-[8px] font-bold text-white">{unreadCount()}</span>}
             </div>
             {!isCollapsed && <span>Notificações</span>}
             {isCollapsed && (
@@ -161,22 +165,51 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
           </button>
 
           {showNotifications && (
-            <div ref={notificationsRef} className={cn("absolute z-50 animate-in fade-in-0 slide-in-from-top-2 duration-200", isCollapsed ? "left-full ml-2.5 top-0 w-72" : "left-0 right-0 top-full mt-1.5")}>
+            <div ref={notificationsRef} className="fixed z-200 animate-in fade-in-0 slide-in-from-top-2 duration-200 w-80" style={{ top: (notificationButtonRef.current?.getBoundingClientRect().bottom ?? 200) + 6, left: isCollapsed ? (notificationButtonRef.current?.getBoundingClientRect().right ?? 64) + 8 : (notificationButtonRef.current?.getBoundingClientRect().left ?? 8) }}>
               <div className="bg-white border border-(--border-custom) rounded-xl shadow-[0_12px_40px_rgba(13,148,136,0.12)] overflow-hidden">
-                <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-(--border-custom) bg-teal-50/50">
-                  <h3 className="text-xs font-bold text-(--text)">Notificações</h3>
-                  <button onClick={() => setShowNotifications(false)} className="flex items-center justify-center w-5 h-5 rounded hover:bg-teal-100 transition-colors">
-                    <XIcon size={12} />
-                  </button>
+                <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-(--border-custom)">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-xs font-bold text-(--text)">Notificações</h3>
+                    {unreadCount() > 0 && <span className="text-[0.6rem] font-semibold text-white bg-red-500 rounded-full px-1.5 py-px">{unreadCount()}</span>}
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    {unreadCount() > 0 && (
+                      <button onClick={markAllAsRead} className="text-[0.6rem] font-medium text-teal-600 hover:underline">
+                        Marcar todas como lidas
+                      </button>
+                    )}
+                    <button onClick={() => setShowNotifications(false)} className="flex items-center justify-center w-5 h-5 rounded hover:bg-gray-100 transition-colors">
+                      <XIcon size={12} />
+                    </button>
+                  </div>
                 </div>
-                <div className="max-h-64 overflow-y-auto">
-                  {notifications.map((n) => (
-                    <div key={n.id} className="px-3.5 py-2.5 border-b border-(--border-custom) last:border-0 hover:bg-teal-50/50 cursor-pointer transition-colors">
-                      <div className="font-semibold text-xs text-(--text)">{n.title}</div>
-                      <div className="text-[0.7rem] text-(--text-muted) mt-0.5 leading-relaxed">{n.message}</div>
-                      <div className="text-[0.65rem] text-teal-500 font-medium mt-1">{n.time}</div>
-                    </div>
-                  ))}
+                <div className="max-h-72 overflow-y-auto">
+                  {notifications.length === 0 ? (
+                    <div className="text-center text-xs text-(--text-muted) py-8">Nenhuma notificação</div>
+                  ) : (
+                    notifications.map((n) => {
+                      const tc = typeConfig[n.type]
+                      return (
+                        <div
+                          key={n.id}
+                          onClick={() => markAsRead(n.id)}
+                          className={cn("px-3.5 py-2.5 border-b border-(--border-custom) last:border-0 cursor-pointer transition-colors hover:bg-gray-50", !n.read && "bg-teal-50/30")}
+                        >
+                          <div className="flex items-start gap-2.5">
+                            {!n.read && <div className="w-1.5 h-1.5 rounded-full bg-teal-500 mt-1.5 shrink-0" />}
+                            <div className={cn("flex-1 min-w-0", n.read && "ml-4")}>
+                              <div className="flex items-center gap-2 mb-0.5">
+                                <span className={cn("text-[0.55rem] font-semibold px-1.5 py-px rounded-full", tc.bg, tc.color)}>{tc.label}</span>
+                                <span className="text-[0.6rem] text-(--text-muted)">{n.time}</span>
+                              </div>
+                              <div className="text-xs font-semibold text-(--text) truncate">{n.title}</div>
+                              <div className="text-[0.65rem] text-(--text-muted) mt-0.5 leading-relaxed line-clamp-2">{n.message}</div>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })
+                  )}
                 </div>
               </div>
             </div>
