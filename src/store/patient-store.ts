@@ -1,5 +1,19 @@
 import { create } from 'zustand'
 
+export type ProtocolAdjustmentType = 'reducao_dose' | 'aumento_intervalo' | 'alteracao_concentracao' | 'suspensao' | 'outro'
+
+export interface ProtocolAdjustment {
+  id: string
+  date: string
+  type: ProtocolAdjustmentType
+  previousConcentracao: string
+  previousIntervalo: number
+  newConcentracao: string
+  newIntervalo: number
+  justificativa: string
+  responsavel: string
+}
+
 export interface Patient {
   id: string
   nome: string
@@ -20,6 +34,7 @@ export interface Patient {
   intervaloAtual: number
   dataProximaAplicacao: string
   concentracaoDoseAtuais: string
+  protocolAdjustments?: ProtocolAdjustment[]
 }
 
 export interface Application {
@@ -46,6 +61,7 @@ interface PatientState {
   selectedPatient: Patient | null
   applications: Application[]
   setSelectedPatient: (patient: Patient | null) => void
+  addProtocolAdjustment: (adjustment: ProtocolAdjustment) => void
 }
 
 export const usePatientStore = create<PatientState>((set) => ({
@@ -166,4 +182,15 @@ export const usePatientStore = create<PatientState>((set) => ({
     // ══════ Agendamentos extras para calendário (sem duplicatas) ══════
   ],
   setSelectedPatient: (patient) => set({ selectedPatient: patient }),
+  addProtocolAdjustment: (adjustment) => set((s) => {
+    if (!s.selectedPatient) return s
+    return {
+      selectedPatient: {
+        ...s.selectedPatient,
+        concentracaoDoseAtuais: adjustment.newConcentracao,
+        intervaloAtual: adjustment.newIntervalo,
+        protocolAdjustments: [...(s.selectedPatient.protocolAdjustments || []), adjustment],
+      },
+    }
+  }),
 }))
