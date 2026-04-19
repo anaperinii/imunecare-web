@@ -7,7 +7,7 @@ import { Menu, X } from 'lucide-react'
 const navLinks = [
   { label: 'Funcionalidades', href: '#features' },
   { label: 'Sobre', href: '#about' },
-  { label: 'Automação Clínica', href: '#ai' },
+  { label: 'Preços', href: '#pricing' },
   { label: 'Depoimentos', href: '#testimonials' },
 ]
 
@@ -78,7 +78,7 @@ export function Header({ isAuthPage = false }: HeaderProps) {
             Log in
           </Link>
           <Link
-            to="/register"
+            to="/trial"
             className="px-4 py-1.5 rounded-full border-none bg-linear-to-br from-brand to-teal-400 text-white font-semibold text-[0.8rem] cursor-pointer transition-all duration-200 shadow-[0_2px_12px_rgba(20,184,166,0.3)] hover:-translate-y-px hover:shadow-[0_4px_20px_rgba(20,184,166,0.4)] no-underline"
           >
             Começar agora
@@ -132,7 +132,7 @@ export function Header({ isAuthPage = false }: HeaderProps) {
               Log in
             </Link>
             <Link
-              to="/register"
+              to="/trial"
               className="text-center px-4 py-2.5 rounded-full border-none bg-linear-to-br from-brand to-teal-400 text-white font-semibold text-sm shadow-[0_2px_12px_rgba(20,184,166,0.3)] no-underline"
             >
               Começar agora

@@ -6,6 +6,7 @@ import { AiSection } from '@/components/landing/ai-section'
 import { NumbersSection } from '@/components/landing/numbers-section'
 import { TestimonialsSection } from '@/components/landing/testimonials-section'
 import { TabsSection } from '@/components/landing/tabs-section'
+import { PricingSection } from '@/components/landing/pricing-section'
 import { CtaSection } from '@/components/landing/cta-section'
 import { Footer } from '@/components/landing/footer'
 import { useScrollReveal } from '@/lib/use-scroll-reveal'
@@ -21,6 +22,7 @@ export function LandingPage() {
       <SplitSection />
       <AiSection />
       <NumbersSection />
+      <PricingSection />
       <TestimonialsSection />
       <TabsSection />
       <CtaSection />

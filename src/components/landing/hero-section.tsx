@@ -27,14 +27,11 @@ export function HeroSection() {
         {/* CTAs */}
         <div className="flex gap-3 flex-wrap mb-10">
           <Link
-            to="/register"
-            className="px-6 py-2.5 rounded-full border-none bg-linear-to-br from-brand to-teal-400 text-white font-semibold text-[0.9rem] cursor-pointer transition-all duration-250 shadow-[0_4px_20px_rgba(20,184,166,0.35)] hover:-translate-y-0.5 hover:shadow-[0_8px_32px_rgba(20,184,166,0.4)] no-underline"
+            to="/trial"
+            className="px-6 py-2.5 rounded-full border-none bg-linear-to-br from-[#18C1CB] to-teal-400 text-white font-semibold text-[0.9rem] cursor-pointer transition-all duration-250 shadow-[0_4px_20px_rgba(24,193,203,0.35)] hover:-translate-y-0.5 hover:shadow-[0_8px_32px_rgba(24,193,203,0.4)] no-underline"
           >
-            Começar gratuitamente
+            Solicitar demonstração
           </Link>
-          <button className="px-6 py-2.5 rounded-full border-[1.5px] border-teal-300 bg-transparent text-teal-700 font-semibold text-[0.9rem] cursor-pointer transition-all duration-250 hover:bg-teal-50">
-            Ver demonstração
-          </button>
         </div>
 
         {/* Stats */}
