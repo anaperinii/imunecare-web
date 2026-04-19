@@ -1,10 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { SettingsPage } from '@/pages/settings-page'
 
 export const Route = createFileRoute('/settings')({
-  component: () => (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold">Configurações</h1>
-      <p className="text-(--text-muted) mt-2">Em breve</p>
-    </div>
-  ),
+  component: SettingsPage,
 })
