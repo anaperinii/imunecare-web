@@ -99,6 +99,7 @@ interface PatientState {
   addProtocolAdjustment: (adjustment: ProtocolAdjustment) => void
   inactivateImunoterapia: (inactivation: Inactivation) => void
   reactivateImunoterapia: (payload: { note: string; reactivatedBy: string; reactivateConcentracao: string; reactivateIntervalo: number; justificativa: string }) => void
+  recordEvolution: (payload: { realizada: Application; proxima: Application }) => void
 }
 
 const INACTIVATION_SEEDS: Record<string, Omit<Inactivation, 'id' | 'snapshotConcentracao' | 'snapshotIntervalo'>> = {
@@ -279,6 +280,20 @@ export const usePatientStore = create<PatientState>((set) => ({
   selectedPatient: null,
   applications: buildSeedApplications(),
   setSelectedPatient: (patient) => set({ selectedPatient: patient }),
+  recordEvolution: ({ realizada, proxima }) => set((s) => {
+    const filtered = s.applications.filter((a) =>
+      !(a.patientId === realizada.patientId && a.status === 'agendada')
+    )
+    return {
+      applications: [...filtered, realizada, proxima],
+      selectedPatient: s.selectedPatient && s.selectedPatient.id === realizada.patientId ? {
+        ...s.selectedPatient,
+        concentracaoDoseAtuais: realizada.dose,
+        intervaloAtual: proxima.ciclo.dias,
+        dataProximaAplicacao: proxima.data,
+      } : s.selectedPatient,
+    }
+  }),
   addProtocolAdjustment: (adjustment) => set((s) => {
     if (!s.selectedPatient) return s
     return {

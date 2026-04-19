@@ -2,7 +2,8 @@ import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { usePatientStore } from '@/store/patient-store'
 import { useImmunotherapiesStore } from '@/store/immunotherapies-store'
-import { useCan } from '@/store/user-store'
+import { useCan, useUserStore } from '@/store/user-store'
+import { useAuditStore } from '@/store/audit-store'
 import { Search, ChevronDown, ArrowLeft, ClipboardList, Syringe, CalendarDays, Info } from 'lucide-react'
 import { addDays, format, differenceInDays, parse } from 'date-fns'
 import { cn } from '@/lib/utils'
@@ -22,7 +23,9 @@ const RESPONSAVEIS_APLICACAO = [
 export function PatientEvolutionPage() {
   const navigate = useNavigate()
   const { patientId: preselectedId } = useSearch({ from: '/patient-evolution' })
-  const { setSelectedPatient: setStorePatient } = usePatientStore()
+  const { setSelectedPatient: setStorePatient, recordEvolution } = usePatientStore()
+  const currentUser = useUserStore((s) => s.current)
+  const logAccess = useAuditStore((s) => s.logAccess)
   const { immunotherapies } = useImmunotherapiesStore()
   const canEvolve = useCan('evolve_patient')
   useEffect(() => { if (!canEvolve) navigate({ to: '/immunotherapies' }) }, [canEvolve, navigate])
@@ -216,6 +219,18 @@ export function PatientEvolutionPage() {
     }
   }, [lastApp, selectedPatient, doseNumber])
 
+  const plannedNext = useMemo(() => {
+    if (!form.dataAplicacao || !form.intervaloProxima || !form.intervaloProxima.trim()) return null
+    const [y, m, d] = form.dataAplicacao.split('-')
+    if (!y || !m || !d) return null
+    const applicationDate = new Date(+y, +m - 1, +d)
+    if (isNaN(applicationDate.getTime())) return null
+    const intervalDays = parseInt(form.intervaloProxima.trim(), 10)
+    if (isNaN(intervalDays) || intervalDays <= 0) return null
+    const nextDate = addDays(applicationDate, intervalDays)
+    return { date: format(nextDate, 'dd/MM/yyyy'), interval: intervalDays, applicationDate }
+  }, [form.dataAplicacao, form.intervaloProxima])
+
   const treatmentTime = useMemo(() => {
     if (!selectedPatient) return null
     try {
@@ -257,6 +272,71 @@ export function PatientEvolutionPage() {
       }))
     }
     setStep((s) => (s + 1) as 0 | 1 | 2 | 3)
+  }
+
+  const handleSaveEvolution = () => {
+    if (!selectedPatient || !plannedNext) return
+    const [y, m, d] = form.dataAplicacao.split('-')
+    const pt = ['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO']
+    const dataRealizada = `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`
+    const mesRealizada = pt[parseInt(m, 10) - 1]
+    const volStr = form.volumeAplicado.replace('.', ',') + 'ml'
+    const doseStr = `${form.concentracao} - ${volStr}`
+    const interval = plannedNext.interval
+    const ciclo = interval === 7 ? 1 : interval === 14 ? 1 : interval === 21 ? 2 : interval === 28 ? 3 : 1
+    const nextDateParts = plannedNext.date.split('/')
+    const nextMonth = pt[parseInt(nextDateParts[1], 10) - 1]
+
+    const realizada = {
+      id: `evo-${Date.now()}-r`,
+      patientId: selectedPatient.id,
+      data: dataRealizada,
+      horaInicio: form.horaInicio,
+      horaFim: form.horaFim,
+      status: 'realizada' as const,
+      dose: doseStr,
+      ciclo: { numero: ciclo, dias: interval },
+      mes: mesRealizada,
+      ano: parseInt(y, 10),
+      volumeAplicado: volStr,
+      concentracaoExtrato: form.concentracao,
+      efeitoColateral: form.efeitoColateralPos,
+      efeitosRelatados: form.efeitoColateralPos === 'Sim' ? form.efeitosRelatadosPos : undefined,
+      necessidadeMedicacao: form.necessidadeMedicacaoPos,
+      medicacoes: form.necessidadeMedicacaoPos === 'Sim' ? form.medicacoesPos : undefined,
+      responsavel: form.responsavel,
+      notaResponsavel: form.notasPos || '-',
+    }
+
+    // Próxima dose = passo seguinte do protocolo SCIT a partir da dose que acabou de ser aplicada
+    const nextCalc = calculateNextDose(doseStr, interval)
+    const proxima = {
+      id: `evo-${Date.now()}-n`,
+      patientId: selectedPatient.id,
+      data: plannedNext.date,
+      horaInicio: form.horaInicio,
+      horaFim: form.horaFim,
+      status: 'agendada' as const,
+      dose: nextCalc.dose,
+      ciclo: { numero: ciclo, dias: nextCalc.interval },
+      mes: nextMonth,
+      ano: parseInt(nextDateParts[2], 10),
+    }
+
+    recordEvolution({ realizada, proxima })
+
+    logAccess({
+      userId: currentUser.id,
+      userName: currentUser.name,
+      userRole: currentUser.role,
+      userRegistration: currentUser.registration,
+      patientId: selectedPatient.id,
+      patientName: selectedPatient.nome,
+      action: 'apply_dose',
+      description: `Aplicou ${doseStr} em ${dataRealizada} (ciclo ${ciclo} · intervalo ${interval} dias) · responsável: ${form.responsavel}`,
+    })
+
+    navigate({ to: '/immunotherapies', search: { success: true, patientName: selectedPatient.nome } })
   }
 
   return (
@@ -729,7 +809,8 @@ export function PatientEvolutionPage() {
               <div className="flex items-center gap-2.5 bg-teal-50 border border-teal-200 rounded-lg px-3.5 py-3">
                 <CalendarDays size={15} className="text-teal-600 shrink-0" />
                 <p className="text-xs text-teal-800 leading-relaxed">
-                  Próxima dose agendada para <span className="font-bold">{nextDose?.date || '—'}</span> com base no protocolo vigente.
+                  Próxima dose agendada para <span className="font-bold">{plannedNext?.date || '—'}</span>
+                  {plannedNext && <> (intervalo de <span className="font-bold">{plannedNext.interval} dias</span> a partir da aplicação).</>}
                 </p>
               </div>
             </div>
@@ -752,7 +833,7 @@ export function PatientEvolutionPage() {
               Continuar
             </button>
           ) : (
-            <button onClick={() => navigate({ to: '/immunotherapies', search: { success: true, patientName: selectedPatient?.nome } })} className="h-8 px-4 rounded-lg bg-linear-to-br from-brand to-teal-400 text-white text-xs font-semibold hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(20,184,166,0.3)] transition-all">
+            <button onClick={handleSaveEvolution} className="h-8 px-4 rounded-lg bg-linear-to-br from-brand to-teal-400 text-white text-xs font-semibold hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(20,184,166,0.3)] transition-all">
               Salvar Evolução
             </button>
           )}
