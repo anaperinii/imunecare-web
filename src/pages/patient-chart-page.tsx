@@ -138,6 +138,7 @@ export function PatientChartPage() {
     }
   }, [patientId, selectedPatient, navigate, setSelectedPatient])
 
+
   const currentUser = useUserStore((s) => s.current)
   const logAccess = useAuditStore((s) => s.logAccess)
   const loggedAccessRef = useRef<string | null>(null)
@@ -615,7 +616,7 @@ export function PatientChartPage() {
           <div className="grid grid-cols-3 gap-3">
             {[
               { icon: Clock, label: 'Intervalo Atual', value: `${currentInterval} dias`, sub: null as string | null },
-              { icon: CalendarDays, label: 'Próxima Aplicação', value: nextDate, sub: nextCalc.dose },
+              { icon: CalendarDays, label: 'Próxima Aplicação', value: nextDate, sub: null },
               { icon: Droplet, label: 'Última Concentração - Volume', value: currentDose, sub: null },
             ].map((card) => {
               const Icon = card.icon
