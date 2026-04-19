@@ -5,6 +5,8 @@ import { cn } from '@/shared/lib/utils'
 import { useCan } from '@/features/user/user-store'
 import { useForm } from '@/shared/hooks/useForm'
 import { useImmunotherapiesStore, type Immunotherapy } from '@/features/immunotherapy/immunotherapies-store'
+import { useCustomTypesStore } from '@/features/immunotherapy/custom-types-store'
+import { PROFILES } from '@/features/user/user-store'
 import { validateExtrato } from '@/shared/lib/validators'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -88,6 +90,7 @@ export function AddImmunotherapyPage() {
   const navigate = useNavigate()
   const canAdd = useCan('add_immunotherapy')
   const addImmunotherapy = useImmunotherapiesStore((s) => s.addImmunotherapy)
+  const customTypes = useCustomTypesStore((s) => s.types)
   useEffect(() => { if (!canAdd) navigate({ to: '/immunotherapies' }) }, [canAdd, navigate])
 
   const handleFinish = () => {
@@ -234,7 +237,15 @@ export function AddImmunotherapyPage() {
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-(--text-muted) mb-1.5 block">Médico Responsável</label>
-                  <input placeholder="Nome do médico" value={form.medicoResponsavel} onChange={(e) => set('medicoResponsavel', e.target.value)} onBlur={() => touch('medicoResponsavel')} className={inputClass('medicoResponsavel')} />
+                  <div className="relative">
+                    <select value={form.medicoResponsavel} onChange={(e) => set('medicoResponsavel', e.target.value)} onBlur={() => touch('medicoResponsavel')} className={cn(inputClass('medicoResponsavel'), "appearance-none pr-8 cursor-pointer")}>
+                      <option value="" disabled>Selecione o médico</option>
+                      {PROFILES.filter((p) => p.role === 'medico').map((p) => (
+                        <option key={p.id} value={p.name}>{p.name} · {p.registration}</option>
+                      ))}
+                    </select>
+                    <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-(--text-muted) pointer-events-none" />
+                  </div>
                   <ErrorMsg field="medicoResponsavel" />
                 </div>
               </div>
@@ -250,13 +261,7 @@ export function AddImmunotherapyPage() {
                   <div className="relative">
                     <select value={form.tipo} onChange={(e) => set('tipo', e.target.value)} onBlur={() => touch('tipo')} className={cn(inputClass('tipo'), "appearance-none pr-8 cursor-pointer")}>
                       <option value="" disabled>Selecione o tipo</option>
-                      <option value="Ácaros">Ácaros</option>
-                      <option value="Gramíneas">Gramíneas</option>
-                      <option value="Cão e Gato">Cão e Gato</option>
-                      <option value="Cândida">Cândida</option>
-                      <option value="Herpes">Herpes</option>
-                      <option value="Fungos">Fungos</option>
-                      <option value="Insetos">Insetos</option>
+                      {customTypes.map((t) => <option key={t.id} value={t.label}>{t.label}</option>)}
                     </select>
                     <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-(--text-muted) pointer-events-none" />
                   </div>

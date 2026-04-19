@@ -1,6 +1,7 @@
 import { useMemo, useState, useEffect } from 'react'
 import { useNavigate, useSearch, Link } from '@tanstack/react-router'
 import { useImmunotherapiesStore } from '@/features/immunotherapy/immunotherapies-store'
+import { useCustomTypesStore } from '@/features/immunotherapy/custom-types-store'
 import { usePatientStore, seedInactivationsFor } from '@/features/patient/patient-store'
 import { useCan, useDoctorFilter } from '@/features/user/user-store'
 import {
@@ -61,9 +62,10 @@ export function ImmunotherapiesPage() {
 
   const [itemsPerPage, setItemsPerPage] = useState(10)
 
+  const customTypes = useCustomTypesStore((s) => s.types)
   const tipos = useMemo(() => {
-    return Array.from(new Set(immunotherapies.map((i) => i.tipo)))
-  }, [immunotherapies])
+    return Array.from(new Set([...immunotherapies.map((i) => i.tipo), ...customTypes.map((t) => t.label)]))
+  }, [immunotherapies, customTypes])
 
   const ciclos = useMemo(() => {
     return Array.from(new Set(immunotherapies.map((i) => i.cicloIntervalo.dias.toString()))).sort(

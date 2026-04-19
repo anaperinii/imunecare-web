@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
-import { ArrowLeft, Database, Bell, Server, ChevronDown, Calendar, ExternalLink, CheckCircle, Palette, Plus, X, Lock } from 'lucide-react'
+import { ArrowLeft, Database, Bell, Server, ChevronDown, Calendar, ExternalLink, CheckCircle, Palette, Plus, X, Lock, Syringe, Pencil, Trash2, Check } from 'lucide-react'
 import { cn } from '@/shared/lib/utils'
 import { useCan } from '@/features/user/user-store'
+import { useCustomTypesStore } from '@/features/immunotherapy/custom-types-store'
 
 const defaultEventColors = [
   { id: 'subcutanea', label: 'Subcutânea', color: '#14B8A6' },
@@ -24,6 +25,17 @@ export function AdvancedSettingsPage() {
   const [reminderWhatsapp, setReminderWhatsapp] = useState(true)
   const [reminderHours, setReminderHours] = useState('24')
   const [eventColors, setEventColors] = useState(defaultEventColors)
+
+  const customTypes = useCustomTypesStore((s) => s.types)
+  const addType = useCustomTypesStore((s) => s.add)
+  const updateType = useCustomTypesStore((s) => s.update)
+  const removeType = useCustomTypesStore((s) => s.remove)
+  const [newTypeLabel, setNewTypeLabel] = useState('')
+  const [editingTypeId, setEditingTypeId] = useState<string | null>(null)
+  const [editingTypeLabel, setEditingTypeLabel] = useState('')
+  const handleAddType = () => { if (newTypeLabel.trim()) { addType(newTypeLabel); setNewTypeLabel('') } }
+  const startEditType = (id: string, label: string) => { setEditingTypeId(id); setEditingTypeLabel(label) }
+  const saveEditType = () => { if (editingTypeId) { updateType(editingTypeId, editingTypeLabel); setEditingTypeId(null); setEditingTypeLabel('') } }
 
   const inputClass = "w-full h-9 rounded-lg border border-(--border-custom) bg-gray-50/60 px-3 text-xs appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#18C1CB]/40 focus:border-transparent transition-all"
 
@@ -277,6 +289,65 @@ export function AdvancedSettingsPage() {
                       Adicionar tipo de evento
                     </button>
                   </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Tipos de Imunoterapia */}
+            <div className="border border-(--border-custom) rounded-xl overflow-hidden">
+              <div className="px-4 py-3 border-b border-(--border-custom) bg-gray-50/50">
+                <h2 className="text-xs font-bold text-(--text)">Tipos de Imunoterapia</h2>
+              </div>
+              <div className="p-4 space-y-3">
+                <p className="text-[0.65rem] text-(--text-muted) leading-relaxed">Gerencie os tipos disponíveis ao cadastrar uma imunoterapia. Alterações refletem em toda a clínica.</p>
+                <div className="flex gap-2">
+                  <input
+                    value={newTypeLabel}
+                    onChange={(e) => setNewTypeLabel(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddType() } }}
+                    placeholder="Ex: Pólen, Pelos de Gato..."
+                    className="flex-1 h-9 rounded-lg border border-(--border-custom) bg-gray-50/60 px-3 text-xs placeholder:text-(--text-muted)/60 focus:outline-none focus:ring-2 focus:ring-[#18C1CB]/40 focus:border-transparent transition-all"
+                  />
+                  <button onClick={handleAddType} className="h-9 px-3 inline-flex items-center gap-1.5 rounded-lg bg-linear-to-br from-brand to-teal-400 text-white text-xs font-semibold hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(20,184,166,0.3)] transition-all cursor-pointer">
+                    <Plus size={13} />
+                    Adicionar
+                  </button>
+                </div>
+                <div className="space-y-1.5">
+                  {customTypes.map((t) => (
+                    <div key={t.id} className="flex items-center gap-2 px-3 py-2 rounded-lg border border-(--border-custom) bg-gray-50/40">
+                      <div className="flex h-6 w-6 items-center justify-center rounded-md bg-brand-50 shrink-0">
+                        <Syringe size={11} className="text-brand" />
+                      </div>
+                      {editingTypeId === t.id ? (
+                        <>
+                          <input
+                            value={editingTypeLabel}
+                            onChange={(e) => setEditingTypeLabel(e.target.value)}
+                            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); saveEditType() } }}
+                            autoFocus
+                            className="flex-1 h-7 rounded border border-brand bg-white px-2 text-xs focus:outline-none"
+                          />
+                          <button onClick={saveEditType} className="flex h-7 w-7 items-center justify-center rounded hover:bg-green-50 text-green-600 cursor-pointer">
+                            <Check size={14} />
+                          </button>
+                          <button onClick={() => setEditingTypeId(null)} className="flex h-7 w-7 items-center justify-center rounded hover:bg-gray-100 text-(--text-muted) cursor-pointer">
+                            <X size={14} />
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <span className="flex-1 text-xs font-medium text-(--text)">{t.label}</span>
+                          <button onClick={() => startEditType(t.id, t.label)} className="flex h-7 w-7 items-center justify-center rounded hover:bg-brand-50 text-(--text-muted) hover:text-brand cursor-pointer">
+                            <Pencil size={12} />
+                          </button>
+                          <button onClick={() => removeType(t.id)} className="flex h-7 w-7 items-center justify-center rounded hover:bg-red-50 text-(--text-muted) hover:text-red-500 cursor-pointer">
+                            <Trash2 size={12} />
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
