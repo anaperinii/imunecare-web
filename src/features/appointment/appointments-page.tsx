@@ -47,7 +47,6 @@ export function AppointmentsPage() {
   const [showToast, setShowToast] = useState(false)
   const [newApptInterval, setNewApptInterval] = useState('7')
   const [newApptIntervalJustificativa, setNewApptIntervalJustificativa] = useState('')
-  // In production, this would come from a settings store
   const googleConnected = true
   const [selectedApp, setSelectedApp] = useState<Application | null>(null)
 

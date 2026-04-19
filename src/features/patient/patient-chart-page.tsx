@@ -139,7 +139,6 @@ export function PatientChartPage() {
     outro: 'Outro',
   }
 
-  // Load patient if navigated directly
   useEffect(() => {
     if (!selectedPatient && patientId) {
       const { immunotherapies } = useImmunotherapiesStore.getState()
@@ -162,7 +161,6 @@ export function PatientChartPage() {
     }
   }, [patientId, selectedPatient, navigate, setSelectedPatient])
 
-  // RNE-021 — Auditoria: registra acesso ao prontuário uma vez por paciente+sessão
   const currentUser = useUserStore((s) => s.current)
   const logAccess = useAuditStore((s) => s.logAccess)
   const loggedAccessRef = useRef<string | null>(null)
@@ -197,7 +195,6 @@ export function PatientChartPage() {
     })[0]
   }, [patientApps])
 
-  // Início da indução = data da primeira aplicação realizada
   const inicioInducaoCalc = useMemo(() => {
     const realized = patientApps.filter((a) => a.status === 'realizada')
     if (!realized.length) return null
@@ -208,7 +205,6 @@ export function PatientChartPage() {
     return firstApp.data
   }, [patientApps])
 
-  // Início da manutenção = data da primeira aplicação realizada com dose meta (1:10 - 0,5ml)
   const inicioManutencaoCalc = useMemo(() => {
     const meta = patientApps.filter((a) => a.status === 'realizada' && a.dose === META_DOSE)
     if (!meta.length) return null
@@ -224,7 +220,6 @@ export function PatientChartPage() {
     ? `${lastRealized.concentracaoExtrato || lastRealized.dose.split(' - ')[0]} - ${lastRealized.volumeAplicado || lastRealized.dose.split(' - ')[1]}`
     : selectedPatient?.concentracaoDoseAtuais ?? '-'
 
-  // RNE-010: cálculo automático da próxima dose e intervalo
   const nextCalc = useMemo(() => calculateNextDose(currentDose, currentInterval), [currentDose, currentInterval])
 
   const nextDate = useMemo(() => {
@@ -256,7 +251,6 @@ export function PatientChartPage() {
     })
   }, [patientApps])
 
-  // Available months for filter
   const availableMonths = useMemo(() => {
     const set = new Map<string, string>()
     sortedApps.forEach((a) => {
@@ -292,7 +286,6 @@ export function PatientChartPage() {
     return sortedApps.filter((a) => `${a.ano}-${a.mes}` === monthFilter)
   }, [sortedApps, monthFilter])
 
-  // Group by month/year
   const grouped = useMemo(() => {
     const g: Record<string, Application[]> = {}
     filteredApps.forEach((a) => {
@@ -303,7 +296,6 @@ export function PatientChartPage() {
     return g
   }, [filteredApps])
 
-  // Calendar: map apps by date string dd/MM/yyyy
   const appsByDate = useMemo(() => {
     const m: Record<string, Application[]> = {}
     patientApps.forEach((a) => {
@@ -327,9 +319,6 @@ export function PatientChartPage() {
     return raw.charAt(0).toUpperCase() + raw.slice(1)
   })()
 
-  // Progress — protocolo SCIT (RNE-006/007/009)
-  // Indução: 1:10.000 (0,1→0,2→0,4→0,8) → 1:1.000 (0,1→0,2→0,4→0,8) → 1:100 (0,1→0,2→0,4→0,8) → 1:10 (0,1→0,2→0,4→0,5=meta)
-  // Manutenção: 1:10 — 0,5ml — intervalos 14→21→28 dias
   const inductionSteps = [
     { conc: '1:10.000', vols: ['0,1ml', '0,2ml', '0,4ml', '0,8ml'] },
     { conc: '1:1.000', vols: ['0,1ml', '0,2ml', '0,4ml', '0,8ml'] },
@@ -348,7 +337,6 @@ export function PatientChartPage() {
       return conc === sc && vol === sv
     })
   }, [currentDoseStr, allSteps])
-  // Se paciente em manutenção (intervalo > 7), progressão é 100%
   const isMaintenance = currentInterval > 7
   const progressPct = isMaintenance ? 100 : Math.round(((currentStepIndex >= 0 ? currentStepIndex : 0) + 1) / allSteps.length * 100)
 

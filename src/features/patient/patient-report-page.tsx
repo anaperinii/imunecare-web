@@ -82,7 +82,6 @@ export function PatientReportPage() {
     })
   }, [patient, applications])
 
-  // RNE-021 — Trilha de acessos ao prontuário (LGPD Art. 19)
   const auditLogs = useAuditStore((s) => s.logs)
   const patientAccessLog = useMemo(() => {
     if (!patient) return []
@@ -169,7 +168,6 @@ export function PatientReportPage() {
       lines.push(`"Concentração atual","${d.patient.concentracaoDoseAtuais.split(' - ')[0]}"`)
       lines.push(`"Intervalo","${d.patient.intervaloAtual} dias"`)
     }
-    // Add BOM for Excel UTF-8 recognition
     downloadFile('\ufeff' + lines.join('\n'), `relatorio_${patient!.nome.replace(/\s+/g, '_').toLowerCase()}_${format(new Date(), 'yyyyMMdd_HHmm')}.csv`, 'text/csv;charset=utf-8')
   }
 
@@ -219,7 +217,6 @@ export function PatientReportPage() {
       }
     }
 
-    // Header
     doc.setFillColor(24, 193, 203)
     doc.rect(0, 0, pageW, 2, 'F')
     doc.setFontSize(16)
@@ -294,7 +291,6 @@ export function PatientReportPage() {
 
     if (selectedSections.includes('applications')) {
       addSectionTitle(`Histórico de Aplicações (${d.realizedApps.length})`)
-      // Table header
       ensureSpace(8)
       doc.setFillColor(245, 250, 250)
       doc.rect(margin, y, pageW - margin * 2, 6, 'F')
@@ -374,7 +370,6 @@ export function PatientReportPage() {
       y += 22
     }
 
-    // Footer on all pages
     const totalPages = doc.getNumberOfPages()
     for (let i = 1; i <= totalPages; i++) {
       doc.setPage(i)
@@ -537,7 +532,6 @@ export function PatientReportPage() {
                         metaAtingida: patient.metaAtingida, dataProximaAplicacao: patient.dataProximaAplicacao,
                       },
                       aplicacoes: patientApps,
-                      // RNE-021 — Trilha de acessos e operações (LGPD Art. 19)
                       historicoDeAcessos: patientAccessLog.map((l) => ({
                         data: l.timestamp,
                         profissional: l.userName,

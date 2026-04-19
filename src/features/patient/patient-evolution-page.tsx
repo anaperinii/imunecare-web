@@ -13,7 +13,6 @@ import { useForm } from '@/shared/hooks/useForm'
 
 const stepLabels = ['Paciente', 'Pré-Aplicação', 'Pós-Aplicação', 'Revisão dos Dados']
 
-// Equipe de execução habilitada para registrar aplicações (enfermeiros + técnicos em enfermagem ativos)
 const RESPONSAVEIS_APLICACAO = [
   { name: 'Jaqueline Oliveira', role: 'Enfermeira' },
   { name: 'Carlos Eduardo Silva', role: 'Enfermeiro' },
@@ -38,7 +37,6 @@ export function PatientEvolutionPage() {
   const [highlightedIndex, setHighlightedIndex] = useState(-1)
   const suggestionsRef = useRef<HTMLDivElement>(null)
 
-  // Auto-select patient if coming from patient chart
   useEffect(() => {
     if (preselectedId && !selectedPatient) {
       const found = immunotherapies.find((i) => i.id === preselectedId)
@@ -69,13 +67,11 @@ export function PatientEvolutionPage() {
       ajusteReacaoJustificativa: '',
     },
   })
-  // Aliases preservam a API usada no JSX (form.xxx, errors[..], touched[..], set(), touch())
   const form = formState.values
   const errors = formState.errors
   const touched = formState.touched
   const touch = formState.touch
 
-  // RNE-013: janela de observação pós-aplicação
   function addMinutesToTime(time: string, minutes: number): string {
     const parts = time.split(':')
     if (parts.length !== 2) return ''
@@ -89,8 +85,6 @@ export function PatientEvolutionPage() {
   }
 
   const set = <K extends keyof EvolutionForm>(field: K, value: EvolutionForm[K]) => {
-    // RNE-013: ao preencher hora de início, sugerir hora fim = início + 30min
-    // se hora fim ainda não foi preenchida. Usuário pode editar livremente depois.
     if (field === 'horaInicio' && typeof value === 'string' && value && !formState.values.horaFim) {
       formState.patch({ horaInicio: value, horaFim: addMinutesToTime(value, 30) })
       return
@@ -115,7 +109,6 @@ export function PatientEvolutionPage() {
     if (form.necessidadeMedicacao === 'Sim' && !form.medicacoes.trim()) e.medicacoes = 'Informe as medicações administradas'
     formState.setErrors(e)
     return Object.keys(e).length === 0
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form])
 
   const validateStep2 = useCallback((): boolean => {
@@ -135,12 +128,10 @@ export function PatientEvolutionPage() {
     if (!form.responsavel.trim()) e.responsavel = 'Responsável é obrigatório'
     if (form.efeitoColateralPos === 'Sim' && !form.efeitosRelatadosPos.trim()) e.efeitosRelatadosPos = 'Descreva os efeitos colaterais'
     if (form.necessidadeMedicacaoPos === 'Sim' && !form.medicacoesPos.trim()) e.medicacoesPos = 'Informe as medicações'
-    // RF-013 — ajuste obrigatório quando há reação + medicação
     if (form.efeitoColateralPos === 'Sim' && form.necessidadeMedicacaoPos === 'Sim' && !form.ajusteReacao) e.ajusteReacao = 'Selecione a conduta para o protocolo'
     if (form.ajusteReacao === 'manter' && !form.ajusteReacaoJustificativa.trim()) e.ajusteReacaoJustificativa = 'Justifique por que manter o protocolo'
     formState.setErrors(e)
     return Object.keys(e).length === 0
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form])
 
   const filtered = useMemo(() => {
@@ -207,7 +198,6 @@ export function PatientEvolutionPage() {
     return applications.filter((a) => a.status === 'realizada' && a.patientId === selectedPatient.id).length
   }, [selectedPatient, applications])
 
-  // RNE-010: cálculo automático da próxima dose a partir do protocolo SCIT
   const nextDose = useMemo(() => {
     if (!lastApp || !selectedPatient) return null
     const [d, m, y] = lastApp.data.split('/')
@@ -226,8 +216,6 @@ export function PatientEvolutionPage() {
     }
   }, [lastApp, selectedPatient, doseNumber])
 
-  // Próxima dose calculada a partir dos dados preenchidos pelo usuário no formulário
-  // (o que de fato vai ser agendado ao salvar). Usada na tela de revisão.
   const plannedNext = useMemo(() => {
     if (!form.dataAplicacao || !form.intervaloProxima || !form.intervaloProxima.trim()) return null
     const [y, m, d] = form.dataAplicacao.split('-')
@@ -270,7 +258,6 @@ export function PatientEvolutionPage() {
     if (step === 0 && (!selectedPatient || selectedPatient.status === 'inativo')) return
     if (step === 1 && !validateStep1()) return
     if (step === 2 && !validateStep2()) return
-    // RNE-010: ao avançar para Pós-Aplicação, pré-preencher sugestão do protocolo
     if (step === 1 && nextDose) {
       const p = formState.values
       formState.patch({
@@ -283,7 +270,6 @@ export function PatientEvolutionPage() {
     setStep((s) => (s + 1) as 0 | 1 | 2 | 3)
   }
 
-  // Persiste a evolução: registra a aplicação realizada + agenda a próxima + loga auditoria
   const handleSaveEvolution = () => {
     if (!selectedPatient || !plannedNext) return
     const [y, m, d] = form.dataAplicacao.split('-')
@@ -318,7 +304,6 @@ export function PatientEvolutionPage() {
       notaResponsavel: form.notasPos || '-',
     }
 
-    // Próxima dose = passo seguinte do protocolo SCIT a partir da dose que acabou de ser aplicada
     const nextCalc = calculateNextDose(doseStr, interval)
     const proxima = {
       id: `evo-${Date.now()}-n`,
@@ -335,7 +320,6 @@ export function PatientEvolutionPage() {
 
     recordEvolution({ realizada, proxima })
 
-    // Auditoria: aplicação realizada + agendamento
     logAccess({
       userId: currentUser.id,
       userName: currentUser.name,

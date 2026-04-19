@@ -9,7 +9,6 @@ import { ptBR } from 'date-fns/locale'
 
 const stepLabels = ['Dados do Paciente', 'Dados da Imunoterapia', 'Revisão dos Dados']
 
-// --- Formatters ---
 function formatCPF(value: string): string {
   const digits = value.replace(/\D/g, '').slice(0, 11)
   if (digits.length <= 3) return digits
@@ -49,7 +48,6 @@ function formatVolume(value: string): string {
   return cleaned
 }
 
-// --- Validators ---
 function validateCPF(cpf: string): boolean {
   const digits = cpf.replace(/\D/g, '')
   if (digits.length !== 11) return false
@@ -120,7 +118,6 @@ export function AddImmunotherapyPage() {
     if (!form.medicoResponsavel.trim()) e.medicoResponsavel = 'Médico responsável é obrigatório'
     formState.setErrors(e)
     return Object.keys(e).length === 0
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form])
 
   const validateStep2 = useCallback((): boolean => {
@@ -135,7 +132,6 @@ export function AddImmunotherapyPage() {
     else if (!validateVolume(form.metaVolume)) e.metaVolume = 'Volume inválido'
     formState.setErrors(e)
     return Object.keys(e).length === 0
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form])
 
   const inputClass = (field?: keyof ImmForm) => cn(

@@ -22,7 +22,6 @@ const chartOptions = [
   { id: 'volume', label: 'Volume vs Concentração' },
 ]
 
-// Mesmas cores e dados do dashboard
 const CONC_COLORS: Record<string, string> = { '1:10.000': '#B6F2EC', '1:1.000': '#2CD3C1', '1:100': '#18C1CB', '1:10': '#0E99A3' }
 const PHASE_COLORS = { 'Indução': '#18C1CB', 'Manutenção': '#A78BFA' }
 const STATUS_COLORS = { 'Ativas': '#2CD3C1', 'Interrompidas': '#F4845F', 'Concluídas': '#22DD44' }
@@ -58,7 +57,6 @@ export function ExportReportPage() {
   const [consentimento, setConsentimento] = useState(false)
   const [showExportModal, setShowExportModal] = useState(false)
 
-  // Escopo: aplica modalidade + filtro de médico (mesma regra do dashboard)
   const filtered = useMemo(() => {
     const mod = modality === 'sub' ? 'subcutânea' : 'sublingual'
     return allImmunotherapies.filter((i) => {

@@ -10,7 +10,6 @@ import {
   LineChart, Line,
 } from 'recharts'
 
-// Concentrações: escala teal (claro → escuro)
 const CONC_COLORS: Record<string, string> = {
   '1:10.000': '#B6F2EC',
   '1:1.000': '#2CD3C1',
@@ -18,13 +17,10 @@ const CONC_COLORS: Record<string, string> = {
   '1:10': '#0E99A3',
 }
 
-// Fases: teal vs violeta
 const PHASE_COLORS = { 'Indução': '#18C1CB', 'Manutenção': '#A78BFA' }
 
-// Status: verde-água, salmão alaranjado, rosa
 const STATUS_COLORS = { 'Ativas': '#2CD3C1', 'Interrompidas': '#F4845F', 'Concluídas': '#22DD44' }
 
-// Tipos por imunoterapia: paleta fria
 const TYPE_COLORS = ['#0E99A3', '#18C1CB', '#2CD3C1', '#B6F2EC', '#3F98AF']
 
 export function DashboardPage() {
@@ -45,17 +41,14 @@ export function DashboardPage() {
   const [mesFilter, setMesFilter] = useState('Todos')
   const [anoFilter, setAnoFilter] = useState(new Date().getFullYear().toString())
 
-  // Card-level filters
   const [concCardFilter, setConcCardFilter] = useState('Todos')
   const [phaseCardFilter, setPhaseCardFilter] = useState('Todos')
   const [statusCardFilter, setStatusCardFilter] = useState('Todos')
   const [typeCardFilter, setTypeCardFilter] = useState('Todos')
   const [volCardFilter, setVolCardFilter] = useState('Todos')
 
-  // Tipos disponíveis
   const tipos = useMemo(() => Array.from(new Set(immunotherapies.map((i) => i.tipo))), [immunotherapies])
 
-  // Filter by modality + tipo
   const filtered = useMemo(() => {
     const mod = modality === 'sub' ? 'subcutânea' : 'sublingual'
     return immunotherapies.filter((i) => {
@@ -65,14 +58,12 @@ export function DashboardPage() {
     })
   }, [immunotherapies, modality, tipoFilter])
 
-  // Stats — apenas pacientes ativos (inativos não entram nas métricas clínicas ativas)
   const activeFiltered = useMemo(() => filtered.filter((i) => i.status === 'ativo'), [filtered])
   const inactiveFiltered = useMemo(() => filtered.filter((i) => i.status === 'inativo'), [filtered])
   const totalPatients = activeFiltered.length
   const induction = activeFiltered.filter((i) => i.cicloIntervalo.dias === 7).length
   const maintenance = totalPatients - induction
 
-  // Pie: concentrations
   const concData = useMemo(() => {
     const counts: Record<string, number> = {}
     activeFiltered.forEach((i) => {
@@ -82,7 +73,6 @@ export function DashboardPage() {
     return Object.entries(counts).map(([name, value]) => ({ name, value }))
   }, [activeFiltered])
 
-  // Bar: phases by month
   const phaseData = [
     { month: 'Jan', Indução: 5, Manutenção: 2 },
     { month: 'Fev', Indução: 6, Manutenção: 2 },
@@ -90,7 +80,6 @@ export function DashboardPage() {
     { month: 'Abr', Indução: induction, Manutenção: maintenance },
   ]
 
-  // Line: status over time
   const statusData = [
     { month: 'Jan', Ativas: 6, Interrompidas: 1, Concluídas: 0 },
     { month: 'Fev', Ativas: 7, Interrompidas: 1, Concluídas: 1 },
@@ -98,7 +87,6 @@ export function DashboardPage() {
     { month: 'Abr', Ativas: totalPatients, Interrompidas: inactiveFiltered.length, Concluídas: 0 },
   ]
 
-  // Top types
   const allTypes = ['Gramíneas', 'Ácaros', 'Cão e Gato', 'Cândida', 'Herpes']
   const typeData = useMemo(() => {
     const counts: Record<string, number> = {}
