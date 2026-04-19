@@ -22,6 +22,7 @@ import { Route as PatientEvolutionRouteImport } from './routes/patient-evolution
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ImmunotherapiesRouteImport } from './routes/immunotherapies'
 import { Route as HelpRouteImport } from './routes/help'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as ExportReportRouteImport } from './routes/export-report'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AppointmentsRouteImport } from './routes/appointments'
@@ -97,6 +98,11 @@ const HelpRoute = HelpRouteImport.update({
   path: '/help',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ExportReportRoute = ExportReportRouteImport.update({
   id: '/export-report',
   path: '/export-report',
@@ -152,6 +158,7 @@ export interface FileRoutesByFullPath {
   '/appointments': typeof AppointmentsRoute
   '/dashboard': typeof DashboardRoute
   '/export-report': typeof ExportReportRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/help': typeof HelpRoute
   '/immunotherapies': typeof ImmunotherapiesRoute
   '/login': typeof LoginRoute
@@ -176,6 +183,7 @@ export interface FileRoutesByTo {
   '/appointments': typeof AppointmentsRoute
   '/dashboard': typeof DashboardRoute
   '/export-report': typeof ExportReportRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/help': typeof HelpRoute
   '/immunotherapies': typeof ImmunotherapiesRoute
   '/login': typeof LoginRoute
@@ -201,6 +209,7 @@ export interface FileRoutesById {
   '/appointments': typeof AppointmentsRoute
   '/dashboard': typeof DashboardRoute
   '/export-report': typeof ExportReportRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/help': typeof HelpRoute
   '/immunotherapies': typeof ImmunotherapiesRoute
   '/login': typeof LoginRoute
@@ -227,6 +236,7 @@ export interface FileRouteTypes {
     | '/appointments'
     | '/dashboard'
     | '/export-report'
+    | '/forgot-password'
     | '/help'
     | '/immunotherapies'
     | '/login'
@@ -251,6 +261,7 @@ export interface FileRouteTypes {
     | '/appointments'
     | '/dashboard'
     | '/export-report'
+    | '/forgot-password'
     | '/help'
     | '/immunotherapies'
     | '/login'
@@ -275,6 +286,7 @@ export interface FileRouteTypes {
     | '/appointments'
     | '/dashboard'
     | '/export-report'
+    | '/forgot-password'
     | '/help'
     | '/immunotherapies'
     | '/login'
@@ -300,6 +312,7 @@ export interface RootRouteChildren {
   AppointmentsRoute: typeof AppointmentsRoute
   DashboardRoute: typeof DashboardRoute
   ExportReportRoute: typeof ExportReportRoute
+  ForgotPasswordRoute: typeof ForgotPasswordRoute
   HelpRoute: typeof HelpRoute
   ImmunotherapiesRoute: typeof ImmunotherapiesRoute
   LoginRoute: typeof LoginRoute
@@ -409,6 +422,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HelpRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/export-report': {
       id: '/export-report'
       path: '/export-report'
@@ -484,6 +504,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppointmentsRoute: AppointmentsRoute,
   DashboardRoute: DashboardRoute,
   ExportReportRoute: ExportReportRoute,
+  ForgotPasswordRoute: ForgotPasswordRoute,
   HelpRoute: HelpRoute,
   ImmunotherapiesRoute: ImmunotherapiesRoute,
   LoginRoute: LoginRoute,

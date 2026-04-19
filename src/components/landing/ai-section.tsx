@@ -25,7 +25,7 @@ export function AiSection() {
           <span className="inline-block text-[0.75rem] font-bold tracking-[2px] uppercase bg-white/15 border border-white/20 text-white px-4 py-1.5 rounded-full mb-4">
             Automação Clínica
           </span>
-          <h2 className="text-[clamp(1.75rem,3.5vw,2.75rem)] font-extrabold tracking-[-1px] leading-[1.15] max-w-130 mb-4 text-white">
+          <h2 className="text-[clamp(1.4rem,2.8vw,2.1rem)] font-extrabold tracking-[-0.5px] leading-[1.15] max-w-130 mb-4 text-white">
             Automação inteligente para alergistas
           </h2>
           <p className="text-base text-white/70 max-w-130 leading-[1.7] mb-10">

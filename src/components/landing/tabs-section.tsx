@@ -50,7 +50,7 @@ export function TabsSection() {
         <span className="inline-block text-[0.75rem] font-bold tracking-[2px] uppercase text-teal-600 bg-white border border-teal-200 px-4 py-1.5 rounded-full mb-4">
           Aprofunde-se
         </span>
-        <h2 className="text-[clamp(1.75rem,3.5vw,2.75rem)] font-extrabold tracking-[-1px] leading-[1.15] mx-auto">
+        <h2 className="text-[clamp(1.4rem,2.8vw,2.1rem)] font-extrabold tracking-[-0.5px] leading-[1.15] mx-auto">
           Projetado para o fluxo clínico real
         </h2>
         <p className="text-base text-(--text-muted) mt-3 mx-auto leading-[1.7]">

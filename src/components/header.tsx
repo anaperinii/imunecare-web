@@ -46,7 +46,7 @@ export function Header({ isAuthPage = false }: HeaderProps) {
         )}
       >
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2 no-underline">
+        <Link to="/" className="flex items-center gap-2 no-underline" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
           <img src={imunecareLogo} alt="ImuneCare" className="w-7 h-7 rounded-md" />
           <span className="text-xl font-extrabold tracking-[-0.5px] gradient-text">
             ImuneCare

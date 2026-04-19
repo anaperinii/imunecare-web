@@ -15,8 +15,8 @@ export function HeroSection() {
         </div>
 
         {/* Heading */}
-        <h1 className="text-[clamp(2.2rem,4.5vw,3.6rem)] font-extrabold leading-[1.1] tracking-[-1.5px] mb-5 bg-[linear-gradient(150deg,var(--text)_0%,var(--color-teal-800)_60%,var(--color-cyan-600)_100%)] bg-clip-text [-webkit-background-clip:text] [-webkit-text-fill-color:transparent]">
-          Centralize e otimize a gestão de imunoterapias alérgicas
+        <h1 className="text-[clamp(1.8rem,3.5vw,2.8rem)] font-extrabold leading-[1.1] tracking-[-1px] mb-5 bg-[linear-gradient(150deg,var(--text)_0%,var(--color-teal-800)_60%,var(--color-cyan-600)_100%)] bg-clip-text [-webkit-background-clip:text] [-webkit-text-fill-color:transparent]">
+          Centralize a gestão de imunoterapias alérgicas
         </h1>
 
         {/* Subtitle */}
@@ -28,7 +28,7 @@ export function HeroSection() {
         <div className="flex gap-3 flex-wrap mb-10">
           <Link
             to="/trial"
-            className="px-6 py-2.5 rounded-full border-none bg-linear-to-br from-[#18C1CB] to-teal-400 text-white font-semibold text-[0.9rem] cursor-pointer transition-all duration-250 shadow-[0_4px_20px_rgba(24,193,203,0.35)] hover:-translate-y-0.5 hover:shadow-[0_8px_32px_rgba(24,193,203,0.4)] no-underline"
+            className="px-6 py-2.5 rounded-full border-none bg-linear-to-br from-brand to-teal-400 text-white font-semibold text-[0.9rem] cursor-pointer transition-all duration-250 shadow-[0_4px_20px_rgba(24,193,203,0.35)] hover:-translate-y-0.5 hover:shadow-[0_8px_32px_rgba(24,193,203,0.4)] no-underline"
           >
             Solicitar demonstração
           </Link>
