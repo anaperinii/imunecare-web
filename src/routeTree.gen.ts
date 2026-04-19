@@ -17,6 +17,7 @@ import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PlansRouteImport } from './routes/plans'
 import { Route as PersonalizationRouteImport } from './routes/personalization'
+import { Route as PatientReportRouteImport } from './routes/patient-report'
 import { Route as PatientEvolutionRouteImport } from './routes/patient-evolution'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ImmunotherapiesRouteImport } from './routes/immunotherapies'
@@ -69,6 +70,11 @@ const PlansRoute = PlansRouteImport.update({
 const PersonalizationRoute = PersonalizationRouteImport.update({
   id: '/personalization',
   path: '/personalization',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PatientReportRoute = PatientReportRouteImport.update({
+  id: '/patient-report',
+  path: '/patient-report',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PatientEvolutionRoute = PatientEvolutionRouteImport.update({
@@ -150,6 +156,7 @@ export interface FileRoutesByFullPath {
   '/immunotherapies': typeof ImmunotherapiesRoute
   '/login': typeof LoginRoute
   '/patient-evolution': typeof PatientEvolutionRoute
+  '/patient-report': typeof PatientReportRoute
   '/personalization': typeof PersonalizationRoute
   '/plans': typeof PlansRoute
   '/profile': typeof ProfileRoute
@@ -173,6 +180,7 @@ export interface FileRoutesByTo {
   '/immunotherapies': typeof ImmunotherapiesRoute
   '/login': typeof LoginRoute
   '/patient-evolution': typeof PatientEvolutionRoute
+  '/patient-report': typeof PatientReportRoute
   '/personalization': typeof PersonalizationRoute
   '/plans': typeof PlansRoute
   '/profile': typeof ProfileRoute
@@ -197,6 +205,7 @@ export interface FileRoutesById {
   '/immunotherapies': typeof ImmunotherapiesRoute
   '/login': typeof LoginRoute
   '/patient-evolution': typeof PatientEvolutionRoute
+  '/patient-report': typeof PatientReportRoute
   '/personalization': typeof PersonalizationRoute
   '/plans': typeof PlansRoute
   '/profile': typeof ProfileRoute
@@ -222,6 +231,7 @@ export interface FileRouteTypes {
     | '/immunotherapies'
     | '/login'
     | '/patient-evolution'
+    | '/patient-report'
     | '/personalization'
     | '/plans'
     | '/profile'
@@ -245,6 +255,7 @@ export interface FileRouteTypes {
     | '/immunotherapies'
     | '/login'
     | '/patient-evolution'
+    | '/patient-report'
     | '/personalization'
     | '/plans'
     | '/profile'
@@ -268,6 +279,7 @@ export interface FileRouteTypes {
     | '/immunotherapies'
     | '/login'
     | '/patient-evolution'
+    | '/patient-report'
     | '/personalization'
     | '/plans'
     | '/profile'
@@ -292,6 +304,7 @@ export interface RootRouteChildren {
   ImmunotherapiesRoute: typeof ImmunotherapiesRoute
   LoginRoute: typeof LoginRoute
   PatientEvolutionRoute: typeof PatientEvolutionRoute
+  PatientReportRoute: typeof PatientReportRoute
   PersonalizationRoute: typeof PersonalizationRoute
   PlansRoute: typeof PlansRoute
   ProfileRoute: typeof ProfileRoute
@@ -359,6 +372,13 @@ declare module '@tanstack/react-router' {
       path: '/personalization'
       fullPath: '/personalization'
       preLoaderRoute: typeof PersonalizationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/patient-report': {
+      id: '/patient-report'
+      path: '/patient-report'
+      fullPath: '/patient-report'
+      preLoaderRoute: typeof PatientReportRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/patient-evolution': {
@@ -468,6 +488,7 @@ const rootRouteChildren: RootRouteChildren = {
   ImmunotherapiesRoute: ImmunotherapiesRoute,
   LoginRoute: LoginRoute,
   PatientEvolutionRoute: PatientEvolutionRoute,
+  PatientReportRoute: PatientReportRoute,
   PersonalizationRoute: PersonalizationRoute,
   PlansRoute: PlansRoute,
   ProfileRoute: ProfileRoute,
