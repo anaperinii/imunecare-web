@@ -268,11 +268,11 @@ export function PatientChartPage() {
                   className="rounded-xl p-3.5 flex items-center gap-3 backdrop-blur-xl border border-white/60 shadow-[inset_0_1px_2px_rgba(255,255,255,0.7),inset_0_-1px_1px_rgba(0,0,0,0.03),0_4px_16px_rgba(0,0,0,0.05)] relative overflow-hidden"
                   style={{ backgroundColor: 'white' }}
                 >
-                  <svg className="absolute bottom-0 left-0 w-full h-full opacity-35" viewBox="0 0 200 40" preserveAspectRatio="none">
+                  <svg className="absolute bottom-0 left-0 w-full h-full opacity-95" viewBox="0 0 200 40" preserveAspectRatio="none">
                     <path d={card.wave} fill="#0d9488" />
                     <path d={card.wave2} fill="#14b8a6" />
                   </svg>
-                  <div className="absolute inset-0 bg-white/20 backdrop-blur-[1px]" />
+                  <div className="absolute inset-0 bg-white/50 backdrop-blur-[3px]" />
                   <Icon size={24} strokeWidth={2} className="text-teal-600 shrink-0 relative z-10" />
                   <div className="min-w-0 relative z-10">
                     <div className="text-xs font-medium text-(--text-muted)">{card.label}</div>
