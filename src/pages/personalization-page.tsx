@@ -35,9 +35,9 @@ export function PersonalizationPage() {
                     <button
                       key={t.id}
                       onClick={() => setTheme(t.id)}
-                      className={cn("rounded-lg border p-3 text-center transition-all cursor-pointer", theme === t.id ? "border-[#18C1CB] shadow-[0_0_0_1px_#18C1CB]" : "border-(--border-custom) hover:border-gray-300")}
+                      className={cn("rounded-lg border p-3 text-center transition-all cursor-pointer", theme === t.id ? "border-brand shadow-[0_0_0_1px_#18C1CB]" : "border-(--border-custom) hover:border-gray-300")}
                     >
-                      <div className={cn("h-12 rounded-md mb-2 mx-auto w-full", t.preview, theme === t.id ? "border-[#18C1CB]" : "border-(--border-custom)")} />
+                      <div className={cn("h-12 rounded-md mb-2 mx-auto w-full", t.preview, theme === t.id ? "border-brand" : "border-(--border-custom)")} />
                       <span className="text-xs font-medium text-(--text)">{t.label}</span>
                     </button>
                   ))}
@@ -61,7 +61,7 @@ export function PersonalizationPage() {
                     <button
                       key={d.id}
                       onClick={() => setDensity(d.id)}
-                      className={cn("rounded-lg border p-3 text-left transition-all cursor-pointer", density === d.id ? "border-[#18C1CB] bg-[#E6F9FA]/30" : "border-(--border-custom) hover:border-gray-300")}
+                      className={cn("rounded-lg border p-3 text-left transition-all cursor-pointer", density === d.id ? "border-brand bg-brand-50/30" : "border-(--border-custom) hover:border-gray-300")}
                     >
                       <div className="text-xs font-semibold text-(--text)">{d.label}</div>
                       <div className="text-[0.6rem] text-(--text-muted) mt-0.5">{d.desc}</div>
@@ -80,7 +80,7 @@ export function PersonalizationPage() {
               <div className="p-4">
                 <div className="flex items-center gap-4">
                   <span className="text-[0.7rem] text-(--text-muted)">A</span>
-                  <input type="range" min="12" max="18" defaultValue="14" className="flex-1 accent-[#18C1CB] cursor-pointer" />
+                  <input type="range" min="12" max="18" defaultValue="14" className="flex-1 accent-brand cursor-pointer" />
                   <span className="text-base text-(--text-muted)">A</span>
                 </div>
               </div>
