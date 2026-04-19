@@ -3,6 +3,8 @@ import { cn } from '@/lib/utils'
 import { useState, useRef, useEffect } from 'react'
 import { usePatientStore } from '@/store/patient-store'
 import { useNotificationsStore, type Notification } from '@/store/notifications-store'
+import { formatDistanceToNow } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
 import imunecareLogo from '@/assets/imunecare-logo.png'
 import {
   ChevronLeft,
@@ -30,10 +32,12 @@ const menuItems = [
 ]
 
 const typeConfig: Record<Notification['type'], { color: string; bg: string; label: string }> = {
-  appointment: { color: 'text-brand', bg: 'bg-teal-50', label: 'Agendamento' },
-  alert: { color: 'text-amber-600', bg: 'bg-amber-50', label: 'Alerta' },
-  protocol: { color: 'text-violet-600', bg: 'bg-violet-50', label: 'Protocolo' },
-  system: { color: 'text-gray-500', bg: 'bg-gray-100', label: 'Sistema' },
+  upcoming_application: { color: 'text-brand', bg: 'bg-teal-50', label: 'Aplicação' },
+  missed_appointment: { color: 'text-red-600', bg: 'bg-red-50', label: 'Falta' },
+  adverse_reaction: { color: 'text-amber-600', bg: 'bg-amber-50', label: 'Reação' },
+  protocol_milestone: { color: 'text-violet-600', bg: 'bg-violet-50', label: 'Protocolo' },
+  patient_inactivity: { color: 'text-orange-600', bg: 'bg-orange-50', label: 'Inatividade' },
+  system_alert: { color: 'text-gray-500', bg: 'bg-gray-100', label: 'Sistema' },
 }
 
 export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
@@ -200,7 +204,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
                             <div className={cn("flex-1 min-w-0", n.read && "ml-4")}>
                               <div className="flex items-center gap-2 mb-0.5">
                                 <span className={cn("text-[0.55rem] font-semibold px-1.5 py-px rounded-full", tc.bg, tc.color)}>{tc.label}</span>
-                                <span className="text-[0.6rem] text-(--text-muted)">{n.time}</span>
+                                <span className="text-[0.6rem] text-(--text-muted)">{formatDistanceToNow(n.timestamp, { locale: ptBR, addSuffix: true })}</span>
                               </div>
                               <div className="text-xs font-semibold text-(--text) truncate">{n.title}</div>
                               <div className="text-[0.65rem] text-(--text-muted) mt-0.5 leading-relaxed line-clamp-2">{n.message}</div>
@@ -210,6 +214,12 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
                       )
                     })
                   )}
+                </div>
+                <div className="border-t border-(--border-custom) px-3.5 py-2">
+                  <Link to="/notifications" onClick={() => setShowNotifications(false)} className="text-[0.65rem] font-semibold text-brand hover:underline flex items-center justify-center gap-1 no-underline">
+                    Ver todas as notificações
+                    <ChevronRight size={11} />
+                  </Link>
                 </div>
               </div>
             </div>
