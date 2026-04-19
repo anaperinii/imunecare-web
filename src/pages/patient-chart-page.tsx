@@ -3,6 +3,7 @@ import { useNavigate, useParams } from '@tanstack/react-router'
 import { usePatientStore, type Application } from '@/store/patient-store'
 import { useImmunotherapiesStore } from '@/store/immunotherapies-store'
 import { addDays, format, differenceInDays, parse } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
 import {
   Clock,
@@ -10,9 +11,12 @@ import {
   Droplet,
   ChevronUp,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Pencil,
   X,
   Save,
+  List,
 } from 'lucide-react'
 
 const INTERVAL_COLORS: Record<number, { bg: string; text: string; dot: string }> = {
@@ -35,6 +39,9 @@ export function PatientChartPage() {
   const [showProgress, setShowProgress] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [showEditConfirm, setShowEditConfirm] = useState(false)
+  const [viewMode, setViewMode] = useState<'timeline' | 'calendar'>('timeline')
+  const [calMonth, setCalMonth] = useState(new Date().getMonth())
+  const [calYear, setCalYear] = useState(new Date().getFullYear())
   const [editForm, setEditForm] = useState({
     nome: '', telefone: '', peso: '', medicoResponsavel: '',
     tipoImunoterapia: '', viaAdministracao: '', extrato: '',
@@ -134,6 +141,30 @@ export function PatientChartPage() {
     })
     return g
   }, [filteredApps])
+
+  // Calendar: map apps by date string dd/MM/yyyy
+  const appsByDate = useMemo(() => {
+    const m: Record<string, Application[]> = {}
+    patientApps.forEach((a) => {
+      if (!m[a.data]) m[a.data] = []
+      m[a.data].push(a)
+    })
+    return m
+  }, [patientApps])
+
+  const calDays = useMemo(() => {
+    const firstDay = new Date(calYear, calMonth, 1).getDay()
+    const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate()
+    const days: (number | null)[] = []
+    for (let i = 0; i < firstDay; i++) days.push(null)
+    for (let i = 1; i <= daysInMonth; i++) days.push(i)
+    return days
+  }, [calMonth, calYear])
+
+  const calMonthLabel = (() => {
+    const raw = format(new Date(calYear, calMonth, 1), "MMMM 'de' yyyy", { locale: ptBR })
+    return raw.charAt(0).toUpperCase() + raw.slice(1)
+  })()
 
   // Progress — protocolo SCIT (RNE-006/007/009)
   // Indução: 1:10.000 (0,1→0,2→0,4→0,8) → 1:1.000 (0,1→0,2→0,4→0,8) → 1:100 (0,1→0,2→0,4→0,8) → 1:10 (0,1→0,2→0,4→0,5=meta)
@@ -455,117 +486,198 @@ export function PatientChartPage() {
                   </div>
                 </div>
               </div>
-              <div className="flex gap-1.5 overflow-x-auto pb-0.5" style={{ scrollbarWidth: 'none' }}>
-                <button
-                  onClick={() => setMonthFilter('all')}
-                  className={cn(
-                    "shrink-0 px-3 py-1 rounded-full text-[0.65rem] font-semibold border transition-all",
-                    monthFilter === 'all'
-                      ? "bg-linear-to-br from-brand to-teal-400 text-white border-transparent"
-                      : "bg-white text-(--text-muted) border-(--border-custom) hover:border-teal-300 hover:text-teal-600"
-                  )}
-                >
-                  Todas
-                </button>
-                {availableMonths.map((m) => (
+              {(viewMode === 'timeline' || viewMode === 'calendar') && (
+                <div className="flex items-center gap-2">
+                <div className="flex gap-1.5 overflow-x-auto pb-0.5 flex-1" style={{ scrollbarWidth: 'none' }}>
                   <button
-                    key={m.key}
-                    onClick={() => setMonthFilter(m.key)}
+                    onClick={() => setMonthFilter('all')}
                     className={cn(
                       "shrink-0 px-3 py-1 rounded-full text-[0.65rem] font-semibold border transition-all",
-                      monthFilter === m.key
+                      monthFilter === 'all'
                         ? "bg-linear-to-br from-brand to-teal-400 text-white border-transparent"
                         : "bg-white text-(--text-muted) border-(--border-custom) hover:border-teal-300 hover:text-teal-600"
                     )}
                   >
-                    {m.label.charAt(0) + m.label.slice(1).toLowerCase()}
+                    Todas
                   </button>
-                ))}
-              </div>
+                  {availableMonths.map((m) => (
+                    <button
+                      key={m.key}
+                      onClick={() => {
+                        setMonthFilter(m.key)
+                        const [yr, monthName] = m.key.split('-')
+                        const meses = ['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO']
+                        const mi = meses.indexOf(monthName.toUpperCase())
+                        if (mi >= 0) { setCalMonth(mi); setCalYear(Number(yr)) }
+                      }}
+                      className={cn(
+                        "shrink-0 px-3 py-1 rounded-full text-[0.65rem] font-semibold border transition-all",
+                        monthFilter === m.key
+                          ? "bg-linear-to-br from-brand to-teal-400 text-white border-transparent"
+                          : "bg-white text-(--text-muted) border-(--border-custom) hover:border-teal-300 hover:text-teal-600"
+                      )}
+                    >
+                      {m.label.charAt(0) + m.label.slice(1).toLowerCase()}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex h-6.5 rounded-lg border border-(--border-custom) overflow-hidden shrink-0">
+                  <button onClick={() => setViewMode('timeline')} className={cn("px-2 flex items-center gap-1 text-[0.55rem] font-semibold transition-all", viewMode === 'timeline' ? "bg-brand text-white" : "text-(--text-muted) hover:bg-gray-50")}>
+                    <List size={10} />
+                    Lista
+                  </button>
+                  <button onClick={() => setViewMode('calendar')} className={cn("px-2 flex items-center gap-1 text-[0.55rem] font-semibold transition-all", viewMode === 'calendar' ? "bg-brand text-white" : "text-(--text-muted) hover:bg-gray-50")}>
+                    <CalendarDays size={10} />
+                    Calendário
+                  </button>
+                </div>
+                </div>
+              )}
             </div>
 
-            {/* Timeline */}
-            <div className="flex-1 overflow-y-auto px-5 py-4">
-              {filteredApps.length === 0 ? (
-                <div className="text-center text-xs text-(--text-muted) py-10">Nenhuma aplicação encontrada neste período.</div>
-              ) : (
-                <div className="relative pl-7">
-                  {Object.entries(grouped).map(([monthYear, apps]) => {
-                    return (
-                      <div key={monthYear} className="mb-7 last:mb-0">
-                        {/* Month header — left aligned, timeline starts below */}
-                        <div className="flex items-center gap-1.5 mb-2 -ml-7">
-                          <span className="text-[0.65rem] font-extrabold uppercase tracking-[0.5px] text-(--text-muted)">{monthYear}</span>
-                          <span className="text-[0.55rem] bg-gray-100 text-(--text-muted) border border-(--border-custom) px-1.5 py-px rounded-full">
-                            {apps.length} aplicaç{apps.length === 1 ? 'ão' : 'ões'}
-                          </span>
-                        </div>
+            {viewMode === 'timeline' ? (
+              /* Timeline */
+              <div className="flex-1 overflow-y-auto px-5 py-4">
+                {filteredApps.length === 0 ? (
+                  <div className="text-center text-xs text-(--text-muted) py-10">Nenhuma aplicação encontrada neste período.</div>
+                ) : (
+                  <div className="relative pl-7">
+                    {Object.entries(grouped).map(([monthYear, apps]) => {
+                      return (
+                        <div key={monthYear} className="mb-7 last:mb-0">
+                          <div className="flex items-center gap-1.5 mb-2 -ml-7">
+                            <span className="text-[0.65rem] font-extrabold uppercase tracking-[0.5px] text-(--text-muted)">{monthYear}</span>
+                            <span className="text-[0.55rem] bg-gray-100 text-(--text-muted) border border-(--border-custom) px-1.5 py-px rounded-full">
+                              {apps.length} aplicaç{apps.length === 1 ? 'ão' : 'ões'}
+                            </span>
+                          </div>
 
-                        <div className="relative">
-                        {/* Vertical line — only spans the applications area */}
-                        <div className="absolute -left-3.75 top-0 bottom-0 w-px bg-gray-200 rounded-full" />
+                          <div className="relative">
+                          <div className="absolute -left-3.75 top-0 bottom-0 w-px bg-gray-200 rounded-full" />
 
-                        {apps.map((app, idx) => {
-                          const color = INTERVAL_COLORS[app.ciclo.dias] || DEFAULT_COLOR
-                          const isRealized = app.status === 'realizada'
-                          const isNext = app.status === 'agendada'
-                          const nodeColor = isNext ? '#0d9488' : '#2dd4bf'
-                          return (
-                            <div
-                              key={app.id}
-                              className="relative mb-2.5 last:mb-0"
-                              style={{ animationDelay: `${idx * 0.06}s` }}
-                            >
-                              {/* Timeline node */}
-                              <div className="absolute -left-6.25 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center z-10">
-                                <div className="w-4 h-4 rounded-full bg-white flex items-center justify-center">
-                                  <div
-                                    className="w-2.5 h-2.5 rounded-full"
-                                    style={{ backgroundColor: nodeColor }}
-                                  />
-                                </div>
-                              </div>
-
-                              {/* Card */}
+                          {apps.map((app, idx) => {
+                            const color = INTERVAL_COLORS[app.ciclo.dias] || DEFAULT_COLOR
+                            const isRealized = app.status === 'realizada'
+                            const isNext = app.status === 'agendada'
+                            const nodeColor = isNext ? '#0d9488' : '#2dd4bf'
+                            return (
                               <div
-                                onClick={() => isRealized && setSelectedApp(app)}
-                                className={cn(
-                                  "rounded-lg border p-3 ml-1 transition-all",
-                                  isNext
-                                    ? "border-teal-400 bg-teal-50/60"
-                                    : "border-(--border-custom) bg-white hover:translate-x-0.5 hover:shadow-[0_2px_8px_rgba(20,184,166,0.1)]",
-                                  isRealized && "cursor-pointer hover:border-teal-300"
-                                )}
+                                key={app.id}
+                                className="relative mb-2.5 last:mb-0"
+                                style={{ animationDelay: `${idx * 0.06}s` }}
                               >
-                                <div className="flex items-center justify-between">
-                                  <div>
-                                    <div className="text-xs font-bold text-(--text)">{app.dose}</div>
-                                    <div className="text-[0.65rem] text-(--text-muted) mt-0.5">
-                                      {app.data} · {app.horaInicio}–{app.horaFim}
+                                <div className="absolute -left-6.25 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center z-10">
+                                  <div className="w-4 h-4 rounded-full bg-white flex items-center justify-center">
+                                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: nodeColor }} />
+                                  </div>
+                                </div>
+
+                                <div
+                                  onClick={() => isRealized && setSelectedApp(app)}
+                                  className={cn(
+                                    "rounded-lg border p-3 ml-1 transition-all",
+                                    isNext
+                                      ? "border-teal-400 bg-teal-50/60"
+                                      : "border-(--border-custom) bg-white hover:translate-x-0.5 hover:shadow-[0_2px_8px_rgba(20,184,166,0.1)]",
+                                    isRealized && "cursor-pointer hover:border-teal-300"
+                                  )}
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <div>
+                                      <div className="text-xs font-bold text-(--text)">{app.dose}</div>
+                                      <div className="text-[0.65rem] text-(--text-muted) mt-0.5">
+                                        {app.data} · {app.horaInicio}–{app.horaFim}
+                                      </div>
+                                    </div>
+                                    <div className="flex flex-col items-end gap-1">
+                                      {isNext && <span className="text-[0.6rem] font-bold text-teal-700">PRÓXIMA</span>}
+                                      <span
+                                        className="inline-flex items-center gap-1.5 px-2 py-px rounded-full text-[0.65rem] font-semibold border"
+                                        style={{ backgroundColor: color.bg, color: color.text, borderColor: color.dot + '30' }}
+                                      >
+                                        <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: color.dot }} />
+                                        {app.ciclo.dias} dias
+                                      </span>
                                     </div>
                                   </div>
-                                  <div className="flex flex-col items-end gap-1">
-                                    {isNext && <span className="text-[0.6rem] font-bold text-teal-700">PRÓXIMA</span>}
-                                    <span
-                                      className="inline-flex items-center gap-1.5 px-2 py-px rounded-full text-[0.65rem] font-semibold border"
-                                      style={{ backgroundColor: color.bg, color: color.text, borderColor: color.dot + '30' }}
-                                    >
-                                      <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: color.dot }} />
-                                      {app.ciclo.dias} dias
-                                    </span>
-                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          )
-                        })}
+                            )
+                          })}
+                          </div>
                         </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* Calendar view */
+              <div className="flex-1 overflow-y-auto px-5 py-4">
+                {/* Month navigation */}
+                <div className="flex items-center justify-between mb-4">
+                  <button onClick={() => { if (calMonth === 0) { setCalMonth(11); setCalYear(calYear - 1) } else setCalMonth(calMonth - 1) }} className="h-7 w-7 flex items-center justify-center rounded-lg border border-(--border-custom) text-(--text-muted) hover:border-brand hover:text-brand transition-all cursor-pointer">
+                    <ChevronLeft size={14} />
+                  </button>
+                  <span className="text-xs font-bold text-(--text)">{calMonthLabel}</span>
+                  <button onClick={() => { if (calMonth === 11) { setCalMonth(0); setCalYear(calYear + 1) } else setCalMonth(calMonth + 1) }} className="h-7 w-7 flex items-center justify-center rounded-lg border border-(--border-custom) text-(--text-muted) hover:border-brand hover:text-brand transition-all cursor-pointer">
+                    <ChevronRight size={14} />
+                  </button>
+                </div>
+
+                {/* Weekday headers */}
+                <div className="grid grid-cols-7 mb-1">
+                  {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((d) => (
+                    <div key={d} className="text-center text-[0.55rem] font-semibold text-(--text-muted) uppercase tracking-wider py-1">{d}</div>
+                  ))}
+                </div>
+
+                {/* Days grid */}
+                <div className="grid grid-cols-7 gap-px bg-(--border-custom) rounded-lg overflow-hidden border border-(--border-custom)">
+                  {calDays.map((day, i) => {
+                    if (day === null) return <div key={`empty-${i}`} className="bg-gray-50/50 h-18" />
+                    const dateStr = `${String(day).padStart(2, '0')}/${String(calMonth + 1).padStart(2, '0')}/${calYear}`
+                    const dayApps = appsByDate[dateStr] || []
+                    const isToday = day === new Date().getDate() && calMonth === new Date().getMonth() && calYear === new Date().getFullYear()
+                    return (
+                      <div key={day} className={cn("bg-white h-18 p-1.5 relative", isToday && "bg-teal-50/40")}>
+                        <div className={cn("text-[0.6rem] font-semibold mb-1", isToday ? "text-brand" : "text-(--text-muted)")}>
+                          {day}
+                        </div>
+                        {dayApps.length > 0 && (
+                          <div className="space-y-0.5">
+                            {dayApps.slice(0, 2).map((app) => {
+                              const isRealized = app.status === 'realizada'
+                              const isNext = app.status === 'agendada'
+                              const intColor = INTERVAL_COLORS[app.ciclo.dias] || DEFAULT_COLOR
+                              return (
+                                <div
+                                  key={app.id}
+                                  onClick={() => isRealized && setSelectedApp(app)}
+                                  className={cn(
+                                    "rounded px-1 py-0.5 text-[0.45rem] font-semibold truncate",
+                                    isNext ? "cursor-default border-dashed border" :
+                                    isRealized ? "cursor-pointer border" :
+                                    "bg-gray-100 text-(--text-muted) border border-gray-200"
+                                  )}
+                                  style={{ backgroundColor: intColor.bg, color: intColor.text, borderColor: intColor.dot }}
+                                >
+                                  {app.dose}
+                                </div>
+                              )
+                            })}
+                            {dayApps.length > 2 && (
+                              <div className="text-[0.45rem] text-(--text-muted) font-medium text-center">+{dayApps.length - 2}</div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     )
                   })}
                 </div>
-              )}
-            </div>
+
+              </div>
+            )}
           </div>
         </div>
       </div>
