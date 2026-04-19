@@ -6,6 +6,7 @@ import { useCan } from '@/store/user-store'
 import { Search, ChevronDown, ArrowLeft, ClipboardList, Syringe, CalendarDays, Info } from 'lucide-react'
 import { addDays, format, differenceInDays, parse } from 'date-fns'
 import { cn } from '@/lib/utils'
+import { validateVolume, validateConcentration } from '@/lib/validators'
 
 const stepLabels = ['Paciente', 'Pré-Aplicação', 'Pós-Aplicação', 'Revisão dos Dados']
 
@@ -44,8 +45,11 @@ export function PatientEvolutionPage() {
     intervaloRelato: '', efeitoColateral: 'Não', efeitosRelatados: '', necessidadeMedicacao: 'Não',
     medicacoes: '', notasPre: '',
     dataAplicacao: '', horaInicio: '', horaFim: '', volumeAplicado: '', concentracao: '',
-    intervaloProxima: '', responsavel: '', efeitoColateralPos: 'Não', efeitosRelatadosPos: '',
+    intervaloProxima: '', intervaloJustificativa: '', responsavel: '', efeitoColateralPos: 'Não', efeitosRelatadosPos: '',
     necessidadeMedicacaoPos: 'Não', medicacoesPos: '', notasPos: '',
+    // RF-013: ajuste pós-reação adversa
+    ajusteReacao: '' as '' | 'reduzir_dose' | 'aumentar_intervalo' | 'suspender' | 'manter',
+    ajusteReacaoJustificativa: '',
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -104,18 +108,24 @@ export function PatientEvolutionPage() {
     if (!form.horaInicio) e.horaInicio = 'Hora de início é obrigatória'
     if (!form.horaFim) e.horaFim = 'Hora de fim é obrigatória'
     if (form.horaInicio && form.horaFim && form.horaInicio >= form.horaFim) e.horaFim = 'Hora fim deve ser após início'
-    if (!form.volumeAplicado.trim()) e.volumeAplicado = 'Volume é obrigatório'
-    else { const n = parseFloat(form.volumeAplicado); if (isNaN(n) || n <= 0 || n > 10) e.volumeAplicado = 'Volume inválido' }
-    if (!form.concentracao.trim()) e.concentracao = 'Concentração é obrigatória'
-    else if (!/^1:\d+(\.\d+)?$/.test(form.concentracao)) e.concentracao = 'Formato inválido (ex: 1:10)'
-    if (!form.intervaloProxima) e.intervaloProxima = 'Intervalo é obrigatório'
+    { const err = validateVolume(form.volumeAplicado); if (err) e.volumeAplicado = err }
+    { const err = validateConcentration(form.concentracao); if (err) e.concentracao = err }
+    if (!form.intervaloProxima || !form.intervaloProxima.trim()) e.intervaloProxima = 'Intervalo é obrigatório'
+    else {
+      const customInterval = form.intervaloProxima && !['7','14','21','28'].includes(form.intervaloProxima)
+      if (customInterval && !form.intervaloJustificativa.trim()) e.intervaloJustificativa = 'Justifique o intervalo personalizado'
+      else if (customInterval && form.intervaloJustificativa.trim().length < 10) e.intervaloJustificativa = 'Justificativa deve ter ao menos 10 caracteres'
+    }
     if (!form.responsavel.trim()) e.responsavel = 'Responsável é obrigatório'
     if (form.efeitoColateralPos === 'Sim' && !form.efeitosRelatadosPos.trim()) e.efeitosRelatadosPos = 'Descreva os efeitos colaterais'
     if (form.necessidadeMedicacaoPos === 'Sim' && !form.medicacoesPos.trim()) e.medicacoesPos = 'Informe as medicações'
+    // RF-013 — ajuste obrigatório quando há reação + medicação
+    if (form.efeitoColateralPos === 'Sim' && form.necessidadeMedicacaoPos === 'Sim' && !form.ajusteReacao) e.ajusteReacao = 'Selecione a conduta para o protocolo'
+    if (form.ajusteReacao === 'manter' && !form.ajusteReacaoJustificativa.trim()) e.ajusteReacaoJustificativa = 'Justifique por que manter o protocolo'
     setErrors(e)
     setTouched((t) => ({
       ...t, dataAplicacao: true, horaInicio: true, horaFim: true, volumeAplicado: true,
-      concentracao: true, intervaloProxima: true, responsavel: true, efeitosRelatadosPos: true, medicacoesPos: true,
+      concentracao: true, intervaloProxima: true, intervaloJustificativa: true, responsavel: true, efeitosRelatadosPos: true, medicacoesPos: true,
     }))
     return Object.keys(e).length === 0
   }, [form])
@@ -431,15 +441,64 @@ export function PatientEvolutionPage() {
                 <div>
                   <label className="text-xs font-semibold text-(--text-muted) mb-1.5 block">Intervalo próxima aplicação</label>
                   <div className="relative">
-                    <select value={form.intervaloProxima} onChange={(e) => set('intervaloProxima', e.target.value)} onBlur={() => touch('intervaloProxima')} className={cn(inputCls('intervaloProxima'), "appearance-none pr-8 cursor-pointer")}>
-                      <option value="" disabled>Selecione</option>
-                      <option value="7">7 dias</option>
-                      <option value="14">14 dias</option>
-                      <option value="21">21 dias</option>
-                      <option value="28">28 dias</option>
-                    </select>
+                    {(() => {
+                      const isCustom = form.intervaloProxima && !['7', '14', '21', '28'].includes(form.intervaloProxima)
+                      const selectValue = isCustom ? 'outro' : form.intervaloProxima
+                      return (
+                        <select
+                          value={selectValue}
+                          onChange={(e) => {
+                            const v = e.target.value
+                            set('intervaloProxima', v === 'outro' ? ' ' : v)
+                          }}
+                          onBlur={() => touch('intervaloProxima')}
+                          className={cn(inputCls('intervaloProxima'), "appearance-none pr-8 cursor-pointer")}
+                        >
+                          <option value="" disabled>Selecione</option>
+                          <option value="7">7 dias</option>
+                          <option value="14">14 dias</option>
+                          <option value="21">21 dias</option>
+                          <option value="28">28 dias</option>
+                          <option value="outro">Outro</option>
+                        </select>
+                      )
+                    })()}
                     <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-(--text-muted) pointer-events-none" />
                   </div>
+                  {(form.intervaloProxima === ' ' || (form.intervaloProxima && !['7','14','21','28'].includes(form.intervaloProxima))) && (
+                    <div className="mt-2 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number"
+                          min="1"
+                          placeholder="Ex: 35"
+                          value={form.intervaloProxima.trim()}
+                          onChange={(e) => set('intervaloProxima', e.target.value.replace(/[^0-9]/g, ''))}
+                          className={cn(inputCls('intervaloProxima'), "flex-1")}
+                        />
+                        <span className="text-[0.65rem] text-(--text-muted) shrink-0">dias</span>
+                      </div>
+                      {(() => {
+                        const n = parseInt(form.intervaloProxima.trim(), 10)
+                        if (isNaN(n) || n <= 0) return null
+                        if (n < 4) return <div className="text-[0.65rem] text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1">⚠ Intervalo muito curto desrespeita o tempo mínimo de segurança entre doses. Reavalie o protocolo.</div>
+                        if (n > 15) return <div className="text-[0.65rem] text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1">⚠ Intervalo muito longo na indução pode comprometer a progressão. Confirme a conduta clínica.</div>
+                        return null
+                      })()}
+                      <div>
+                        <label className="text-[0.65rem] font-semibold text-(--text-muted) mb-1 block">Justificativa do intervalo personalizado <span className="text-red-400">*</span></label>
+                        <textarea
+                          rows={2}
+                          placeholder="Descreva o motivo clínico para um intervalo fora do protocolo padrão"
+                          value={form.intervaloJustificativa}
+                          onChange={(e) => set('intervaloJustificativa', e.target.value)}
+                          onBlur={() => touch('intervaloJustificativa')}
+                          className={cn("w-full rounded-lg border bg-gray-50/60 px-3 py-2 text-xs placeholder:text-(--text-muted)/60 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all resize-none", errors.intervaloJustificativa && touched.intervaloJustificativa ? "border-red-400 bg-red-50/30" : "border-(--border-custom)")}
+                        />
+                        <ErrorMsg field="intervaloJustificativa" />
+                      </div>
+                    </div>
+                  )}
                   <ErrorMsg field="intervaloProxima" />
                 </div>
                 <div>
@@ -490,6 +549,55 @@ export function PatientEvolutionPage() {
                   <label className="text-xs font-semibold text-(--text-muted) mb-1.5 block">Medicações administradas</label>
                   <input placeholder="Insira aqui" value={form.medicacoesPos} onChange={(e) => set('medicacoesPos', e.target.value)} onBlur={() => touch('medicacoesPos')} className={inputCls('medicacoesPos')} />
                   <ErrorMsg field="medicacoesPos" />
+                </div>
+                {/* RF-013 — Ajuste após reação adversa com necessidade de medicação */}
+                <div className={cn("col-span-2 transition-all duration-300 overflow-hidden", form.efeitoColateralPos === 'Sim' && form.necessidadeMedicacaoPos === 'Sim' ? "max-h-96 opacity-100" : "max-h-0 opacity-0")}>
+                  <div className="bg-amber-50/60 border border-amber-200 rounded-lg p-3 space-y-2.5">
+                    <div className="flex items-start gap-2">
+                      <Info size={14} className="text-amber-700 shrink-0 mt-0.5" />
+                      <div className="text-[0.65rem] text-amber-800 leading-relaxed">
+                        <span className="font-bold">Reação adversa com uso de medicação registrada.</span> Selecione a conduta a ser aplicada no protocolo antes de concluir a evolução. A escolha fica vinculada a esta aplicação no histórico clínico.
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { v: 'reduzir_dose', label: 'Reduzir dose', desc: 'Retornar ao volume anterior' },
+                        { v: 'aumentar_intervalo', label: 'Aumentar intervalo', desc: 'Ampliar espaçamento entre doses' },
+                        { v: 'suspender', label: 'Suspender temporariamente', desc: 'Pausar até avaliação médica' },
+                        { v: 'manter', label: 'Manter protocolo', desc: 'Mantém dose e intervalo' },
+                      ].map((opt) => {
+                        const selected = form.ajusteReacao === opt.v
+                        return (
+                          <button
+                            key={opt.v}
+                            type="button"
+                            onClick={() => set('ajusteReacao', opt.v)}
+                            className={cn("text-left px-2.5 py-2 rounded-lg border-[1.5px] transition-all cursor-pointer", selected ? "border-amber-500 bg-amber-100/50" : "border-amber-200 bg-white hover:border-amber-400")}
+                          >
+                            <div className="text-[0.65rem] font-bold text-(--text)">{opt.label}</div>
+                            <div className="text-[0.55rem] text-(--text-muted) mt-0.5">{opt.desc}</div>
+                          </button>
+                        )
+                      })}
+                    </div>
+                    {form.ajusteReacao && (
+                      <div>
+                        <label className="text-[0.6rem] font-semibold text-(--text-muted) mb-1 block">
+                          Justificativa clínica {form.ajusteReacao === 'manter' && <span className="text-red-400">*</span>}
+                        </label>
+                        <textarea
+                          rows={2}
+                          placeholder={form.ajusteReacao === 'manter' ? 'Justifique por que o protocolo será mantido mesmo com reação adversa' : 'Contexto clínico da conduta (opcional)'}
+                          value={form.ajusteReacaoJustificativa}
+                          onChange={(e) => set('ajusteReacaoJustificativa', e.target.value)}
+                          className="w-full rounded-lg border border-(--border-custom) bg-white px-2.5 py-1.5 text-[0.7rem] placeholder:text-(--text-muted)/60 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all resize-none"
+                        />
+                        {form.ajusteReacao === 'manter' && !form.ajusteReacaoJustificativa.trim() && (
+                          <span className="text-[0.55rem] text-red-500 block mt-0.5">Manter protocolo após reação adversa exige justificativa.</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="col-span-2">
                   <label className="text-xs font-semibold text-(--text-muted) mb-1.5 block">Notas do responsável</label>

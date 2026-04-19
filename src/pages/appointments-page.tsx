@@ -45,6 +45,8 @@ export function AppointmentsPage() {
   const [selectedDate, setSelectedDate] = useState(new Date())
   const [showAddModal, setShowAddModal] = useState(false)
   const [showToast, setShowToast] = useState(false)
+  const [newApptInterval, setNewApptInterval] = useState('7')
+  const [newApptIntervalJustificativa, setNewApptIntervalJustificativa] = useState('')
   // In production, this would come from a settings store
   const googleConnected = true
   const [selectedApp, setSelectedApp] = useState<Application | null>(null)
@@ -156,7 +158,19 @@ export function AppointmentsPage() {
                 const today = isToday(day)
                 const selected = isSameDay(day, selectedDate)
                 return (
-                  <div key={day.toISOString()} onClick={() => setSelectedDate(day)} className={cn('border-r border-(--border-custom) last:border-r-0 p-2.5 cursor-pointer hover:bg-teal-50/30 transition-colors flex flex-col min-h-0', selected && 'bg-teal-50/50')}>
+                  <div
+                    key={day.toISOString()}
+                    onClick={() => setSelectedDate(day)}
+                    className={cn(
+                      'border-r border-(--border-custom) last:border-r-0 p-2.5 cursor-pointer transition-colors flex flex-col min-h-0 relative',
+                      today ? 'bg-teal-50/80 hover:bg-teal-50' : 'hover:bg-teal-50/30',
+                      selected && !today && 'bg-teal-50/50',
+                    )}
+                  >
+                    {/* Top accent line for today */}
+                    {today && (
+                      <div className="absolute top-0 left-0 right-0 h-0.75 bg-brand rounded-b-sm" />
+                    )}
                     <div className="text-center mb-2">
                       <div className="text-[0.6rem] font-semibold text-(--text-muted) uppercase">{format(day, 'EEE', { locale: ptBR })}</div>
                       <div className={cn('text-lg font-bold mt-0.5', today ? 'text-brand' : 'text-(--text)')}>{format(day, 'd')}</div>
@@ -191,8 +205,21 @@ export function AppointmentsPage() {
                   const today = isToday(day)
                   const selected = isSameDay(day, selectedDate)
                   return (
-                    <div key={day.toISOString()} onClick={() => setSelectedDate(day)} className={cn('border-r border-b border-(--border-custom) last:border-r-0 p-1.5 min-h-20 cursor-pointer hover:bg-teal-50/30 transition-colors', !isCurrentMonth && 'opacity-40 bg-gray-50', selected && 'ring-2 ring-brand ring-inset')}>
-                      <div className={cn('text-[0.65rem] font-semibold mb-1', today ? 'text-brand font-bold' : 'text-(--text-muted)')}>{format(day, 'd')}</div>
+                    <div
+                      key={day.toISOString()}
+                      onClick={() => setSelectedDate(day)}
+                      className={cn(
+                        'border-r border-b border-(--border-custom) last:border-r-0 p-1.5 min-h-20 cursor-pointer transition-colors relative',
+                        !isCurrentMonth && 'opacity-40 bg-gray-50',
+                        today ? 'bg-teal-50/80 hover:bg-teal-50' : 'hover:bg-teal-50/30',
+                        selected && 'ring-2 ring-brand ring-inset',
+                      )}
+                    >
+                      {/* Top accent line for today */}
+                      {today && (
+                        <div className="absolute top-0 left-0 right-0 h-0.5 bg-brand" />
+                      )}
+                      <div className={cn('text-[0.65rem] font-bold mb-1 w-5 h-5 flex items-center justify-center rounded-full', today ? 'bg-brand text-white' : 'text-(--text-muted) font-semibold')}>{format(day, 'd')}</div>
                       <div className="space-y-0.5">
                         {apps.slice(0, 2).map((app) => {
                           const ec = getEventColor(app)
@@ -444,14 +471,57 @@ export function AppointmentsPage() {
                 <div>
                   <label className="text-xs font-semibold text-(--text-muted) mb-1.5 block">Intervalo</label>
                   <div className="relative">
-                    <select className={cn(inputClass, 'appearance-none pr-8 cursor-pointer')}>
-                      <option value="7">7 dias</option>
-                      <option value="14">14 dias</option>
-                      <option value="21">21 dias</option>
-                      <option value="28">28 dias</option>
-                    </select>
+                    {(() => {
+                      const isCustom = newApptInterval && !['7', '14', '21', '28'].includes(newApptInterval)
+                      const selectValue = isCustom ? 'outro' : newApptInterval
+                      return (
+                        <select
+                          value={selectValue}
+                          onChange={(e) => setNewApptInterval(e.target.value === 'outro' ? ' ' : e.target.value)}
+                          className={cn(inputClass, 'appearance-none pr-8 cursor-pointer')}
+                        >
+                          <option value="7">7 dias</option>
+                          <option value="14">14 dias</option>
+                          <option value="21">21 dias</option>
+                          <option value="28">28 dias</option>
+                          <option value="outro">Outro</option>
+                        </select>
+                      )
+                    })()}
                     <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-(--text-muted) pointer-events-none" />
                   </div>
+                  {(newApptInterval === ' ' || (newApptInterval && !['7','14','21','28'].includes(newApptInterval))) && (
+                    <div className="mt-2 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number"
+                          min="1"
+                          placeholder="Ex: 35"
+                          value={newApptInterval.trim()}
+                          onChange={(e) => setNewApptInterval(e.target.value.replace(/[^0-9]/g, ''))}
+                          className={cn(inputClass, 'flex-1')}
+                        />
+                        <span className="text-[0.65rem] text-(--text-muted) shrink-0">dias</span>
+                      </div>
+                      {(() => {
+                        const n = parseInt(newApptInterval.trim(), 10)
+                        if (isNaN(n) || n <= 0) return null
+                        if (n < 4) return <div className="text-[0.65rem] text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1">⚠ Intervalo muito curto desrespeita o tempo mínimo de segurança entre doses. Reavalie o protocolo.</div>
+                        if (n > 15) return <div className="text-[0.65rem] text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1">⚠ Intervalo muito longo na indução pode comprometer a progressão. Confirme a conduta clínica.</div>
+                        return null
+                      })()}
+                      <div>
+                        <label className="text-[0.65rem] font-semibold text-(--text-muted) mb-1 block">Justificativa do intervalo personalizado <span className="text-red-400">*</span></label>
+                        <textarea
+                          rows={2}
+                          placeholder="Descreva o motivo clínico para um intervalo fora do protocolo padrão"
+                          value={newApptIntervalJustificativa}
+                          onChange={(e) => setNewApptIntervalJustificativa(e.target.value)}
+                          className="w-full rounded-lg border border-(--border-custom) bg-gray-50/60 px-3 py-2 text-xs placeholder:text-(--text-muted)/60 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all resize-none"
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
               <div>
