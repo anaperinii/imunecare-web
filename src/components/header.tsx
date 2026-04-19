@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from '@tanstack/react-router'
+import imunecareLogo from '@/assets/imunecare-logo.png'
 import { cn } from '@/lib/utils'
 import { Menu, X } from 'lucide-react'
 
@@ -46,6 +47,7 @@ export function Header({ isAuthPage = false }: HeaderProps) {
       >
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 no-underline">
+          <img src={imunecareLogo} alt="ImuneCare" className="w-7 h-7 rounded-md" />
           <span className="text-xl font-extrabold tracking-[-0.5px] gradient-text">
             ImuneCare
           </span>
