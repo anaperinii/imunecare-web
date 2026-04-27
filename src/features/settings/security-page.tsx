@@ -1,20 +1,12 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
-import { ArrowLeft, Lock, Smartphone, Eye, FileDown, UserX, Clock, LogOut, ChevronRight, X } from 'lucide-react'
+import { ArrowLeft, Lock, Smartphone, Eye, FileDown, UserX, LogOut, ChevronRight, X } from 'lucide-react'
 import { cn } from '@/shared/lib/utils'
 
 const sessions = [
   { id: '1', device: 'Chrome · Windows 11', location: 'Anápolis, GO', time: 'Agora (sessão atual)', current: true },
   { id: '2', device: 'Safari · iPhone 15', location: 'Anápolis, GO', time: 'há 2 horas', current: false },
   { id: '3', device: 'Chrome · MacBook Pro', location: 'Goiânia, GO', time: 'há 3 dias', current: false },
-]
-
-const auditLog = [
-  { id: 'a1', action: 'Login realizado', ip: '187.45.xx.xx', time: '10/04/2026 08:30', device: 'Chrome · Windows' },
-  { id: 'a2', action: 'Prontuário acessado — Bárbara Sofia Diniz', ip: '187.45.xx.xx', time: '10/04/2026 08:35', device: 'Chrome · Windows' },
-  { id: 'a3', action: 'Aplicação registrada — Camilla Martins', ip: '187.45.xx.xx', time: '09/04/2026 14:20', device: 'Chrome · Windows' },
-  { id: 'a4', action: 'Relatório exportado (PDF)', ip: '187.45.xx.xx', time: '09/04/2026 16:00', device: 'Chrome · Windows' },
-  { id: 'a5', action: 'Login realizado', ip: '201.12.xx.xx', time: '08/04/2026 09:00', device: 'Safari · iPhone' },
 ]
 
 export function SecurityPage() {
@@ -112,28 +104,6 @@ export function SecurityPage() {
                         Encerrar
                       </button>
                     )}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Auditoria */}
-            <div className="border border-(--border-custom) rounded-xl overflow-hidden">
-              <div className="px-4 py-3 border-b border-(--border-custom) bg-gray-50/50 flex items-center justify-between">
-                <h2 className="text-xs font-bold text-(--text)">Log de atividades recentes</h2>
-                <div className="flex items-center gap-1">
-                  <Clock size={11} className="text-(--text-muted)" />
-                  <span className="text-[0.6rem] text-(--text-muted)">Últimos 7 dias</span>
-                </div>
-              </div>
-              <div className="divide-y divide-(--border-custom)">
-                {auditLog.map((log) => (
-                  <div key={log.id} className="px-4 py-2.5 flex items-center justify-between">
-                    <div>
-                      <div className="text-xs font-medium text-(--text)">{log.action}</div>
-                      <div className="text-[0.6rem] text-(--text-muted)">{log.device} · IP {log.ip}</div>
-                    </div>
-                    <span className="text-[0.6rem] text-(--text-muted) shrink-0">{log.time}</span>
                   </div>
                 ))}
               </div>

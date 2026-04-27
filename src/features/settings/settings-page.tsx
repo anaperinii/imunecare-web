@@ -10,26 +10,31 @@ import {
   ChevronRight,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
+import { useUserStore, ROLE_PERMISSIONS, type Permission } from '@/features/user/user-store'
 
 interface SettingsOption {
   icon: LucideIcon
   label: string
   description: string
   route?: string
+  requires?: Permission
 }
 
 const settingsOptions: SettingsOption[] = [
   { icon: Shield, label: 'Segurança e Privacidade', description: 'Autenticação, sessões e políticas de acesso', route: '/security' },
-  { icon: Settings, label: 'Configurações Avançadas', description: 'Parâmetros técnicos e integrações', route: '/advanced-settings' },
+  { icon: Settings, label: 'Configurações Avançadas', description: 'Parâmetros técnicos e integrações', route: '/advanced-settings', requires: 'advanced_settings' },
   { icon: Monitor, label: 'Personalização e Acessibilidade', description: 'Temas, idioma, contraste e tamanho de fonte', route: '/personalization' },
   { icon: Info, label: 'Sobre o Sistema', description: 'Versão, licença e informações técnicas', route: '/about' },
-  { icon: Users, label: 'Gerenciar Equipes e Convites', description: 'Membros, permissões e convites pendentes', route: '/teams' },
-  { icon: CreditCard, label: 'Planos e Serviços', description: 'Assinatura, faturamento e limites', route: '/plans' },
+  { icon: Users, label: 'Gerenciar Equipes e Convites', description: 'Membros, permissões e convites pendentes', route: '/teams', requires: 'manage_team' },
+  { icon: CreditCard, label: 'Planos e Serviços', description: 'Assinatura, faturamento e limites', route: '/plans', requires: 'manage_team' },
   { icon: HelpCircle, label: 'Ajuda', description: 'Central de ajuda, documentação e suporte', route: '/help' },
 ]
 
 export function SettingsPage() {
   const navigate = useNavigate()
+  const role = useUserStore((s) => s.current.role)
+  const permissions = ROLE_PERMISSIONS[role]
+  const visibleOptions = settingsOptions.filter((o) => !o.requires || permissions.includes(o.requires))
   return (
     <div className="flex flex-1 flex-col bg-gray-50/80 min-h-0 overflow-hidden">
       <div className="flex flex-1 min-h-0 flex-col rounded-xl bg-white shadow-[0_4px_24px_rgba(0,0,0,0.06)] overflow-hidden m-4">
@@ -59,7 +64,7 @@ export function SettingsPage() {
           {/* Right — Options */}
           <div className="flex-1 pt-4">
             <div className="space-y-1.5">
-              {settingsOptions.map((option) => {
+              {visibleOptions.map((option) => {
                 const Icon = option.icon
                 return (
                   <button
