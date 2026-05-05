@@ -30,7 +30,7 @@ const DEFAULT_COLOR = { bg: '#F3F4F6', text: '#374151', dot: '#6B7280' }
 
 export function ImmunotherapiesPage() {
   const navigate = useNavigate()
-  const { success, patientName } = useSearch({ from: '/immunotherapies' })
+  const { success, patientName, patientId } = useSearch({ from: '/immunotherapies' })
   const [showToast, setShowToast] = useState(false)
 
   useEffect(() => {
@@ -306,13 +306,15 @@ export function ImmunotherapiesPage() {
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-(--text)">Registro salvo com sucesso!</p>
               <p className="text-xs text-(--text-muted) mt-1">Os dados de {patientName || 'paciente'} foram registrados e a próxima dose já está agendada.</p>
-              <Link
-                to="/patient/$patientId"
-                params={{ patientId: '1' }}
-                className="inline-flex items-center gap-1 text-xs font-semibold text-teal-600 hover:text-teal-700 mt-2 transition-colors"
-              >
-                Acessar prontuário do paciente &rarr;
-              </Link>
+              {patientId && (
+                <Link
+                  to="/patient/$patientId"
+                  params={{ patientId }}
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-teal-600 hover:text-teal-700 mt-2 transition-colors"
+                >
+                  Acessar prontuário do paciente &rarr;
+                </Link>
+              )}
             </div>
             <button onClick={() => setShowToast(false)} className="h-6 w-6 flex items-center justify-center rounded-md text-(--text-muted) hover:bg-gray-100 transition-all shrink-0">
               <X size={14} />

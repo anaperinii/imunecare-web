@@ -7,6 +7,7 @@ import { useForm } from '@/shared/hooks/useForm'
 import { useImmunotherapiesStore, type Immunotherapy } from '@/features/immunotherapy/immunotherapies-store'
 import { useCustomTypesStore } from '@/features/immunotherapy/custom-types-store'
 import { PROFILES } from '@/features/user/user-store'
+import { usePatientStore, type Application } from '@/features/patient/patient-store'
 import { validateExtrato } from '@/shared/lib/validators'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -91,12 +92,14 @@ export function AddImmunotherapyPage() {
   const canAdd = useCan('add_immunotherapy')
   const addImmunotherapy = useImmunotherapiesStore((s) => s.addImmunotherapy)
   const customTypes = useCustomTypesStore((s) => s.types)
+  const scheduleApplication = usePatientStore((s) => s.scheduleApplication)
   useEffect(() => { if (!canAdd) navigate({ to: '/immunotherapies' }) }, [canAdd, navigate])
 
   const handleFinish = () => {
     const modalidade: Immunotherapy['modalidade'] = form.viaCutanea === 'sublingual' ? 'sublingual' : 'subcutânea'
+    const newId = `new-${Date.now()}`
     const newImm: Immunotherapy = {
-      id: `new-${Date.now()}`,
+      id: newId,
       nome: form.nome.trim(),
       tipo: form.tipo.trim(),
       doseConcentracao: '1:10.000 - 0,1ml',
@@ -106,7 +109,28 @@ export function AddImmunotherapyPage() {
       medicoResponsavel: form.medicoResponsavel.trim(),
     }
     addImmunotherapy(newImm)
-    navigate({ to: '/immunotherapies', search: { success: true, patientName: form.nome } })
+
+    const [yyyy, mm, dd] = form.dataInicio.split('-')
+    const dataPtBR = `${dd}/${mm}/${yyyy}`
+    const meses = ['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO']
+    const ano = Number(yyyy)
+    const mesIdx = Math.max(0, Math.min(11, Number(mm) - 1))
+    const firstApp: Application = {
+      id: `app-${newId}-1`,
+      patientId: newId,
+      data: dataPtBR,
+      horaInicio: '09:00',
+      horaFim: '09:30',
+      status: 'agendada',
+      dose: '1:10.000 - 0,1ml',
+      ciclo: { numero: 1, dias: 7 },
+      mes: meses[mesIdx],
+      ano,
+      modalidade,
+    }
+    scheduleApplication(firstApp)
+
+    navigate({ to: '/immunotherapies', search: { success: true, patientName: form.nome, patientId: newId } })
   }
   const [step, setStep] = useState<1 | 2 | 3>(1)
   const [showCancelModal, setShowCancelModal] = useState(false)
