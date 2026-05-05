@@ -99,6 +99,8 @@ interface PatientState {
   addProtocolAdjustment: (adjustment: ProtocolAdjustment) => void
   inactivateImunoterapia: (inactivation: Inactivation) => void
   reactivateImunoterapia: (payload: { note: string; reactivatedBy: string; reactivateConcentracao: string; reactivateIntervalo: number; justificativa: string }) => void
+  /** Agenda uma aplicação inicial (RNE-026 — geração automática no cadastro de imunoterapia). */
+  scheduleApplication: (app: Application) => void
   /** Registra uma aplicação realizada e agenda a próxima automaticamente. */
   recordEvolution: (payload: { realizada: Application; proxima: Application }) => void
 }
@@ -281,6 +283,7 @@ export const usePatientStore = create<PatientState>((set) => ({
   selectedPatient: null,
   applications: buildSeedApplications(),
   setSelectedPatient: (patient) => set({ selectedPatient: patient }),
+  scheduleApplication: (app) => set((s) => ({ applications: [...s.applications, app] })),
   recordEvolution: ({ realizada, proxima }) => set((s) => {
     // Remove aplicação agendada anterior do mesmo paciente (evita duplicar) e
     // adiciona a realizada + a nova agendada.
