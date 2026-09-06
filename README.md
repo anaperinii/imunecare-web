@@ -1,10 +1,18 @@
-# ImuneCare - Sistema de Gestão de Tratamentos Imunoterápicos Alérgicos
+# Allervia · Interface Clínica
 
-Plataforma de gestão clínica dedicada a consultórios de alergologia que conduzem protocolos de imunoterapia específica (**SCIT - Subcutaneous Immunotherapy**). Oferece prontuário eletrônico estruturado, agenda terapêutica, cálculo automático de progressão de doses, emissão de relatórios clínicos e trilha de auditoria em conformidade com a LGPD.
+**Camada de visualização e interação do Sistema de Gestão de Tratamentos Imunoterápicos Alérgicos.**
 
-> **Origem e continuidade:** este repositório foi constituído a partir da versão privada anterior do ImuneCare (repositório interno predecessor), consolidando o estado maduro das funcionalidades estáveis em uma base unificada e arquiteturalmente coerente. A partir deste ponto, toda a evolução subsequente do sistema - novas funcionalidades, refatorações estruturais, correções, melhorias de produto e releases oficiais - passa a ocorrer exclusivamente neste repositório, que assume o papel de fonte única da verdade do projeto.
+<img src="assets/readme-header.png" alt="Allervia · Interface Clínica - Camada de visualização e interação do Sistema de Gestão de Tratamentos Imunoterápicos Alérgicos" width="100%" />
 
-> **Evolução contínua:** as funcionalidades, regras de negócio, protocolos clínicos e políticas de acesso descritas neste documento encontram-se em processo permanente de revisão, refinamento e amadurecimento, acompanhando o avanço do futuro produto, o retorno de profissionais de saúde envolvidos na validação clínica e eventuais atualizações normativas. Portanto, comportamentos atualmente implementados serão ajustados, expandidos ou reescritos em ciclos futuros - esta documentação reflete o estado vigente do sistema, não um contrato estático.
+> **Escopo deste repositório:** aqui vive exclusivamente a interface clínica do Allervia, a aplicação web em React operada pelos profissionais da clínica. O **back-end** (API, persistência, autenticação e regras de servidor) não faz parte deste repositório e será mantido em base própria; enquanto não existe integração, a interface opera sobre dados semeados em memória.
+
+Plataforma de gestão clínica dedicada a consultórios de alergologia que conduzem protocolos de imunoterapia específica, nas modalidades **subcutânea (SCIT)** e **sublingual (SLIT)**. Oferece prontuário eletrônico estruturado, agenda terapêutica, cálculo automático de progressão de doses, encerramento assistido de tratamento, emissão de relatórios clínicos e trilha de auditoria em conformidade com a LGPD.
+
+> **Origem e continuidade:** este repositório foi constituído a partir da versão privada anterior do produto (repositório interno predecessor, à época sob a denominação ImuneCare), consolidando o estado maduro das funcionalidades estáveis em uma base unificada e arquiteturalmente coerente. A partir deste ponto, toda a evolução subsequente do sistema (novas funcionalidades, refatorações estruturais, correções, melhorias de produto e releases oficiais) passa a ocorrer exclusivamente neste repositório, que assume o papel de fonte única da verdade do projeto.
+
+> **Evolução contínua:** as funcionalidades, regras de negócio, protocolos clínicos e políticas de acesso descritas neste documento encontram-se em processo permanente de revisão, refinamento e amadurecimento, acompanhando o avanço do futuro produto, o retorno de profissionais de saúde envolvidos na validação clínica e eventuais atualizações normativas. Portanto, comportamentos atualmente implementados serão ajustados, expandidos ou reescritos em ciclos futuros; esta documentação reflete o estado vigente do sistema, não um contrato estático.
+
+> **Estado atual dos dados:** todo o estado é mantido em stores Zustand com dados semeados em memória (perfis, imunoterapias, aplicações, notificações e trilha de acessos). Nenhuma chamada de rede é feita nesta fase; a substituição por chamadas à API do back-end e a persistência real serão introduzidas em ciclo posterior.
 
 ---
 
@@ -20,20 +28,20 @@ Plataforma de gestão clínica dedicada a consultórios de alergologia que condu
 - [Protocolo SCIT](#protocolo-scit)
 - [Conformidade LGPD](#conformidade-lgpd)
 - [Estrutura de pastas](#estrutura-de-pastas)
-- [Convenções](#convenções)
 
 ---
 
 ## Visão geral
 
-O ImuneCare centraliza e digitaliza o fluxo assistencial de clínicas de alergologia, articulando em um mesmo ambiente as dimensões clínicas, operacionais e regulatórias do acompanhamento longitudinal de pacientes em imunoterapia:
+O Allervia centraliza e digitaliza o fluxo assistencial de clínicas de alergologia, articulando em um mesmo ambiente as dimensões clínicas, operacionais e regulatórias do acompanhamento longitudinal de pacientes em imunoterapia:
 
-- Prontuário eletrônico completo do paciente sob protocolo SCIT, com histórico integral de aplicações
+- Prontuário eletrônico completo do paciente sob protocolo de imunoterapia, com histórico integral de aplicações
 - Progressão automatizada do tratamento, calculando dose e intervalo da próxima aplicação conforme a fase em curso
-- Agenda terapêutica com visões semanal e mensal, incluindo integração com Google Agenda
-- Evolução assistida em etapas (pré-aplicação, aplicação, pós-aplicação, revisão clínica)
-- Dashboard analítico com indicadores de adesão, distribuição de concentrações e ciclos, filtrado por médico e modalidade
-- Emissão de relatórios clínicos e pacotes de portabilidade de dados em conformidade com a LGPD
+- Agenda terapêutica com visões semanal e mensal
+- Evolução assistida em etapas (seleção do paciente, pré-aplicação, pós-aplicação, revisão clínica)
+- Encerramento assistido de tratamento, com métricas de desfecho e plano pós-alta
+- Dashboard em duas camadas: painel geral de indicadores operacionais e panorama clínico analítico
+- Emissão de relatórios clínicos (PDF, Excel ou CSV) e pacotes de portabilidade de dados em conformidade com a LGPD
 - Controle de acesso granular por perfil profissional, com trilha de auditoria de todos os acessos a dados sensíveis
 
 ---
@@ -41,10 +49,17 @@ O ImuneCare centraliza e digitaliza o fluxo assistencial de clínicas de alergol
 ## Stack
 
 - **React 19** + **TypeScript** (strict)
-- **Vite** — bundler e dev server
-- **TanStack Router** — roteamento file-based
-- **Zustand** — state management
-- **Tailwind CSS 4** — estilização
+- **Vite**: bundler e dev server
+- **TanStack Router**: roteamento file-based
+- **Zustand**: state management
+- **React Hook Form** + **Zod** (via `@hookform/resolvers`): formulários e validação
+- **Tailwind CSS 4**: estilização (`class-variance-authority`, `tailwind-merge`, `tw-animate-css`)
+- **Radix UI**: primitives acessíveis (dialog, select, dropdown, separator, label)
+- **Recharts**: gráficos do dashboard
+- **date-fns** (locale `ptBR`) e **react-day-picker**: datas e seletores de período
+- **jsPDF**: geração de relatórios em PDF
+- **GSAP** e **OGL**: animações e efeitos visuais da landing page
+- **FontAwesome** e **Hugeicons**: iconografia
 
 ---
 
@@ -55,21 +70,22 @@ O código é organizado em **feature modules** + camadas compartilhadas:
 ```
 src/
 ├── features/          Domínios de negócio (autocontidos)
-│   ├── appointment/   Agendamentos
-│   ├── audit/         Trilha de acessos (LGPD Art. 19)
-│   ├── auth/          Login / register / recuperação de senha
-│   ├── dashboard/     Dashboard + export-report
-│   ├── immunotherapy/ Lista, cadastro e tipos customizáveis
-│   ├── landing-page/  Landing page + seções 
+│   ├── auth/          Login, cadastro em etapas, recuperação de senha e trial
+│   ├── dashboard/     Painel geral, panorama clínico e exportação de relatórios
+│   ├── immunotherapy/ Lista, cadastro em etapas, tipos customizáveis e protocolo SCIT
+│   ├── landing-page/  Landing page, seções e alternância de tema
 │   ├── notification/  Central de notificações
-│   ├── patient/       Prontuário, evolução e relatório do paciente
-│   ├── settings/      Configurações (avançadas, perfil, times, etc.)
-│   └── user/          Perfis, roles e permissions (RBAC)
+│   ├── patient/       Prontuário, evolução, encerramento, relatório e exportadores
+│   ├── scheduling/    Agenda terapêutica (visões semanal e mensal)
+│   └── settings/      Configurações (perfil, times, segurança, planos, ajuda, etc.)
 ├── shared/
-│   ├── hooks/         useForm + hooks genéricos
-│   ├── lib/           utils + validators
-│   └── ui/            Modal / Button / FormField / Toast
-├── layout/            Header, Sidebar, sidebar-store
+│   ├── components/    Primitives sem contexto de domínio (forms, modals, toasts,
+│   │                  wizard, tables, showcase) + barrel `index.ts`
+│   ├── constants/     Constantes transversais (contato, meses, planos)
+│   ├── hooks/         Hooks genéricos (countdown, scroll, guarda de alterações)
+│   ├── layout/        AppShell, header, sidebar e store da sidebar
+│   ├── lib/           Utilidades (cn, datas, máscaras, formatters, download, WhatsApp)
+│   └── stores/        Stores globais (usuário/RBAC e trilha de auditoria)
 ├── routes/            TanStack Router (file-based)
 ├── assets/            Imagens, logos, landing art
 └── main.tsx
@@ -77,9 +93,10 @@ src/
 
 **Princípios:**
 
-- Cada feature tem seu próprio store (Zustand), páginas e componentes
-- `shared/ui` contém primitives sem contexto de domínio
-- `shared/hooks/useForm` centraliza formulários controlados com validação
+- Cada feature é autocontida e segue a mesma subdivisão interna: `components/`, `constants/`, `hooks/`, `schemas/` e `stores/`, com as páginas na raiz da feature
+- Estado de domínio vive em stores Zustand da própria feature; apenas usuário/RBAC e auditoria são globais (`shared/stores`)
+- `shared/components` contém primitives sem contexto de domínio, reexportados pelo barrel `@/shared/components`
+- `shared/components/showcase` concentra os tokens e primitives da linguagem visual v2 (`PageHeader`, `Pill`, `SHOWCASE`)
 - Routes ficam em `src/routes/` (TanStack Router gera `routeTree.gen.ts`)
 - Todos imports usam alias `@/*` → `./src/*`
 
@@ -130,45 +147,51 @@ npm run preview
 
 ### Prontuário do paciente
 
-- Histórico de aplicações (calendário mensal + lista)
+- Histórico de aplicações (calendário mensal + linha do tempo)
 - Progressão visual do protocolo (indução → manutenção)
 - Ajustes de protocolo com histórico e justificativa clínica
-- Inativação com categorias estruturadas (motivo + data de retorno prevista)
+- Inativação com categorias estruturadas (motivo + data de retorno prevista) e histórico de inativações
 - Reativação com ponto de retomada configurável
+- Edição dos dados do paciente e exportação de portabilidade direto do prontuário
 
 ### Evolução do paciente
 
 - Fluxo em 4 steps (Paciente / Pré-aplicação / Pós-aplicação / Revisão)
-- Avanço via tecla Enter entre steps
-- Autocompletar de sugestões baseado no protocolo SCIT
-- Validação de extrato, concentração e volume via validators compartilhados
+- Sugestões de dose, concentração e intervalo derivadas do protocolo SCIT
+- Validação por schemas Zod dedicados a cada etapa
 - Registro simultâneo da aplicação realizada + agendamento da próxima
 
-### Agendamentos
+### Encerramento de tratamento
 
-- Visão semanal e mensal
+- Fluxo em 3 steps (Visão geral / Plano pós-alta / Revisão)
+- Métricas do desfecho: aplicações realizadas, aderência, reações adversas e duração total
+- Recomendações de alta, retornos de monitoramento e sinais de alerta para retorno antecipado
+- Rascunhos preservados por paciente (`useCompletionDraftsStore`); ao assinar, o registro vai para o prontuário e a imunoterapia é inativada
+
+### Agenda
+
+- Visões semanal e mensal com barra de navegação e faixa do dia selecionado
 - Modal de detalhes com dados do paciente, WhatsApp direto e navegação para o prontuário
-- Lembretes automáticos via WhatsApp (configurável)
+- Criação de agendamento por modal, com validação por schema
 
 ### Dashboard
 
-- Cards de KPI (pacientes ativos, aplicações do mês, taxa de adesão)
-- 5 gráficos (concentrações, fases, status, tipos, volume × concentração)
-- Arquivamento individual de gráficos com reflow automático do layout
+- **Painel geral:** cards de aplicações, aderência e aplicações do dia, com filtros por card e seleção de período/semana
+- **Panorama clínico:** 5 gráficos (concentrações, fases, status, tipos, volume × concentração)
 - Filtros por médico (quando perfil = médico), modalidade, tipo, mês e ano
+- Seção de métricas em tema escuro com destaques comparativos
 
 ### Exportação de relatórios
 
-- Relatório clínico em PDF (via jsPDF)
+- Relatório clínico em **PDF** (jsPDF), **Excel** ou **CSV**, com seleção de seções (dados pessoais, imunoterapia, aplicações, reações, progresso, ajustes, inativações) e opção de anonimização
 - Pacote LGPD de portabilidade em JSON ou CSV
 - Trilha de acessos completa (Art. 19) incluída no pacote
 
-### Configurações avançadas
+### Configurações
 
 - Gerenciamento dos tipos de imunoterapia (CRUD visível em toda a clínica)
-- Integração com Google Agenda
-- Notificações por e-mail / push
-- Personalização de cores de eventos e agendamentos
+- Times: convites, membros, papéis e ações administrativas
+- Perfil, segurança, personalização, planos, acessibilidade, ajuda e sobre
 
 ---
 
@@ -184,7 +207,7 @@ npm run preview
 | enfermeiro | Jaqueline Oliveira    | COREN/GO 318.942 |
 | técnico    | Rafael Mendes         | COREN/GO 415.327 |
 
-**Permissões** (`ROLE_PERMISSIONS`):
+**Permissões** (`ROLE_PERMISSIONS` em `src/shared/stores/useUserStore.ts`):
 
 - `adjust_protocol`, `inactivate_immunotherapy`, `reactivate_patient`
 - `edit_patient_data`, `evolve_patient`, `emit_report`, `lgpd_portability`
@@ -197,9 +220,9 @@ Médicos veem apenas seus próprios pacientes (`useDoctorFilter`). O profile swi
 
 ## Protocolo SCIT
 
-Implementação de referência em `src/features/immunotherapy/scit-protocol.ts`.
+Implementação de referência em `src/features/immunotherapy/constants/scit-protocol.ts`.
 
-**Indução** — 16 passos semanais:
+**Indução**, 16 passos semanais:
 
 ```
 1:10.000 → 0,1ml → 0,2ml → 0,4ml → 0,8ml
@@ -208,9 +231,9 @@ Implementação de referência em `src/features/immunotherapy/scit-protocol.ts`.
 1:10     → 0,1ml → 0,2ml → 0,4ml → 0,5ml   ← meta
 ```
 
-**Manutenção** — mesma concentração meta (`1:10 - 0,5ml`) com progressão de intervalo: `14 → 21 → 28 dias`.
+**Manutenção**: mesma concentração meta (`1:10 - 0,5ml`) com progressão de intervalo: `14 → 21 → 28 dias`.
 
-A função `calculateNextDose(dose, interval)` determina automaticamente a próxima aplicação respeitando a fase atual do paciente.
+A função `calculateNextDose(dose, interval)` determina automaticamente a próxima aplicação respeitando a fase atual do paciente; `getPhase` e `getInductionProgress` derivam fase e percentual de avanço para a interface.
 
 ---
 
@@ -218,9 +241,9 @@ A função `calculateNextDose(dose, interval)` determina automaticamente a próx
 
 O sistema foi desenhado para operar em conformidade com a Lei Geral de Proteção de Dados Pessoais (Lei nº 13.709/2018), com atenção especial aos direitos do titular previstos nos artigos 18 e 19:
 
-- **Art. 18, V — Direito à portabilidade:** exportação integral do dossiê clínico do paciente nos formatos JSON ou CSV por meio da rota `/patient-report`, permitindo a transmissão dos dados a outro controlador quando solicitado pelo titular.
-- **Art. 19 — Direito de acesso e transparência:** trilha de acessos persistida no `audit-store` e incorporada ao pacote de portabilidade. Cada visualização de prontuário, exportação ou alteração de dados gera um registro com identificação do profissional, perfil, número de registro profissional, ação executada e carimbo temporal.
-- **Salvaguardas operacionais:** solicitação explícita de justificativa clínica e consentimento documentado em operações sensíveis, como inativação de tratamento, reativação de paciente e exportação de dados pessoais.
+- **Art. 18, V, direito à portabilidade:** exportação integral do dossiê clínico do paciente nos formatos JSON ou CSV (`exportLgpd`), acessível pela rota `/patient-report` e pelo prontuário, permitindo a transmissão dos dados a outro controlador quando solicitado pelo titular.
+- **Art. 19, direito de acesso e transparência:** trilha de acessos persistida em `shared/stores/useAuditStore` e incorporada ao pacote de portabilidade. Cada visualização de prontuário, exportação ou alteração de dados gera um registro com identificação do profissional, perfil, número de registro profissional, ação executada e carimbo temporal.
+- **Salvaguardas operacionais:** solicitação explícita de justificativa clínica e consentimento documentado em operações sensíveis, como inativação de tratamento, reativação de paciente, encerramento e exportação de dados pessoais. Relatórios clínicos podem ser emitidos em modo anonimizado.
 
 ---
 
@@ -229,85 +252,93 @@ O sistema foi desenhado para operar em conformidade com a Lei Geral de Proteçã
 ```
 src/
 ├── features/
-│   ├── appointment/
-│   │   └── appointments-page.tsx
-│   ├── audit/
-│   │   └── audit-store.ts
 │   ├── auth/
-│   │   ├── auth-card.tsx
+│   │   ├── components/          AuthLayout, AuthStepTransition
+│   │   │   ├── forgot-password-steps/
+│   │   │   └── register-steps/
+│   │   ├── schemas/             login, register, forgot-password, trial
 │   │   ├── forgot-password-page.tsx
 │   │   ├── login-page.tsx
 │   │   ├── register-page.tsx
 │   │   └── trial-page.tsx
 │   ├── dashboard/
+│   │   ├── components/
+│   │   │   ├── charts/          5 gráficos Recharts + estilo de tooltip
+│   │   │   ├── export/          painel de configuração, preview e modais
+│   │   │   └── showcase/        cards do painel geral, popovers de período
+│   │   ├── constants/           chart-colors
+│   │   ├── hooks/               useChartWindow, useDashboardAnalytics
 │   │   ├── dashboard-page.tsx
 │   │   └── export-report-page.tsx
 │   ├── immunotherapy/
+│   │   ├── components/          tabela, filtros e add-steps/
+│   │   ├── constants/           scit-protocol, modality, interval-colors
+│   │   ├── schemas/             add-immunotherapy
+│   │   ├── stores/              useImmunotherapiesStore, useCustomTypesStore
 │   │   ├── add-immunotherapy-page.tsx
-│   │   ├── custom-types-store.ts
-│   │   ├── immunotherapies-page.tsx
-│   │   ├── immunotherapies-store.ts
-│   │   └── scit-protocol.ts
+│   │   └── immunotherapies-page.tsx
 │   ├── landing-page/
-│   │   ├── _ui/
+│   │   ├── components/          hero, features, pricing, tabs, footer, etc.
+│   │   ├── constants/           features, tabs, testimonials, footer-columns
 │   │   ├── landing-page.tsx
-│   │   └── sections/
+│   │   └── theme-context.tsx
 │   ├── notification/
-│   │   ├── notifications-page.tsx
-│   │   └── notifications-store.ts
+│   │   ├── components/          header, filtros, item, estado vazio
+│   │   ├── constants/           notification-display
+│   │   ├── stores/              useNotificationsStore
+│   │   └── notifications-page.tsx
 │   ├── patient/
+│   │   ├── components/
+│   │   │   ├── chart/           calendário, timeline, modais do prontuário
+│   │   │   ├── report/          preview clínico e painel de configuração
+│   │   │   ├── treatment-completion/
+│   │   │   └── treatment-evolution/
+│   │   ├── constants/           clinical-labels, patient-profiles
+│   │   ├── exporters/           pdf, excel, csv, lgpd (+ types)
+│   │   ├── schemas/             evolution, completion, adjust-protocol, etc.
+│   │   ├── stores/              usePatientStore, useCompletionDraftsStore
 │   │   ├── patient-chart-page.tsx
+│   │   ├── patient-completion-page.tsx
 │   │   ├── patient-evolution-page.tsx
-│   │   ├── patient-report-page.tsx
-│   │   └── patient-store.ts
-│   ├── settings/
-│   │   ├── about-page.tsx
-│   │   ├── accessibility-page.tsx
-│   │   ├── advanced-settings-page.tsx
-│   │   ├── help-page.tsx
-│   │   ├── personalization-page.tsx
-│   │   ├── plans-page.tsx
-│   │   ├── profile-page.tsx
-│   │   ├── security-page.tsx
-│   │   ├── settings-page.tsx
-│   │   └── teams-page.tsx
-│   └── user/
-│       └── user-store.ts
+│   │   └── patient-report-page.tsx
+│   ├── scheduling/
+│   │   ├── components/          MonthView, WeekView, toolbar, modais
+│   │   ├── constants/           application-display
+│   │   ├── hooks/               useCalendarNav
+│   │   ├── schemas/             new-appointment
+│   │   └── appointments-page.tsx
+│   └── settings/
+│       ├── components/          SettingsLayout, tabelas e modais de time
+│       ├── constants/           faqs, team-roles
+│       ├── schemas/             profile
+│       ├── stores/              useSettingsStore, useTeamsStore
+│       └── *-page.tsx           settings, profile, teams, security,
+│                                personalization, plans, help, about,
+│                                advanced-settings
 ├── shared/
-│   ├── hooks/
-│   │   ├── use-counter.ts
-│   │   ├── use-enter-reveal.ts
-│   │   ├── use-scroll-reveal.ts
-│   │   └── useForm.ts
-│   ├── lib/
-│   │   ├── utils.ts
-│   │   └── validators.ts
-│   └── ui/
-│       ├── Button.tsx
-│       ├── FormField.tsx
-│       ├── Modal.tsx
-│       ├── Toast.tsx
-│       └── index.ts
-├── layout/
-│   ├── header.tsx
-│   ├── sidebar.tsx
-│   └── sidebar-store.ts
-├── routes/            (TanStack Router file-based)
+│   ├── components/
+│   │   ├── forms/               Button, IconButton, FormField, Switch,
+│   │   │                        SegmentedControl, PasswordInput, etc.
+│   │   ├── modals/              Modal, CancelWizardModal, ConfirmDiscardModal
+│   │   ├── showcase/            PageHeader, primitives, tokens
+│   │   ├── tables/              TablePagination
+│   │   ├── toasts/              Toast, ToastViewport, useToastStore
+│   │   ├── wizard/              StepHeading, WizardStepsBreadcrumb
+│   │   └── index.ts             barrel de exportação
+│   ├── constants/               contact, months-pt, plans
+│   ├── hooks/                   useCountdown, useScrollIndicators,
+│   │                            useUnsavedChangesGuard
+│   ├── layout/                  AppShell, header, sidebar, SidebarProfile,
+│   │                            useSidebarStore
+│   ├── lib/                     cn, dates, field-schemas, file-download,
+│   │                            formatters, mask, whatsapp
+│   └── stores/                  useUserStore (RBAC), useAuditStore
+├── routes/                      TanStack Router file-based
 ├── assets/
 ├── index.css
 ├── main.tsx
-└── routeTree.gen.ts   (auto-gerado)
+└── routeTree.gen.ts             (auto-gerado)
 ```
-
----
-
-## Convenções
-
-- **Imports:** sempre via alias `@/...` (nunca relativo profundo). Ex.: `import { cn } from '@/shared/lib/utils'`.
-- **Formulários:** `useForm` para todo form com validação (`set`, `touch`, `validate`, `showError`, `errorOf`).
-- **Modais:** `<Modal>` do `@/shared/ui` — variantes `sm | md | lg`, suporte a `footer` e `headerSlot`.
-- **Comentários:** apenas quando explicarem **por quê** (decisões não-óbvias, RNE específico, workaround). Identificadores bem nomeados dispensam comentários sobre *o quê*.
-- **Datas:** sempre `date-fns` com locale `ptBR`. Formatos ISO (`yyyy-MM-dd`) apenas em inputs `type="date"`; UI sempre pt-BR (`dd/MM/yyyy`).
 
 ---
 
@@ -315,10 +346,10 @@ src/
 
 Software proprietário. Todos os direitos reservados.
 
-O código-fonte, a documentação, a identidade visual e quaisquer artefatos correlatos contidos neste repositório são de titularidade exclusiva do projeto ImuneCare e destinam-se ao uso interno da organização responsável pelo produto. É vedada, sem autorização prévia e expressa por escrito dos titulares:
+O código-fonte, a documentação, a identidade visual e quaisquer artefatos correlatos contidos neste repositório são de titularidade exclusiva do projeto Allervia e destinam-se ao uso interno da organização responsável pelo produto. É vedada, sem autorização prévia e expressa por escrito dos titulares:
 
 - a reprodução, distribuição, publicação ou disponibilização total ou parcial do código a terceiros;
 - a modificação, engenharia reversa, descompilação ou criação de obras derivadas;
 - a utilização comercial, acadêmica ou pessoal fora do escopo autorizado pela organização.
 
-O acesso a este repositório é restrito a colaboradores devidamente autorizados e implica a aceitação integral das políticas internas de confidencialidade, segurança da informação e tratamento de dados pessoais aplicáveis ao projeto. 
+O acesso a este repositório é restrito a colaboradores devidamente autorizados e implica a aceitação integral das políticas internas de confidencialidade, segurança da informação e tratamento de dados pessoais aplicáveis ao projeto.
